@@ -30,31 +30,20 @@
         /* --- NATIVE LIQUID B&W BACKGROUND --- */
         #liquid-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
-            background: radial-gradient(circle at 50% 50%, #ebebeb 0%, #ffffff 100%);
+            top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
+            background: radial-gradient(circle at 50% 50%, #f0f0f0 0%, #ffffff 100%);
         }
 
         #liquid-motion {
             position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            z-index: -1;
-            background: repeating-radial-gradient(circle at 0% 0%, transparent 0, transparent 40px, rgba(0,0,0,0.03) 40px, rgba(0,0,0,0.03) 80px);
-            animation: move 20s linear infinite;
-            filter: blur(2px);
-            opacity: 0.6;
+            top: -50%; left: -50%; width: 200%; height: 200%; z-index: -1;
+            background: repeating-radial-gradient(circle at 0% 0%, transparent 0, transparent 50px, rgba(0,0,0,0.02) 50px, rgba(0,0,0,0.02) 100px);
+            animation: move 25s linear infinite;
+            filter: blur(3px);
+            opacity: 0.7;
         }
 
-        @keyframes move {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+        @keyframes move { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         #effect-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 
@@ -62,62 +51,55 @@
         #game-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
         #sidebar {
-            width: 400px;
+            width: 420px;
             border-left: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
+            display: flex; flex-direction: column; padding: 20px;
         }
 
-        #points { font-size: 5.5rem; font-weight: 900; margin: 0; letter-spacing: -4px; }
+        #points { font-size: 5.5rem; font-weight: 900; margin: 0; letter-spacing: -4px; line-height: 1; }
 
         /* --- Nav --- */
         .nav-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        .nav-btn { background: #000; color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-weight: 900; }
+        .nav-btn { background: #000; color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; font-weight: 900; font-size: 1.2rem; }
 
         /* --- Clicker --- */
-        #clicker-container { cursor: pointer; transition: transform 0.1s; }
+        #clicker-container { cursor: pointer; transition: transform 0.05s; margin: 30px 0; }
         #clicker-image { width: 340px; height: 340px; object-fit: contain; }
-        #clicker-container:active { transform: scale(0.92); }
+        #clicker-container:active { transform: scale(0.9); }
 
         /* --- Upgrades --- */
         .upgrade-card {
             background: var(--secondary);
-            border-radius: 14px;
-            padding: 14px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border: 2px solid transparent;
-            transition: 0.2s;
+            border-radius: 16px; padding: 16px; margin-bottom: 12px;
+            cursor: pointer; display: flex; align-items: center; gap: 16px;
+            border: 2px solid transparent; transition: 0.2s;
         }
-        .upgrade-card:hover:not(.locked) { background: #fff; border-color: #000; }
-        .upgrade-card.locked { opacity: 0.4; filter: grayscale(1); cursor: not-allowed; }
+        .upgrade-card:hover:not(.locked) { background: #fff; border-color: #000; transform: translateX(-5px); }
+        .upgrade-card.locked { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
-        .upgrade-icon { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: #eee; }
-        .u-name { font-weight: 900; font-size: 1rem; display: block; }
-        .u-cost { font-weight: 700; font-size: 0.85rem; color: #555; }
+        .upgrade-icon { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; background: #eee; border: 1px solid #ddd; }
+        .u-name { font-weight: 900; font-size: 1.1rem; display: block; }
+        .u-cost { font-weight: 700; font-size: 0.9rem; color: #007AFF; }
 
         .particle {
             position: absolute; font-weight: 900; pointer-events: none; color: #000;
-            animation: pOut 0.7s ease-out forwards;
+            animation: pOut 0.6s ease-out forwards; font-size: 1.5rem;
         }
         @keyframes pOut {
             0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -100px) scale(1.4); opacity: 0; }
+            100% { transform: translate(-50%, -150px) scale(1.6); opacity: 0; }
         }
 
         .floating-item {
-            position: absolute; width: 70px; height: 70px; opacity: 0.3;
-            animation: floatLoop 25s linear infinite;
+            position: absolute; width: 80px; height: 80px; opacity: 0.2;
+            animation: floatLoop 30s linear infinite; pointer-events: none;
         }
         @keyframes floatLoop {
             0% { transform: translate(0,0) rotate(0deg); }
-            100% { transform: translate(20vw, 20vh) rotate(360deg); }
+            50% { transform: translate(15vw, 15vh) rotate(180deg); }
+            100% { transform: translate(0,0) rotate(360deg); }
         }
     </style>
 </head>
@@ -128,27 +110,28 @@
 <div id="effect-layer"></div>
 
 <div id="game-view">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="font-weight: 900; letter-spacing: 3px; font-size: 0.8rem; color: #888;">SIAMESE AGENCY</div>
+    <div style="text-align: center;">
+        <div style="font-weight: 900; letter-spacing: 4px; font-size: 0.8rem; color: #999;">SIAMESE AGENCY</div>
         <h1 id="points">0</h1>
+        <div style="font-weight: 700; color: #555; margin-top: 5px;" id="power-display">+1 per click</div>
     </div>
 
     <div id="clicker-container">
-        <img id="clicker-image" src="IMG_2109-removebg-preview.png" alt="Idiot Clicker">
+        <img id="clicker-image" src="IMG_2109-removebg-preview.png" alt="Clicker">
     </div>
 </div>
 
 <div id="sidebar">
     <div class="nav-header">
         <button class="nav-btn" onclick="changePage(-1)">←</button>
-        <h2 id="page-title" style="font-weight: 900; font-size: 1.1rem; margin: 0;">AGENCY UPGRADES</h2>
+        <h2 id="page-title" style="font-weight: 900; font-size: 1.2rem; margin: 0;">AGENCY UPGRADES</h2>
         <button class="nav-btn" onclick="changePage(1)">→</button>
     </div>
 
-    <div id="upgrades-list" style="flex: 1; overflow-y: auto; padding-right: 5px;"></div>
+    <div id="upgrades-list" style="flex: 1; overflow-y: auto;"></div>
     
     <div style="margin-top: 20px;">
-        <button id="rebirth-btn" onclick="rebirth()" style="width:100%; padding:18px; background:#000; color:#fff; border:none; font-weight:900; border-radius:12px; cursor:pointer;">REBIRTH</button>
+        <button id="rebirth-btn" onclick="rebirth()" style="width:100%; padding:20px; background:#000; color:#fff; border:none; font-weight:900; border-radius:15px; cursor:pointer; font-size: 1.1rem;">REBIRTH</button>
     </div>
 </div>
 
@@ -162,19 +145,28 @@
         page: 0
     };
 
-    // Updated with your provided images
+    // ALL images sent so far integrated here
     const agencyUpgrades = [
-        { name: "Vulnus Core", img: "Annotation 2025-12-18 203140.png" },
-        { name: "Baldi Audio", img: "baldi.png-removebg-preview.png" },
-        { name: "Blossom Rage", img: "blossom.gif" },
-        { name: "The Drive", img: "bradarwhatisthis.gif" },
-        { name: "Merch Flash", img: "IMG_3018.jpg" },
-        { name: "King's Gaze", img: "Screenshot 2026-01-11 211640.jpg" }
+        { name: "Rhythia Sync", img: "rhythia-steam.png" },
+        { name: "Mugshot Protocol", img: "OIP.webp" },
+        { name: "Diddy Synergy", img: "OIP (1).webp" },
+        { name: "Vulnus Logic", img: "Annotation 2025-12-18 203140.png" },
+        { name: "Baldi Education", img: "baldi.png-removebg-preview.png" },
+        { name: "Blossom Speed", img: "blossom.gif" },
+        { name: "Bradar Drive", img: "bradarwhatisthis.gif" },
+        { name: "Noob Admin", img: "togif.gif" },
+        { name: "Strategy Link", img: "togif-1.gif" },
+        { name: "WhoIs Alter", img: "whoisalter.png" },
+        { name: "King LeBron", img: "Screenshot 2026-01-11 211640.jpg" },
+        { name: "Merch Stock", img: "IMG_3018.jpg" },
+        { name: "Asset Group", img: "IMG_1114.jpg" },
+        { name: "Agency Liquid", img: "image_a96080.jpg" },
+        { name: "Final Optimal", img: "image.jpg" }
     ];
 
     function format(n) {
         if (n < 1000n) return n.toString();
-        const units = ["", "k", "M", "B", "T", "Qa", "Qi"];
+        const units = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc"];
         let s = n.toString();
         let unitIdx = Math.floor((s.length - 1) / 3);
         let digits = s.length % 3 || 3;
@@ -192,37 +184,42 @@
         const img = document.createElement('img');
         img.src = src;
         img.className = 'floating-item';
-        img.style.left = Math.random() * 90 + "%";
-        img.style.top = Math.random() * 90 + "%";
+        img.style.left = Math.random() * 85 + "%";
+        img.style.top = Math.random() * 85 + "%";
         document.getElementById('effect-layer').appendChild(img);
     }
 
     function render() {
         document.getElementById('points').innerText = format(game.points);
+        document.getElementById('power-display').innerText = `+${format(game.clickPower * (2n ** game.rebirths))} per click`;
+        
         const list = document.getElementById('upgrades-list');
         list.innerHTML = "";
 
         if (game.page === 0) {
             const up = agencyUpgrades[game.agencyIdx % agencyUpgrades.length];
-            const cost = 10n ** BigInt(game.agencyIdx + 1) * 8n;
+            // CHEAPER SCALING: Starts lower (150) and grows at a slower 4x rate per level
+            const cost = 150n * (4n ** BigInt(game.agencyIdx));
             createCard(up.name, up.img, cost, () => {
                 game.points -= cost;
-                game.clickPower += (cost / 12n);
+                // BETTER POWER: Adds 25% of current cost to power instead of 10%
+                game.clickPower += (cost / 4n);
                 spawnFloating(up.img);
                 game.agencyIdx++;
                 render();
             });
         } else {
-            const cost = 10n ** BigInt(game.jarvisIdx + 2) * 5n;
-            createCard(`Jarvis Bot v${game.jarvisIdx + 1}`, "", cost, () => {
+            // JARVIS BOTS: Slower scaling for infinite play
+            const cost = 1000n * (3n ** BigInt(game.jarvisIdx));
+            createCard(`Jarvis Unit ${game.jarvisIdx + 1}`, "", cost, () => {
                 game.points -= cost;
-                game.clickPower += (cost / 6n);
+                game.clickPower += (cost / 3n);
                 game.jarvisIdx++;
                 render();
             });
         }
         
-        const rCost = 1000000n * (50n ** game.rebirths);
+        const rCost = 500000n * (20n ** game.rebirths); // Rebirth also made cheaper
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
         document.getElementById('rebirth-btn').disabled = game.points < rCost;
     }
@@ -249,16 +246,19 @@
         p.innerText = `+${format(val)}`;
         p.style.left = e.clientX + "px"; p.style.top = e.clientY + "px";
         document.body.appendChild(p);
-        setTimeout(() => p.remove(), 700);
+        setTimeout(() => p.remove(), 600);
         render();
     };
 
     function rebirth() {
-        game.points = 0n; game.clickPower = 1n;
-        game.agencyIdx = 0; game.jarvisIdx = 0;
-        game.rebirths++;
-        document.getElementById('effect-layer').innerHTML = "";
-        render();
+        const cost = 500000n * (20n ** game.rebirths);
+        if (game.points >= cost) {
+            game.points = 0n; game.clickPower = 1n;
+            game.agencyIdx = 0; game.jarvisIdx = 0;
+            game.rebirths++;
+            document.getElementById('effect-layer').innerHTML = "";
+            render();
+        }
     }
 
     render();
