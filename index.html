@@ -11,8 +11,7 @@
         :root {
             --bg: #ffffff;
             --text: #1a1a1a;
-            --accent: #000000;
-            --secondary: rgba(243, 244, 246, 0.85);
+            --secondary: rgba(243, 244, 246, 0.9);
             --border: #e5e7eb;
         }
 
@@ -26,155 +25,130 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
-            position: relative;
         }
 
-        /* --- CUSTOM LIQUID B&W BACKGROUND --- */
-        #liquid-canvas {
+        /* --- NATIVE LIQUID B&W BACKGROUND --- */
+        #liquid-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: -2;
-            background: linear-gradient(45deg, #e0e0e0 25%, #ffffff 25%, #ffffff 50%, #e0e0e0 50%, #e0e0e0 75%, #ffffff 75%, #ffffff 100%);
-            background-size: 100px 100px;
-            filter: blur(60px);
-            opacity: 0.4;
-            animation: flow 10s linear infinite;
+            background: radial-gradient(circle at 50% 50%, #ebebeb 0%, #ffffff 100%);
         }
 
-        @keyframes flow {
-            from { background-position: 0 0; }
-            to { background-position: 200px 200px; }
+        #liquid-motion {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            z-index: -1;
+            background: repeating-radial-gradient(circle at 0% 0%, transparent 0, transparent 40px, rgba(0,0,0,0.03) 40px, rgba(0,0,0,0.03) 80px);
+            animation: move 20s linear infinite;
+            filter: blur(2px);
+            opacity: 0.6;
+        }
+
+        @keyframes move {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         #effect-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 
         /* --- Layout --- */
-        #game-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; }
+        #game-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
         #sidebar {
-            width: 380px;
+            width: 400px;
             border-left: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
             padding: 20px;
-            transition: transform 0.3s ease;
         }
 
-        #points { font-size: 5rem; font-weight: 900; margin: 0; letter-spacing: -3px; }
+        #points { font-size: 5.5rem; font-weight: 900; margin: 0; letter-spacing: -4px; }
 
-        /* --- Navigation Arrows --- */
-        .nav-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
+        /* --- Nav --- */
+        .nav-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .nav-btn { background: #000; color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-weight: 900; }
 
-        .nav-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            font-weight: 900;
-            padding: 10px;
-            transition: transform 0.2s;
-        }
+        /* --- Clicker --- */
+        #clicker-container { cursor: pointer; transition: transform 0.1s; }
+        #clicker-image { width: 340px; height: 340px; object-fit: contain; }
+        #clicker-container:active { transform: scale(0.92); }
 
-        .nav-btn:hover { transform: scale(1.2); color: var(--accent); }
-
-        /* --- The Clicker --- */
-        #clicker-container {
-            cursor: pointer;
-            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        #clicker-image { width: 320px; height: 320px; object-fit: contain; }
-        #clicker-container:active { transform: scale(0.9); }
-
-        /* --- Upgrade Cards --- */
+        /* --- Upgrades --- */
         .upgrade-card {
             background: var(--secondary);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 10px;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 12px;
-            transition: all 0.2s;
-            border: 1px solid transparent;
+            gap: 15px;
+            border: 2px solid transparent;
+            transition: 0.2s;
         }
-
-        .upgrade-card:hover:not(.locked) { background: #fff; border-color: #000; transform: translateX(-5px); }
+        .upgrade-card:hover:not(.locked) { background: #fff; border-color: #000; }
         .upgrade-card.locked { opacity: 0.4; filter: grayscale(1); cursor: not-allowed; }
 
-        .upgrade-icon { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #ddd; }
-        .upgrade-info { flex: 1; }
-        .u-name { font-weight: 800; font-size: 0.9rem; display: block; }
-        .u-cost { font-weight: 700; font-size: 0.8rem; color: #666; }
+        .upgrade-icon { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: #eee; }
+        .u-name { font-weight: 900; font-size: 1rem; display: block; }
+        .u-cost { font-weight: 700; font-size: 0.85rem; color: #555; }
 
-        /* --- Rebirth --- */
-        #rebirth-area { margin-top: auto; border-top: 1px solid var(--border); padding-top: 20px; }
-        #rebirth-btn {
-            width: 100%; padding: 15px; background: #000; color: #fff; border: none; 
-            font-weight: 900; border-radius: 8px; cursor: pointer;
-        }
-        #rebirth-btn:disabled { background: #ccc; }
-
-        /* Floating Text */
         .particle {
-            position: absolute; font-weight: 900; pointer-events: none;
-            animation: pOut 0.8s ease-out forwards;
+            position: absolute; font-weight: 900; pointer-events: none; color: #000;
+            animation: pOut 0.7s ease-out forwards;
         }
         @keyframes pOut {
             0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -120px) scale(1.5); opacity: 0; }
+            100% { transform: translate(-50%, -100px) scale(1.4); opacity: 0; }
         }
 
         .floating-item {
-            position: absolute; width: 60px; height: 60px; opacity: 0.25;
-            animation: floatLoop 20s linear infinite; border-radius: 50%;
+            position: absolute; width: 70px; height: 70px; opacity: 0.3;
+            animation: floatLoop 25s linear infinite;
         }
         @keyframes floatLoop {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            50% { transform: translate(100px, 100px) rotate(180deg); }
-            100% { transform: translate(0, 0) rotate(360deg); }
+            0% { transform: translate(0,0) rotate(0deg); }
+            100% { transform: translate(20vw, 20vh) rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
-<div id="liquid-canvas"></div>
+<div id="liquid-overlay"></div>
+<div id="liquid-motion"></div>
 <div id="effect-layer"></div>
 
 <div id="game-view">
-    <div style="text-align: center;">
-        <div style="font-weight: 900; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 2px; color: #666;">Siamese Wealth</div>
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="font-weight: 900; letter-spacing: 3px; font-size: 0.8rem; color: #888;">SIAMESE AGENCY</div>
         <h1 id="points">0</h1>
     </div>
 
     <div id="clicker-container">
-        <img id="clicker-image" src="IMG_2109-removebg-preview.png" alt="The Idiot">
+        <img id="clicker-image" src="IMG_2109-removebg-preview.png" alt="Idiot Clicker">
     </div>
 </div>
 
 <div id="sidebar">
     <div class="nav-header">
         <button class="nav-btn" onclick="changePage(-1)">←</button>
-        <h2 id="page-title" style="font-weight: 900; margin: 0; font-size: 1.2rem;">AGENCY UPGRADES</h2>
+        <h2 id="page-title" style="font-weight: 900; font-size: 1.1rem; margin: 0;">AGENCY UPGRADES</h2>
         <button class="nav-btn" onclick="changePage(1)">→</button>
     </div>
 
-    <div id="upgrades-list" style="flex: 1; overflow-y: auto;"></div>
+    <div id="upgrades-list" style="flex: 1; overflow-y: auto; padding-right: 5px;"></div>
     
-    <div id="rebirth-area">
-        <button id="rebirth-btn" onclick="rebirth()">REBIRTH</button>
-        <div id="rebirth-stat" style="text-align:center; font-size:0.7rem; font-weight:800; margin-top:10px; color:#666;">0 REBIRTHS (2x MULTI)</div>
+    <div style="margin-top: 20px;">
+        <button id="rebirth-btn" onclick="rebirth()" style="width:100%; padding:18px; background:#000; color:#fff; border:none; font-weight:900; border-radius:12px; cursor:pointer;">REBIRTH</button>
     </div>
 </div>
 
@@ -183,22 +157,24 @@
         points: 0n,
         clickPower: 1n,
         rebirths: 0n,
-        upgradeLevel: 0,
-        jarvisLevel: 0,
-        currentPage: 0 // 0: Agency, 1: Jarvis
+        agencyIdx: 0,
+        jarvisIdx: 0,
+        page: 0
     };
 
-    const agencyData = [
-        { name: "Rhythia Sync", img: "rhythia-steam.png" },
-        { name: "Mugshot Protocol", img: "OIP.webp" },
-        { name: "Agency Syrup", img: "OIP (1).webp" },
-        { name: "Gif Loop", img: "togif.gif" },
-        { name: "Alter Intel", img: "whoisalter.png" }
+    // Updated with your provided images
+    const agencyUpgrades = [
+        { name: "Vulnus Core", img: "Annotation 2025-12-18 203140.png" },
+        { name: "Baldi Audio", img: "baldi.png-removebg-preview.png" },
+        { name: "Blossom Rage", img: "blossom.gif" },
+        { name: "The Drive", img: "bradarwhatisthis.gif" },
+        { name: "Merch Flash", img: "IMG_3018.jpg" },
+        { name: "King's Gaze", img: "Screenshot 2026-01-11 211640.jpg" }
     ];
 
     function format(n) {
         if (n < 1000n) return n.toString();
-        const units = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx"];
+        const units = ["", "k", "M", "B", "T", "Qa", "Qi"];
         let s = n.toString();
         let unitIdx = Math.floor((s.length - 1) / 3);
         let digits = s.length % 3 || 3;
@@ -206,53 +182,49 @@
     }
 
     function changePage(dir) {
-        game.currentPage = (game.currentPage + dir + 2) % 2;
-        document.getElementById('page-title').innerText = game.currentPage === 0 ? "AGENCY UPGRADES" : "JARVIS BOTS";
+        game.page = (game.page + dir + 2) % 2;
+        document.getElementById('page-title').innerText = game.page === 0 ? "AGENCY UPGRADES" : "JARVIS BOTS";
         render();
     }
 
     function spawnFloating(src) {
-        if(!src) return;
+        if (!src) return;
         const img = document.createElement('img');
         img.src = src;
         img.className = 'floating-item';
-        img.style.left = Math.random() * 80 + 10 + "%";
-        img.style.top = Math.random() * 80 + 10 + "%";
+        img.style.left = Math.random() * 90 + "%";
+        img.style.top = Math.random() * 90 + "%";
         document.getElementById('effect-layer').appendChild(img);
     }
 
     function render() {
         document.getElementById('points').innerText = format(game.points);
-        document.getElementById('rebirth-stat').innerText = `${game.rebirths} REBIRTHS (${2n**game.rebirths}x MULTI)`;
-        
         const list = document.getElementById('upgrades-list');
         list.innerHTML = "";
 
-        if (game.currentPage === 0) {
-            // Agency Upgrades Page
-            const up = agencyData[game.upgradeLevel % agencyData.length];
-            const cost = 10n ** BigInt(game.upgradeLevel + 1) * 5n;
+        if (game.page === 0) {
+            const up = agencyUpgrades[game.agencyIdx % agencyUpgrades.length];
+            const cost = 10n ** BigInt(game.agencyIdx + 1) * 8n;
             createCard(up.name, up.img, cost, () => {
                 game.points -= cost;
-                game.clickPower += (cost / 10n);
+                game.clickPower += (cost / 12n);
                 spawnFloating(up.img);
-                game.upgradeLevel++;
+                game.agencyIdx++;
                 render();
             });
         } else {
-            // Jarvis Bots Page
-            const cost = 10n ** BigInt(game.jarvisLevel + 2) * 2n;
-            createCard(`Jarvis Unit ${game.jarvisLevel + 1}`, "", cost, () => {
+            const cost = 10n ** BigInt(game.jarvisIdx + 2) * 5n;
+            createCard(`Jarvis Bot v${game.jarvisIdx + 1}`, "", cost, () => {
                 game.points -= cost;
-                game.clickPower += (cost / 5n);
-                game.jarvisLevel++;
+                game.clickPower += (cost / 6n);
+                game.jarvisIdx++;
                 render();
             });
         }
-
-        const rCost = 1000000n * (100n ** game.rebirths);
-        document.getElementById('rebirth-btn').disabled = game.points < rCost;
+        
+        const rCost = 1000000n * (50n ** game.rebirths);
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
+        document.getElementById('rebirth-btn').disabled = game.points < rCost;
     }
 
     function createCard(name, img, cost, onClick) {
@@ -272,26 +244,21 @@
     document.getElementById('clicker-container').onmousedown = (e) => {
         const val = game.clickPower * (2n ** game.rebirths);
         game.points += val;
-        
         const p = document.createElement('div');
         p.className = 'particle';
         p.innerText = `+${format(val)}`;
-        p.style.left = e.clientX + "px";
-        p.style.top = e.clientY + "px";
+        p.style.left = e.clientX + "px"; p.style.top = e.clientY + "px";
         document.body.appendChild(p);
-        setTimeout(() => p.remove(), 800);
+        setTimeout(() => p.remove(), 700);
         render();
     };
 
     function rebirth() {
-        const cost = 1000000n * (100n ** game.rebirths);
-        if (game.points >= cost) {
-            game.points = 0n; game.clickPower = 1n;
-            game.upgradeLevel = 0; game.jarvisLevel = 0;
-            game.rebirths++;
-            document.getElementById('effect-layer').innerHTML = "";
-            render();
-        }
+        game.points = 0n; game.clickPower = 1n;
+        game.agencyIdx = 0; game.jarvisIdx = 0;
+        game.rebirths++;
+        document.getElementById('effect-layer').innerHTML = "";
+        render();
     }
 
     render();
