@@ -205,8 +205,9 @@
             const cost = 1000n * (15n ** BigInt(game.jarvisIdx));
             createCard(`Jarvis Bot Mk ${game.jarvisIdx + 1}`, "togif.gif", cost, () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); });
         }
-        // Updated Rebirth cost logic: 1e100 higher for every rebirth
-        const rCost = 10n ** 100n * (10n ** (100n * game.rebirths));
+        
+        // REBIRTH COST SCALING: Exactly 1e100 more every rebirth
+        const rCost = (game.rebirths + 1n) * (10n ** 100n);
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
         document.getElementById('rebirth-btn').disabled = game.points < rCost;
     }
@@ -234,8 +235,9 @@
     setInterval(() => { game.points += (game.pps * (2n ** game.rebirths)); render(); }, 1000);
     function toggleOverlay(id) { const s = document.getElementById(id); s.style.display = s.style.display === 'flex' ? 'none' : 'flex'; }
     function toggleMute() { const m = document.getElementById('main-music'); game.muted = !game.muted; m.muted = game.muted; document.getElementById('mute-btn').innerText = game.muted ? "AUDIO: OFF" : "AUDIO: ON"; }
+    
     function rebirth() { 
-        const rCost = 10n ** 100n * (10n ** (100n * game.rebirths));
+        const rCost = (game.rebirths + 1n) * (10n ** 100n);
         if(game.points >= rCost) { 
             game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); 
         } 
@@ -257,26 +259,76 @@
     }
     window.addEventListener('resize', initBg); initBg(); drawBg();
 
+    // FLAPPY SIAMESE REPAIR
     const fc = document.getElementById('flappy-canvas');
     const fctx = fc.getContext('2d');
     let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim;
     const bImg = new Image(); bImg.src = 'IMG_3017.jpg';
     const pImg = new Image(); pImg.src = 'image0_15.gif';
 
-    function startFlappy() { toggleOverlay('minigame-menu'); document.getElementById('flappy-container').style.display = 'flex'; fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; document.getElementById('f-score').innerText = "0"; flappyLoop(); }
-    function endFlappy() { fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
+    function startFlappy() { 
+        toggleOverlay('minigame-menu'); 
+        document.getElementById('flappy-container').style.display = 'flex'; 
+        fc.width = 400; fc.height = 500; 
+        fScore = 0; birdY = 250; birdV = 0; pipes = []; 
+        fActive = true; 
+        document.getElementById('f-score').innerText = "0"; 
+        cancelAnimationFrame(fAnim); // Clear any old loops
+        flappyLoop(); 
+    }
+    
+    function endFlappy() { 
+        fActive = false; 
+        cancelAnimationFrame(fAnim); 
+        document.getElementById('flappy-container').style.display = 'none'; 
+        render(); 
+    }
+    
     window.addEventListener('keydown', (e) => { if(e.code === 'Space' && fActive) { birdV = -4.5; e.preventDefault(); } });
     fc.onmousedown = (e) => { if(fActive) { birdV = -4.5; e.preventDefault(); } };
+    
     function flappyLoop() {
         if(!fActive) return;
-        fctx.fillStyle = '#4ec0ca'; fctx.fillRect(0,0,400,500);
-        birdV += 0.2; birdY += birdV;
+        fctx.fillStyle = '#4ec0ca'; 
+        fctx.fillRect(0,0,400,500);
+        
+        birdV += 0.2; 
+        birdY += birdV;
+        
+        // Draw Bird
         fctx.drawImage(bImg, 50, birdY, 40, 40);
-        if(pipes.length === 0 || pipes[pipes.length-1].x < 180) pipes.push({ x: 400, h: Math.random()*200+50, scored: false });
-        pipes.forEach((p, i) => { p.x -= 1.5; fctx.drawImage(pImg, p.x, 0, 60, p.h); fctx.drawImage(pImg, p.x, p.h + 140, 60, 500); if(!p.scored && p.x < 50) { p.scored = true; fScore++; document.getElementById('f-score').innerText = fScore; if(fScore % 10 === 0) game.gems += 1; } if(p.x < 90 && p.x + 60 > 50) { if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy(); } if(p.x < -60) pipes.splice(i, 1); });
+        
+        // Pipe Generation
+        if(pipes.length === 0 || pipes[pipes.length-1].x < 180) {
+            pipes.push({ x: 400, h: Math.random()*200+50, scored: false });
+        }
+        
+        pipes.forEach((p, i) => {
+            p.x -= 1.8;
+            // Draw Pipes
+            fctx.drawImage(pImg, p.x, 0, 60, p.h); 
+            fctx.drawImage(pImg, p.x, p.h + 140, 60, 500); 
+            
+            // Score
+            if(!p.scored && p.x < 50) { 
+                p.scored = true; 
+                fScore++; 
+                document.getElementById('f-score').innerText = fScore; 
+                if(fScore % 5 === 0) game.gems += 1; // Reward gems every 5 points
+            } 
+            
+            // Collision
+            if(p.x < 90 && p.x + 60 > 50) { 
+                if(birdY + 10 < p.h || birdY + 30 > p.h + 140) endFlappy(); 
+            } 
+            
+            if(p.x < -60) pipes.splice(i, 1);
+        });
+        
         if(birdY > 500 || birdY < -40) endFlappy();
         fAnim = requestAnimationFrame(flappyLoop);
     }
+    
     render();
 </script>
 </body>
