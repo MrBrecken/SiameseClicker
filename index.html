@@ -118,36 +118,50 @@
 <script>
     let game = { points: 0n, clickPower: 1n, pps: 0n, rebirths: 0n, agencyIdx: 0, jarvisIdx: 0, page: 0, muted: false, gems: 0, musicStarted: false };
     
-    // --- FIXED BRAILLE IMPORT/EXPORT LOGIC ---
-    const brailleChars = "⠁⠃⠉⠙⠑⠋⠛⠓⠊⠚⠅⠇⠍⠝⠕⠏⠟⠗⠎⠞⠥⠧⠺⠭⠽⠵⠠⠤⠨⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿";
-    const b64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    // --- HEXADECIMAL BRAILLE SYSTEM (Rock Solid) ---
+    const hexToBraille = {
+        '0': '⠚', '1': '⠁', '2': '⠃', '3': '⠉', '4': '⠙', '5': '⠑', '6': '⠋', '7': '⠛', '8': '⠓', '9': '⠊',
+        'a': '⠅', 'b': '⠇', 'c': '⠍', 'd': '⠝', 'e': '⠕', 'f': '⠏'
+    };
+    const brailleToHex = Object.fromEntries(Object.entries(hexToBraille).map(([k, v]) => [v, k]));
 
     function exportData() {
         const json = JSON.stringify(game, (key, value) => typeof value === 'bigint' ? value.toString() + 'n' : value);
-        const b64 = btoa(json);
-        let braille = "";
-        for (let i = 0; i < b64.length; i++) {
-            const charIdx = b64Chars.indexOf(b64[i]);
-            braille += brailleChars[charIdx] || b64[i];
+        // Convert string to Hex
+        let hex = "";
+        for (let i = 0; i < json.length; i++) {
+            hex += json.charCodeAt(i).toString(16).padStart(2, '0');
         }
-        navigator.clipboard.writeText(braille);
-        alert("Braille Save Code Copied!");
+        // Map Hex to Braille
+        let braille = "";
+        for (let char of hex) {
+            braille += hexToBraille[char] || char;
+        }
+        navigator.clipboard.writeText(braille).then(() => {
+            alert("Braille Save Code Copied!");
+        });
     }
 
     function importData() {
         const braille = prompt("Paste your Braille code:");
         if (!braille) return;
         try {
-            let b64 = "";
-            for (let i = 0; i < braille.length; i++) {
-                const charIdx = brailleChars.indexOf(braille[i]);
-                b64 += charIdx !== -1 ? b64Chars[charIdx] : braille[i];
+            // Map Braille back to Hex
+            let hex = "";
+            for (let char of braille) {
+                hex += brailleToHex[char] || "";
             }
-            const json = atob(b64);
-            game = JSON.parse(json, (key, value) => (typeof value === 'string' && value.endsWith('n')) ? BigInt(value.slice(0, -1)) : value);
+            // Convert Hex back to String
+            let str = "";
+            for (let i = 0; i < hex.length; i += 2) {
+                str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+            }
+            game = JSON.parse(str, (key, value) => (typeof value === 'string' && value.endsWith('n')) ? BigInt(value.slice(0, -1)) : value);
             render();
             alert("Data Imported Successfully!");
-        } catch(e) { alert("Invalid Braille Data!"); }
+        } catch(e) { 
+            alert("Import Failed: Make sure the Braille code is exact."); 
+        }
     }
 
     // --- (REMAINDER OF SCRIPT UNCHANGED) ---
