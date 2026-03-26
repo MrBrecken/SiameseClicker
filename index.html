@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Siamese Agency Clicker</title>
+    <title>Neal.fun</title>
+    
+    <link rel="icon" type="image/png" href="ecc268d7-06ed-40cb-8294-4bd7479bc3d0.png">
     
     <meta property="og:title" content="Siamese Agency Mole East Clicker">
     <meta property="og:description" content="Click Siameses pussy ass.">
@@ -118,7 +120,6 @@
 <script>
     let game = { points: 0n, clickPower: 1n, pps: 0n, rebirths: 0n, agencyIdx: 0, jarvisIdx: 0, page: 0, muted: false, gems: 0, musicStarted: false };
     
-    // --- HEXADECIMAL BRAILLE SYSTEM (Rock Solid) ---
     const hexToBraille = {
         '0': '⠚', '1': '⠁', '2': '⠃', '3': '⠉', '4': '⠙', '5': '⠑', '6': '⠋', '7': '⠛', '8': '⠓', '9': '⠊',
         'a': '⠅', 'b': '⠇', 'c': '⠍', 'd': '⠝', 'e': '⠕', 'f': '⠏'
@@ -127,12 +128,10 @@
 
     function exportData() {
         const json = JSON.stringify(game, (key, value) => typeof value === 'bigint' ? value.toString() + 'n' : value);
-        // Convert string to Hex
         let hex = "";
         for (let i = 0; i < json.length; i++) {
             hex += json.charCodeAt(i).toString(16).padStart(2, '0');
         }
-        // Map Hex to Braille
         let braille = "";
         for (let char of hex) {
             braille += hexToBraille[char] || char;
@@ -146,12 +145,10 @@
         const braille = prompt("Paste your Braille code:");
         if (!braille) return;
         try {
-            // Map Braille back to Hex
             let hex = "";
             for (let char of braille) {
                 hex += brailleToHex[char] || "";
             }
-            // Convert Hex back to String
             let str = "";
             for (let i = 0; i < hex.length; i += 2) {
                 str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
@@ -164,7 +161,6 @@
         }
     }
 
-    // --- (REMAINDER OF SCRIPT UNCHANGED) ---
     let lockedNames = [];
     const agencyKeywords1 = ["MrBrecken", "Mole East", "pussy ass", "Dahmer", "Jeffrey", "baldi", "blossom"];
     const agencyKeywords2 = ["Link", "Clicker", "Commit", "Update", "Annotation", "Upload", "CNAME"];
