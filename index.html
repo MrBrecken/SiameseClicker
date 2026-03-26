@@ -205,7 +205,8 @@
             const cost = 1000n * (15n ** BigInt(game.jarvisIdx));
             createCard(`Jarvis Bot Mk ${game.jarvisIdx + 1}`, "togif.gif", cost, () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); });
         }
-        const rCost = 10n ** 100n * (1000n ** game.rebirths);
+        // Updated Rebirth cost logic: 1e100 higher for every rebirth
+        const rCost = 10n ** 100n * (10n ** (100n * game.rebirths));
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
         document.getElementById('rebirth-btn').disabled = game.points < rCost;
     }
@@ -233,7 +234,12 @@
     setInterval(() => { game.points += (game.pps * (2n ** game.rebirths)); render(); }, 1000);
     function toggleOverlay(id) { const s = document.getElementById(id); s.style.display = s.style.display === 'flex' ? 'none' : 'flex'; }
     function toggleMute() { const m = document.getElementById('main-music'); game.muted = !game.muted; m.muted = game.muted; document.getElementById('mute-btn').innerText = game.muted ? "AUDIO: OFF" : "AUDIO: ON"; }
-    function rebirth() { if(game.points >= 10n**100n) { game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); } }
+    function rebirth() { 
+        const rCost = 10n ** 100n * (10n ** (100n * game.rebirths));
+        if(game.points >= rCost) { 
+            game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); 
+        } 
+    }
 
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
@@ -255,7 +261,7 @@
     const fctx = fc.getContext('2d');
     let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim;
     const bImg = new Image(); bImg.src = 'IMG_3017.jpg';
-    const pImg = new Image(); pImg.src = 'image0_15.gif.jpg';
+    const pImg = new Image(); pImg.src = 'image0_15.gif';
 
     function startFlappy() { toggleOverlay('minigame-menu'); document.getElementById('flappy-container').style.display = 'flex'; fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; document.getElementById('f-score').innerText = "0"; flappyLoop(); }
     function endFlappy() { fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
