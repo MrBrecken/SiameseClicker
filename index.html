@@ -11,9 +11,10 @@
         :root {
             --bg: #ffffff;
             --text: #1a1a1a;
+            --accent: #007AFF;
             --secondary: rgba(243, 244, 246, 0.9);
             --border: #e5e7eb;
-            --accent: #007AFF;
+            --jarvis-red: #ff3b30;
         }
 
         * { box-sizing: border-box; user-select: none; -webkit-user-drag: none; }
@@ -26,65 +27,88 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
+            position: relative;
         }
 
-        /* --- NATIVE LIQUID B&W BACKGROUND --- */
-        #liquid-overlay {
+        /* --- CUSTOM LIQUID B&W BACKGROUND --- */
+        #liquid-canvas {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
-            background: radial-gradient(circle at 50% 50%, #f0f0f0 0%, #ffffff 100%);
+            background: linear-gradient(45deg, #e0e0e0 25%, #ffffff 25%, #ffffff 50%, #e0e0e0 50%, #e0e0e0 75%, #ffffff 75%, #ffffff 100%);
+            background-size: 100px 100px;
+            filter: blur(60px);
+            opacity: 0.4;
+            animation: flow 10s linear infinite;
         }
 
-        #liquid-motion {
-            position: fixed;
-            top: -50%; left: -50%; width: 200%; height: 200%; z-index: -1;
-            background: repeating-radial-gradient(circle at 0% 0%, transparent 0, transparent 50px, rgba(0,0,0,0.02) 50px, rgba(0,0,0,0.02) 100px);
-            animation: move 25s linear infinite;
-            filter: blur(3px);
-            opacity: 0.7;
+        @keyframes flow {
+            from { background-position: 0 0; }
+            to { background-position: 200px 200px; }
         }
 
-        @keyframes move { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
+        /* Container for particles on click */
         #effect-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 
-        /* --- Layout --- */
-        #game-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* --- Main Layout --- */
+        #game-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; }
 
         #sidebar {
             width: 420px;
             border-left: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
             display: flex; flex-direction: column; padding: 20px;
         }
 
         #points { font-size: 5.5rem; font-weight: 900; margin: 0; letter-spacing: -4px; line-height: 1; }
 
-        /* --- Nav --- */
+        /* --- NAVIGATION --- */
         .nav-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        .nav-btn { background: #000; color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; font-weight: 900; font-size: 1.2rem; }
+        .nav-btn {
+            background: #000; color: #fff; border: none; border-radius: 50%;
+            width: 44px; height: 44px; cursor: pointer; font-size: 1.5rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s;
+        }
+        .nav-btn:hover { transform: scale(1.1); background: #333; }
 
         /* --- Clicker --- */
         #clicker-container { cursor: pointer; transition: transform 0.05s; margin: 30px 0; }
         #clicker-image { width: 340px; height: 340px; object-fit: contain; }
         #clicker-container:active { transform: scale(0.9); }
 
-        /* --- Upgrades --- */
+        /* --- Cards & Error Handling --- */
         .upgrade-card {
             background: var(--secondary);
             border-radius: 16px; padding: 16px; margin-bottom: 12px;
             cursor: pointer; display: flex; align-items: center; gap: 16px;
             border: 2px solid transparent; transition: 0.2s;
+            position: relative;
         }
         .upgrade-card:hover:not(.locked) { background: #fff; border-color: #000; transform: translateX(-5px); }
         .upgrade-card.locked { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
         .upgrade-icon { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; background: #eee; border: 1px solid #ddd; }
         .u-name { font-weight: 900; font-size: 1.1rem; display: block; }
-        .u-desc { font-size: 0.75rem; color: #666; font-weight: 600; }
-        .u-cost { font-weight: 800; font-size: 0.95rem; color: var(--accent); }
+        .u-cost { font-weight: 800; font-size: 0.9rem; color: var(--accent); }
 
+        /* Custom broken image placeholder */
+        .broken-img {
+            width: 64px; height: 64px; border-radius: 12px;
+            background: #f8d7da; border: 2px solid var(--jarvis-red);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; color: var(--jarvis-red); font-weight: 900; text-align: center; line-height: 1.2;
+        }
+
+        /* Rebirth area */
+        #rebirth-area { margin-top: auto; border-top: 1px solid var(--border); padding-top: 20px; }
+        #rebirth-btn {
+            width: 100%; padding: 20px; background: #000; color: #fff; border: none; 
+            font-weight: 900; border-radius: 15px; cursor: pointer; font-size: 1.1rem;
+        }
+        #rebirth-btn:disabled { background: #ccc; }
+
+        /* Floating particles */
         .particle {
             position: absolute; font-weight: 900; pointer-events: none; color: #000;
             animation: pOut 0.6s ease-out forwards; font-size: 1.5rem;
@@ -94,30 +118,53 @@
             100% { transform: translate(-50%, -150px) scale(1.6); opacity: 0; }
         }
 
-        .floating-item {
-            position: absolute; width: 80px; height: 80px; opacity: 0.2;
-            animation: floatLoop 30s linear infinite; pointer-events: none;
+        /* --- SETTINGS BUTTON --- */
+        #settings-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            background: rgba(0,0,0,0.8); color: white; border: none;
+            padding: 12px 18px; border-radius: 50px; cursor: pointer;
+            font-weight: 900; font-size: 0.9rem; font-family: 'Inter', sans-serif;
+            transition: 0.2s; z-index: 1000; backdrop-filter: blur(10px);
         }
-        @keyframes floatLoop {
-            0% { transform: translate(0,0) rotate(0deg); }
-            50% { transform: translate(15vw, 15vh) rotate(180deg); }
-            100% { transform: translate(0,0) rotate(360deg); }
+        #settings-btn:hover { background: #000; }
+
+        /* Settings Modal */
+        #settings-panel {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 999;
+            display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px);
         }
+        #settings-content {
+            background: #fff; padding: 40px; border-radius: 20px; text-align: center;
+            width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .mute-btn {
+            width: 100%; padding: 15px; background: var(--accent); color: #fff;
+            border: none; border-radius: 10px; font-weight: 900; font-size: 1rem;
+            cursor: pointer; transition: 0.2s; margin-bottom: 15px;
+        }
+        .mute-btn:hover { filter: brightness(1.1); }
+        .mute-btn.muted { background: #ccc; color: #666; }
+
     </style>
 </head>
 <body>
 
-<div id="liquid-overlay"></div>
-<div id="liquid-motion"></div>
+<div id="liquid-canvas"></div>
 <div id="effect-layer"></div>
+
+<audio id="bg-music" loop>
+    <source src="PATH/TO/YOUR/MUSIC.MP3" type="audio/mpeg">
+</audio>
+<audio id="click-sound">
+    <source src="PATH/TO/YOUR/SOUND.MP3" type="audio/mpeg">
+</audio>
 
 <div id="game-view">
     <div style="text-align: center;">
         <div style="font-weight: 900; letter-spacing: 4px; font-size: 0.8rem; color: #999;">SIAMESE AGENCY</div>
         <h1 id="points">0</h1>
-        <div id="stats-bar" style="font-weight: 700; color: #444; margin-top: 10px; font-size: 0.9rem;">
-            <span id="power-display">+1/click</span> • <span id="pps-display">0/sec</span>
-        </div>
+        <div style="font-weight: 700; color: #444; margin-top: 10px; font-size: 0.9rem;" id="multi-display">1x Multi</div>
     </div>
 
     <div id="clicker-container">
@@ -127,15 +174,25 @@
 
 <div id="sidebar">
     <div class="nav-header">
-        <button class="nav-btn" onclick="changePage(-1)">←</button>
+        <button class="nav-btn" onclick="changePage(-1)">‹</button>
         <h2 id="page-title" style="font-weight: 900; font-size: 1.2rem; margin: 0;">AGENCY UPGRADES</h2>
-        <button class="nav-btn" onclick="changePage(1)">→</button>
+        <button class="nav-btn" onclick="changePage(1)">›</button>
     </div>
 
     <div id="upgrades-list" style="flex: 1; overflow-y: auto;"></div>
     
-    <div style="margin-top: 20px;">
-        <button id="rebirth-btn" onclick="rebirth()" style="width:100%; padding:20px; background:#000; color:#fff; border:none; font-weight:900; border-radius:15px; cursor:pointer; font-size: 1.1rem;">REBIRTH</button>
+    <div id="rebirth-area">
+        <button id="rebirth-btn" onclick="rebirth()">REBIRTH</button>
+        <div id="rebirth-stat" style="text-align:center; font-size:0.75rem; font-weight:700; margin-top:10px;">0 REBIRTHS</div>
+    </div>
+</div>
+
+<button id="settings-btn" onclick="toggleSettings()">SETTINGS</button>
+<div id="settings-panel" onclick="closeSettings(event)">
+    <div id="settings-content">
+        <h2 style="font-weight: 900; margin: 0 0 25px;">Settings</h2>
+        <button class="mute-btn" id="music-btn" onclick="toggleMute('music')">MUTE MUSIC</button>
+        <button onclick="toggleSettings()" style="background:none; border:none; color:#666; cursor:pointer;">Close</button>
     </div>
 </div>
 
@@ -143,36 +200,35 @@
     let game = {
         points: 0n,
         clickPower: 1n,
-        pointsPerSec: 0n,
         rebirths: 0n,
         agencyIdx: 0,
         jarvisIdx: 0,
-        page: 0
+        page: 0,
+        mutedMusic: false
     };
 
     const agencyUpgrades = [
-        { name: "Rhythia Sync", img: "rhythia-steam.png" },
-        { name: "Mugshot Protocol", img: "OIP.webp" },
-        { name: "Diddy Synergy", img: "OIP (1).webp" },
-        { name: "Vulnus Logic", img: "Annotation 2025-12-18 203140.png" },
-        { name: "Baldi Education", img: "baldi.png-removebg-preview.png" },
-        { name: "Blossom Speed", img: "blossom.gif" },
-        { name: "Bradar Drive", img: "bradarwhatisthis.gif" },
-        { name: "Noob Admin", img: "togif.gif" },
-        { name: "Strategy Link", img: "togif-1.gif" },
+        { name: "Neural Sync", img: "rhythia-steam.png" },
+        { name: "Mugshot Proc", img: "OIP.webp" },
+        { name: "Asset Link", img: "OIP (1).webp" },
+        { name: "Syrup Fuel", img: "OIP (1).webp" },
         { name: "WhoIs Alter", img: "whoisalter.png" },
-        { name: "King LeBron", img: "Screenshot 2026-01-11 211640.jpg" },
-        { name: "Merch Stock", img: "IMG_3018.jpg" },
-        { name: "Asset Group", img: "IMG_1114.jpg" },
-        { name: "Agency Liquid", img: "image_a96080.jpg" },
-        { name: "Final Optimal", img: "image.jpg" }
+        { name: "Group Core", img: "IMG_1114.jpg" }
     ];
 
     function format(n) {
         if (n < 1000n) return n.toString();
-        const units = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc"];
+        const units = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No"];
         let s = n.toString();
         let unitIdx = Math.floor((s.length - 1) / 3);
+        
+        // Scientific notation fallback for numbers larger than suffixes list
+        if (unitIdx >= units.length) {
+            // Standard scientific notation: 1.23e35
+            return s[0] + "." + s.substring(1,3) + "e" + (s.length - 1);
+        }
+        
+        // Normal abbreviation: 1No
         let digits = s.length % 3 || 3;
         return s.substring(0, digits) + "." + s.substring(digits, digits + 2) + units[unitIdx];
     }
@@ -183,94 +239,145 @@
         render();
     }
 
-    function spawnFloating(src) {
-        if (!src) return;
-        const img = document.createElement('img');
-        img.src = src;
-        img.className = 'floating-item';
-        img.style.left = Math.random() * 85 + "%";
-        img.style.top = Math.random() * 85 + "%";
-        document.getElementById('effect-layer').appendChild(img);
+    // --- REBIRTH COST SCALING (1e100 start) ---
+    function getRebirthCost() {
+        // Base is 1e100 (written as 10^100 BigInt)
+        // Scaled by 50x per level
+        return (10n ** 100n) * (50n ** game.rebirths);
     }
 
     function render() {
         document.getElementById('points').innerText = format(game.points);
-        const multi = 2n ** game.rebirths;
-        document.getElementById('power-display').innerText = `+${format(game.clickPower * multi)}/click`;
-        document.getElementById('pps-display').innerText = `${format(game.pointsPerSec * multi)}/sec`;
+        document.getElementById('rebirth-stat').innerText = `${game.rebirths} REBIRTHS`;
+        document.getElementById('multi-display').innerText = `${format(2n ** game.rebirths)}x Multiplier`;
         
         const list = document.getElementById('upgrades-list');
         list.innerHTML = "";
 
         if (game.page === 0) {
             const up = agencyUpgrades[game.agencyIdx % agencyUpgrades.length];
-            // Reverted scaling: First upgrade is 50, then 8x cost scaling
-            const cost = 50n * (8n ** BigInt(game.agencyIdx));
-            createCard(up.name, "Click Power", up.img, cost, () => {
+            // Scaled scaling: Base 50, then 9x per level
+            const cost = 50n * (9n ** BigInt(game.agencyIdx));
+            createCard(up.name, up.img, cost, () => {
                 game.points -= cost;
-                game.clickPower += (cost / 10n) + 2n;
-                spawnFloating(up.img);
+                game.clickPower += (cost / 8n) + 1n; // Adds rewarding power
                 game.agencyIdx++;
                 render();
             });
         } else {
-            // Jarvis Bots Reverted: First cost 500, then 10x scaling
-            const cost = 500n * (10n ** BigInt(game.jarvisIdx));
-            createCard(`Jarvis Unit ${game.jarvisIdx + 1}`, "Auto-Points", "", cost, () => {
+            // Jarvis Bots: Cheaper and scale slightly less intensely
+            const cost = 1000n * (6n ** BigInt(game.jarvisIdx));
+            createCard(`Jarvis Bot v${game.jarvisIdx + 1}`, "", cost, () => {
                 game.points -= cost;
-                game.pointsPerSec += (cost / 8n) + 10n;
+                game.clickPower += (cost / 5n); // Higher power scaling
                 game.jarvisIdx++;
                 render();
             });
         }
         
-        const rCost = 1000000n * (100n ** game.rebirths); // Reverted Rebirth
+        const rCost = getRebirthCost();
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
         document.getElementById('rebirth-btn').disabled = game.points < rCost;
     }
 
-    function createCard(name, desc, img, cost, onClick) {
+    // New helper to create card AND check for broken images
+    function createCard(name, imgSrc, cost, onClick) {
         const card = document.createElement('div');
         card.className = `upgrade-card ${game.points < cost ? 'locked' : ''}`;
         card.innerHTML = `
-            <img src="${img}" class="upgrade-icon">
+            <img src="${imgSrc}" class="upgrade-icon">
             <div style="flex:1">
                 <span class="u-name">${name}</span>
-                <span class="u-desc">${desc}</span>
+                <span class="u-cost">Cost: ${format(cost)}</span>
             </div>
-            <div class="u-cost">${format(cost)}</div>
         `;
         if (game.points >= cost) card.onclick = onClick;
+
+        // Broken image detection system
+        const img = card.querySelector('.upgrade-icon');
+        if(img.complete) { checkBroken(img); } // already loaded
+        img.onerror = () => { replaceBroken(img); }; // fails to load
+        
         document.getElementById('upgrades-list').appendChild(card);
     }
 
+    function checkBroken(img) {
+        if (!img.complete || img.naturalWidth === 0) { replaceBroken(img); }
+    }
+    function replaceBroken(img) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'broken-img';
+        placeholder.innerHTML = 'JARVIS<br>ERROR';
+        img.parentNode.replaceChild(placeholder, img);
+    }
+
+    // --- Sound Logic ---
+    function playSound(id) {
+        const sound = document.getElementById(id);
+        if(!sound) return;
+        sound.currentTime = 0; // Restart sound
+        sound.play().catch(()=>{}); // Catch errors if user hasn't interacted
+    }
+    
+    function startMusic() {
+        const music = document.getElementById('bg-music');
+        if(!music || game.mutedMusic) return;
+        music.play().catch(()=>{});
+    }
+
     document.getElementById('clicker-container').onmousedown = (e) => {
-        const val = game.clickPower * (2n ** game.rebirths);
-        game.points += val;
+        playSound('click-sound');
+        startMusic(); // Try starting music on first click
+
+        const multi = 2n ** game.rebirths;
+        game.points += game.clickPower * multi;
         const p = document.createElement('div');
         p.className = 'particle';
-        p.innerText = `+${format(val)}`;
+        p.innerText = `+${format(game.clickPower * multi)}`;
         p.style.left = e.clientX + "px"; p.style.top = e.clientY + "px";
         document.body.appendChild(p);
         setTimeout(() => p.remove(), 600);
         render();
     };
 
-    // Passive Income Logic
-    setInterval(() => {
-        const income = game.pointsPerSec * (2n ** game.rebirths);
-        game.points += income;
-        document.getElementById('points').innerText = format(game.points);
-    }, 1000);
-
     function rebirth() {
-        const cost = 1000000n * (100n ** game.rebirths);
+        const cost = getRebirthCost();
         if (game.points >= cost) {
-            game.points = 0n; game.clickPower = 1n; game.pointsPerSec = 0n;
-            game.agencyIdx = 0; game.jarvisIdx = 0;
-            game.rebirths++;
-            document.getElementById('effect-layer').innerHTML = "";
-            render();
+            // Confirm massive rebirth
+            if(confirm("This will reset your points and upgrades for a permanent 2x multiplier. Proceed?")) {
+                game.points = 0n; game.clickPower = 1n;
+                game.agencyIdx = 0; game.jarvisIdx = 0;
+                game.rebirths++;
+                render();
+            }
+        }
+    }
+
+    // --- Settings Logic ---
+    const musicBtn = document.getElementById('music-btn');
+    const music = document.getElementById('bg-music');
+
+    function toggleSettings() {
+        const panel = document.getElementById('settings-panel');
+        panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function closeSettings(e) {
+        if (e.target.id === 'settings-panel') { toggleSettings(); }
+    }
+
+    function toggleMute(type) {
+        if(type === 'music'){
+            game.mutedMusic = !game.mutedMusic;
+            if(game.mutedMusic) { 
+                music.pause(); 
+                musicBtn.innerText = "UNMUTE MUSIC";
+                musicBtn.classList.add('muted');
+            } else { 
+                music.play().catch(()=>{});
+                musicBtn.innerText = "MUTE MUSIC";
+                musicBtn.classList.remove('muted');
+            }
         }
     }
 
