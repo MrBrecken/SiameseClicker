@@ -118,32 +118,39 @@
 <script>
     let game = { points: 0n, clickPower: 1n, pps: 0n, rebirths: 0n, agencyIdx: 0, jarvisIdx: 0, page: 0, muted: false, gems: 0, musicStarted: false };
     
-    // --- Braille Conversion Logic ---
-    const brailleMap = {"0":"⠚","1":"⠁","2":"⠝","3":"⠉","4":"⠙","5":"⠑","6":"⠋","7":"⠛","8":"⠓","9":"⠊","a":"⠁","b":"⠃","c":"⠉","d":"⠙","e":"⠑","f":"⠋","g":"⠛","h":"⠓","i":"⠊","j":"⠚","k":"⠅","l":"⠇","m":"⠍","n":"⠝","o":"⠕","p":"⠏","q":"⠟","r":"⠗","s":"⠎","t":"⠞","u":"⠥","v":"⠧","w":"⠺","x":"⠭","y":"⠽","z":"⠵","{":"⠪","}":"⠻","\"":"⠐",":":"⠒",",":"⠂","n":"⠝"};
-    const revBrailleMap = Object.fromEntries(Object.entries(brailleMap).map(([k, v]) => [v, k]));
-
-    function toBraille(str) { return str.toLowerCase().split('').map(c => brailleMap[c] || c).join(''); }
-    function fromBraille(str) { return str.split('').map(c => revBrailleMap[c] || c).join(''); }
+    // --- FIXED BRAILLE IMPORT/EXPORT LOGIC ---
+    const brailleChars = "⠁⠃⠉⠙⠑⠋⠛⠓⠊⠚⠅⠇⠍⠝⠕⠏⠟⠗⠎⠞⠥⠧⠺⠭⠽⠵⠠⠤⠨⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿";
+    const b64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
     function exportData() {
-        const data = JSON.stringify(game, (key, value) => typeof value === 'bigint' ? value.toString() + 'n' : value);
-        const bCode = toBraille(data);
-        navigator.clipboard.writeText(bCode);
-        alert("Braille Save Code Copied to Clipboard!");
+        const json = JSON.stringify(game, (key, value) => typeof value === 'bigint' ? value.toString() + 'n' : value);
+        const b64 = btoa(json);
+        let braille = "";
+        for (let i = 0; i < b64.length; i++) {
+            const charIdx = b64Chars.indexOf(b64[i]);
+            braille += brailleChars[charIdx] || b64[i];
+        }
+        navigator.clipboard.writeText(braille);
+        alert("Braille Save Code Copied!");
     }
 
     function importData() {
-        const bCode = prompt("Paste your Braille code:");
-        if (!bCode) return;
+        const braille = prompt("Paste your Braille code:");
+        if (!braille) return;
         try {
-            const raw = fromBraille(bCode);
-            const parsed = JSON.parse(raw, (key, value) => (typeof value === 'string' && value.endsWith('n')) ? BigInt(value.slice(0, -1)) : value);
-            game = parsed;
+            let b64 = "";
+            for (let i = 0; i < braille.length; i++) {
+                const charIdx = brailleChars.indexOf(braille[i]);
+                b64 += charIdx !== -1 ? b64Chars[charIdx] : braille[i];
+            }
+            const json = atob(b64);
+            game = JSON.parse(json, (key, value) => (typeof value === 'string' && value.endsWith('n')) ? BigInt(value.slice(0, -1)) : value);
             render();
+            alert("Data Imported Successfully!");
         } catch(e) { alert("Invalid Braille Data!"); }
     }
 
-    // --- Fixed Upgrade Names: Generated once and stored ---
+    // --- (REMAINDER OF SCRIPT UNCHANGED) ---
     let lockedNames = [];
     const agencyKeywords1 = ["MrBrecken", "Mole East", "pussy ass", "Dahmer", "Jeffrey", "baldi", "blossom"];
     const agencyKeywords2 = ["Link", "Clicker", "Commit", "Update", "Annotation", "Upload", "CNAME"];
@@ -159,26 +166,7 @@
         return lockedNames[index];
     }
 
-    // --- Filtered Images: Removing duplicates used elsewhere ---
-    const agencyImgs = [
-        "Annotation 2025-12-18 203140.png",
-        "IMG_1114.png",
-        "IMG_3018.png",
-        "OIP (1).webp",
-        "OIP.webp",
-        "Screenshot 2026-01-11 211640.png",
-        "abstract-wavy-shapes-marble-effect-backgrou...",
-        "baldi.png-removebg-preview.png",
-        "blossom.gif",
-        "bradarwhatisthis.gif",
-        "dahmer-jeffrey.gif",
-        "image.png",
-        "rhythia-steam.png",
-        "rrxc12ej6dqtf7a18m4dy3vdk9vm.jpg",
-        "togif-1.gif",
-        "whoisalter.png"
-    ];
-
+    const agencyImgs = ["Annotation 2025-12-18 203140.png","IMG_1114.png","IMG_3018.png","OIP (1).webp","OIP.webp","Screenshot 2026-01-11 211640.png","abstract-wavy-shapes-marble-effect-backgrou...","baldi.png-removebg-preview.png","blossom.gif","bradarwhatisthis.gif","dahmer-jeffrey.gif","image.png","rhythia-steam.png","rrxc12ej6dqtf7a18m4dy3vdk9vm.jpg","togif-1.gif","whoisalter.png"];
     const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg"];
 
     function format(n) {
@@ -200,7 +188,6 @@
         document.getElementById('rebirth-count').innerText = `${game.rebirths} TOTAL REBIRTHS`;
         const list = document.getElementById('upgrades-list');
         list.innerHTML = "";
-        
         if (game.page === 0) {
             const cost = 50n * (12n ** BigInt(game.agencyIdx));
             createCard(getLockedName(game.agencyIdx), agencyImgs[game.agencyIdx % agencyImgs.length], cost, () => { game.points -= cost; game.clickPower += (cost / 10n) + 3n; game.agencyIdx++; render(); });
@@ -208,7 +195,6 @@
             const cost = 1000n * (15n ** BigInt(game.jarvisIdx));
             createCard(`Jarvis Bot Mk ${game.jarvisIdx + 1}`, "togif.gif", cost, () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); });
         }
-
         const rCost = 10n ** 100n * (1000n ** game.rebirths);
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
         document.getElementById('rebirth-btn').disabled = game.points < rCost;
@@ -223,10 +209,7 @@
     }
 
     document.getElementById('clicker-container').onmousedown = (e) => {
-        if(!game.musicStarted) {
-            document.getElementById('main-music').play();
-            game.musicStarted = true;
-        }
+        if(!game.musicStarted) { document.getElementById('main-music').play(); game.musicStarted = true; }
         const val = game.clickPower * (2n ** game.rebirths);
         game.points += val;
         const p = document.createElement('div');
@@ -239,42 +222,21 @@
 
     setInterval(() => { game.points += (game.pps * (2n ** game.rebirths)); render(); }, 1000);
     function toggleOverlay(id) { const s = document.getElementById(id); s.style.display = s.style.display === 'flex' ? 'none' : 'flex'; }
-    
-    function toggleMute() { 
-        const m = document.getElementById('main-music');
-        game.muted = !game.muted; 
-        m.muted = game.muted;
-        document.getElementById('mute-btn').innerText = game.muted ? "AUDIO: OFF" : "AUDIO: ON"; 
-    }
-
+    function toggleMute() { const m = document.getElementById('main-music'); game.muted = !game.muted; m.muted = game.muted; document.getElementById('mute-btn').innerText = game.muted ? "AUDIO: OFF" : "AUDIO: ON"; }
     function rebirth() { if(game.points >= 10n**100n) { game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); } }
 
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let bgBlobs = [];
     const colors = ['#8A2BE2', '#4169E1', '#FF69B4', '#00BFFF', '#9370DB'];
-    
     function initBg() {
         bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-        bgBlobs = Array.from({length: 8}, (v, i) => ({ 
-            x: Math.random()*bgCanvas.width, 
-            y: Math.random()*bgCanvas.height, 
-            vx: Math.random()*1.5-0.75, 
-            vy: Math.random()*1.5-0.75, 
-            r: Math.random()*400+200,
-            c: colors[i % colors.length]
-        }));
+        bgBlobs = Array.from({length: 8}, (v, i) => ({ x: Math.random()*bgCanvas.width, y: Math.random()*bgCanvas.height, vx: Math.random()*1.5-0.75, vy: Math.random()*1.5-0.75, r: Math.random()*400+200, c: colors[i % colors.length] }));
     }
     function drawBg() {
         bgCtx.fillStyle = '#fff'; bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
         bgCtx.filter = 'blur(50px)';
-        bgBlobs.forEach(b => {
-            bgCtx.fillStyle = b.c; 
-            bgCtx.beginPath(); bgCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); bgCtx.fill();
-            b.x += b.vx; b.y += b.vy;
-            if(b.x < -b.r || b.x > bgCanvas.width+b.r) b.vx *= -1;
-            if(b.y < -b.r || b.y > bgCanvas.height+b.r) b.vy *= -1;
-        });
+        bgBlobs.forEach(b => { bgCtx.fillStyle = b.c; bgCtx.beginPath(); bgCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); bgCtx.fill(); b.x += b.vx; b.y += b.vy; if(b.x < -b.r || b.x > bgCanvas.width+b.r) b.vx *= -1; if(b.y < -b.r || b.y > bgCanvas.height+b.r) b.vy *= -1; });
         bgCtx.filter = 'none'; requestAnimationFrame(drawBg);
     }
     window.addEventListener('resize', initBg); initBg(); drawBg();
@@ -285,33 +247,17 @@
     const bImg = new Image(); bImg.src = 'IMG_3017.jpg';
     const pImg = new Image(); pImg.src = 'image0_15.gif';
 
-    function startFlappy() { 
-        toggleOverlay('minigame-menu'); 
-        document.getElementById('flappy-container').style.display = 'flex';
-        fc.width = 400; fc.height = 500;
-        fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true;
-        document.getElementById('f-score').innerText = "0";
-        flappyLoop();
-    }
+    function startFlappy() { toggleOverlay('minigame-menu'); document.getElementById('flappy-container').style.display = 'flex'; fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; document.getElementById('f-score').innerText = "0"; flappyLoop(); }
     function endFlappy() { fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
-
     window.addEventListener('keydown', (e) => { if(e.code === 'Space' && fActive) { birdV = -4.5; e.preventDefault(); } });
     fc.onmousedown = (e) => { if(fActive) { birdV = -4.5; e.preventDefault(); } };
-
     function flappyLoop() {
         if(!fActive) return;
         fctx.fillStyle = '#4ec0ca'; fctx.fillRect(0,0,400,500);
         birdV += 0.2; birdY += birdV;
         fctx.drawImage(bImg, 50, birdY, 40, 40);
         if(pipes.length === 0 || pipes[pipes.length-1].x < 180) pipes.push({ x: 400, h: Math.random()*200+50, scored: false });
-        pipes.forEach((p, i) => {
-            p.x -= 1.5;
-            fctx.drawImage(pImg, p.x, 0, 60, p.h); 
-            fctx.drawImage(pImg, p.x, p.h + 140, 60, 500); 
-            if(!p.scored && p.x < 50) { p.scored = true; fScore++; document.getElementById('f-score').innerText = fScore; if(fScore % 10 === 0) game.gems += 1; }
-            if(p.x < 90 && p.x + 60 > 50) { if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy(); }
-            if(p.x < -60) pipes.splice(i, 1);
-        });
+        pipes.forEach((p, i) => { p.x -= 1.5; fctx.drawImage(pImg, p.x, 0, 60, p.h); fctx.drawImage(pImg, p.x, p.h + 140, 60, 500); if(!p.scored && p.x < 50) { p.scored = true; fScore++; document.getElementById('f-score').innerText = fScore; if(fScore % 10 === 0) game.gems += 1; } if(p.x < 90 && p.x + 60 > 50) { if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy(); } if(p.x < -60) pipes.splice(i, 1); });
         if(birdY > 500 || birdY < -40) endFlappy();
         fAnim = requestAnimationFrame(flappyLoop);
     }
