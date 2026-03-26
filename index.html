@@ -125,8 +125,8 @@
     };
     
     let ashcroftPurchases = { dylan: 0 };
-    // Fixed image filenames
-    const ashcroftImgs = ["dylandiamond.jpg", "oliversopal.jpg", "stevenssaphire.jpg"];
+    // Updated jewel images order and extensions to .png
+    const ashcroftImgs = ["dylandiamond.png", "oliversopal.png", "stevenssaphire.png"];
 
     function getRebirthCost() {
         return 10n ** (100n * (game.rebirths + 1n));
@@ -156,8 +156,12 @@
             createCard(getLockedName(game.agencyIdx), agencyImgs[game.agencyIdx % agencyImgs.length], cost, () => { game.points -= cost; game.clickPower += (cost / 10n) + 3n; game.agencyIdx++; render(); });
         } else if (game.page === 1) {
             const cost = 1000n * (15n ** BigInt(game.jarvisIdx));
-            // Fixed Jarvis Bot image reference to togif-1.gif
-            createCard(`Jarvis Bot Mk ${game.jarvisIdx + 1}`, "togif-1.gif", cost, () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); });
+            // Removed image for Jarvis Bots, replaced with Red Text
+            const card = document.createElement('div');
+            card.className = `upgrade-card ${game.points < cost ? 'locked' : ''}`;
+            card.innerHTML = `<div class="upgrade-icon" style="display:flex; align-items:center; justify-content:center; color:red; font-weight:900; font-size:0.75rem; text-align:center;">Jarvis Error</div><div style="flex:1"><span class="u-name">Mk ${game.jarvisIdx + 1}</span><span class="u-cost">${format(cost)} Points</span></div>`;
+            if (game.points >= cost) card.onclick = () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); };
+            list.appendChild(card);
         } else {
             renderJewels();
         }
