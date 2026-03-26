@@ -206,8 +206,8 @@
             createCard(`Jarvis Bot Mk ${game.jarvisIdx + 1}`, "togif.gif", cost, () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); });
         }
         
-        // REBIRTH COST SCALING: Exactly 1e100 more every rebirth
-        const rCost = (game.rebirths + 1n) * (10n ** 100n);
+        // REBIRTH COST SCALING: 1e100, 1e200, 1e300...
+        const rCost = 10n ** (100n * (game.rebirths + 1n));
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
         document.getElementById('rebirth-btn').disabled = game.points < rCost;
     }
@@ -237,7 +237,7 @@
     function toggleMute() { const m = document.getElementById('main-music'); game.muted = !game.muted; m.muted = game.muted; document.getElementById('mute-btn').innerText = game.muted ? "AUDIO: OFF" : "AUDIO: ON"; }
     
     function rebirth() { 
-        const rCost = (game.rebirths + 1n) * (10n ** 100n);
+        const rCost = 10n ** (100n * (game.rebirths + 1n));
         if(game.points >= rCost) { 
             game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); 
         } 
@@ -264,7 +264,6 @@
     let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim;
     const bImg = new Image(); bImg.src = 'IMG_3017.jpg';
     
-    // Updated pipe image reference
     const pImg = new Image(); pImg.src = 'image0_15.gif.jpg';
 
     function startFlappy() { 
