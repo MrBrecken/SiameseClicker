@@ -259,12 +259,13 @@
     }
     window.addEventListener('resize', initBg); initBg(); drawBg();
 
-    // FLAPPY SIAMESE REPAIR
     const fc = document.getElementById('flappy-canvas');
     const fctx = fc.getContext('2d');
     let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim;
     const bImg = new Image(); bImg.src = 'IMG_3017.jpg';
-    const pImg = new Image(); pImg.src = 'image0_15.gif';
+    
+    // Updated pipe image reference
+    const pImg = new Image(); pImg.src = 'image0_15.gif.jpg';
 
     function startFlappy() { 
         toggleOverlay('minigame-menu'); 
@@ -273,7 +274,7 @@
         fScore = 0; birdY = 250; birdV = 0; pipes = []; 
         fActive = true; 
         document.getElementById('f-score').innerText = "0"; 
-        cancelAnimationFrame(fAnim); // Clear any old loops
+        cancelAnimationFrame(fAnim);
         flappyLoop(); 
     }
     
@@ -295,29 +296,24 @@
         birdV += 0.2; 
         birdY += birdV;
         
-        // Draw Bird
         fctx.drawImage(bImg, 50, birdY, 40, 40);
         
-        // Pipe Generation
         if(pipes.length === 0 || pipes[pipes.length-1].x < 180) {
             pipes.push({ x: 400, h: Math.random()*200+50, scored: false });
         }
         
         pipes.forEach((p, i) => {
             p.x -= 1.8;
-            // Draw Pipes
             fctx.drawImage(pImg, p.x, 0, 60, p.h); 
             fctx.drawImage(pImg, p.x, p.h + 140, 60, 500); 
             
-            // Score
             if(!p.scored && p.x < 50) { 
                 p.scored = true; 
                 fScore++; 
                 document.getElementById('f-score').innerText = fScore; 
-                if(fScore % 5 === 0) game.gems += 1; // Reward gems every 5 points
+                if(fScore % 5 === 0) game.gems += 1;
             } 
             
-            // Collision
             if(p.x < 90 && p.x + 60 > 50) { 
                 if(birdY + 10 < p.h || birdY + 30 > p.h + 140) endFlappy(); 
             } 
