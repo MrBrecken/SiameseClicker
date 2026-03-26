@@ -130,13 +130,17 @@
         document.getElementById('rebirth-count').innerText = `${game.rebirths} TOTAL REBIRTHS`;
         const list = document.getElementById('upgrades-list');
         list.innerHTML = "";
+        
         if (game.page === 0) {
             const cost = 50n * (12n ** BigInt(game.agencyIdx));
-            createCard("Agency Link", agencyImgs[game.agencyIdx % 10], cost, () => { game.points -= cost; game.clickPower += (cost / 10n) + 3n; game.agencyIdx++; render(); });
+            // Fixed Names: Now dynamically scale
+            createCard(`Agency Upgrade ${game.agencyIdx + 1}`, agencyImgs[game.agencyIdx % agencyImgs.length], cost, () => { game.points -= cost; game.clickPower += (cost / 10n) + 3n; game.agencyIdx++; render(); });
         } else {
             const cost = 1000n * (15n ** BigInt(game.jarvisIdx));
-            createCard(`Jarvis Bot Mk ${game.jarvisIdx + 1}`, "image0_15.gif", cost, () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); });
+            // Fixed Image: Uses 'togif.gif' instead of the flappy bird pipe
+            createCard(`Jarvis Bot Mk ${game.jarvisIdx + 1}`, "togif.gif", cost, () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); });
         }
+
         const rCost = 10n ** 100n * (1000n ** game.rebirths);
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
         document.getElementById('rebirth-btn').disabled = game.points < rCost;
@@ -151,7 +155,6 @@
     }
 
     document.getElementById('clicker-container').onmousedown = (e) => {
-        // Start music on first interaction
         if(!game.musicStarted) {
             document.getElementById('main-music').play();
             game.musicStarted = true;
@@ -179,18 +182,30 @@
 
     function rebirth() { if(game.points >= 10n**100n) { game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); } }
 
+    // --- HIGH VISIBILITY SWIRLS ---
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let bgBlobs = [];
+    // Added vibrant colors so it isn't just gray
+    const colors = ['#8A2BE2', '#4169E1', '#FF69B4', '#00BFFF', '#9370DB'];
+    
     function initBg() {
         bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-        bgBlobs = Array.from({length: 8}, () => ({ x: Math.random()*bgCanvas.width, y: Math.random()*bgCanvas.height, vx: Math.random()*2-1, vy: Math.random()*2-1, r: Math.random()*300+200 }));
+        bgBlobs = Array.from({length: 8}, (v, i) => ({ 
+            x: Math.random()*bgCanvas.width, 
+            y: Math.random()*bgCanvas.height, 
+            vx: Math.random()*1.5-0.75, 
+            vy: Math.random()*1.5-0.75, 
+            r: Math.random()*400+200,
+            c: colors[i % colors.length]
+        }));
     }
     function drawBg() {
         bgCtx.fillStyle = '#fff'; bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
-        bgCtx.filter = 'blur(80px) contrast(30)';
+        bgCtx.filter = 'blur(50px)'; // Reduced blur so the colors pop
         bgBlobs.forEach(b => {
-            bgCtx.fillStyle = '#aaa'; bgCtx.beginPath(); bgCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); bgCtx.fill();
+            bgCtx.fillStyle = b.c; 
+            bgCtx.beginPath(); bgCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); bgCtx.fill();
             b.x += b.vx; b.y += b.vy;
             if(b.x < -b.r || b.x > bgCanvas.width+b.r) b.vx *= -1;
             if(b.y < -b.r || b.y > bgCanvas.height+b.r) b.vy *= -1;
@@ -199,12 +214,12 @@
     }
     window.addEventListener('resize', initBg); initBg(); drawBg();
 
-    // --- FLAPPY SIAMESE FIXED ---
+    // --- FLAPPY SIAMESE (MUCH SLOWER) ---
     const fc = document.getElementById('flappy-canvas');
     const fctx = fc.getContext('2d');
     let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim;
     const bImg = new Image(); bImg.src = 'IMG_3017.jpg';
-    const pImg = new Image(); pImg.src = 'image0_15.gif';
+    const pImg = new Image(); pImg.src = 'image0_15.gif'; // This is only used for the pipes now
 
     function startFlappy() { 
         toggleOverlay('minigame-menu'); 
@@ -221,34 +236,34 @@
         render(); 
     }
 
-    window.addEventListener('keydown', (e) => { if(e.code === 'Space' && fActive) { birdV = -7; e.preventDefault(); } });
-    fc.onmousedown = (e) => { if(fActive) { birdV = -7; e.preventDefault(); } };
+    // Weakened jump power for better control
+    window.addEventListener('keydown', (e) => { if(e.code === 'Space' && fActive) { birdV = -4.5; e.preventDefault(); } });
+    fc.onmousedown = (e) => { if(fActive) { birdV = -4.5; e.preventDefault(); } };
 
     function flappyLoop() {
         if(!fActive) return;
         fctx.fillStyle = '#4ec0ca'; fctx.fillRect(0,0,400,500);
         
-        birdV += 0.4; birdY += birdV;
+        birdV += 0.2; // Halved gravity
+        birdY += birdV;
         fctx.drawImage(bImg, 50, birdY, 40, 40);
 
-        if(pipes.length === 0 || pipes[pipes.length-1].x < 220) {
+        if(pipes.length === 0 || pipes[pipes.length-1].x < 180) {
             pipes.push({ x: 400, h: Math.random()*200+50, scored: false });
         }
 
         pipes.forEach((p, i) => {
-            p.x -= 3;
-            // Draw Pipes (Top and Bottom)
+            p.x -= 1.5; // Halved pipe speed
+            
             fctx.drawImage(pImg, p.x, 0, 60, p.h); 
             fctx.drawImage(pImg, p.x, p.h + 140, 60, 500); 
             
-            // Score
             if(!p.scored && p.x < 50) { 
                 p.scored = true; fScore++; 
                 document.getElementById('f-score').innerText = fScore;
                 if(fScore % 10 === 0) game.gems += 1;
             }
 
-            // Hit detection with a small grace margin
             if(p.x < 90 && p.x + 60 > 50) {
                 if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy();
             }
@@ -256,7 +271,6 @@
             if(p.x < -60) pipes.splice(i, 1);
         });
 
-        // Floor and Ceiling check
         if(birdY > 500 || birdY < -40) endFlappy();
         fAnim = requestAnimationFrame(flappyLoop);
     }
