@@ -255,7 +255,7 @@
     const fctx = fc.getContext('2d');
     let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim;
     const bImg = new Image(); bImg.src = 'IMG_3017.jpg';
-    const pImg = new Image(); pImg.src = 'image0_15.gif.png';
+    const pImg = new Image(); pImg.src = 'image0_15.gif.jpg';
 
     function startFlappy() { toggleOverlay('minigame-menu'); document.getElementById('flappy-container').style.display = 'flex'; fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; document.getElementById('f-score').innerText = "0"; flappyLoop(); }
     function endFlappy() { fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
