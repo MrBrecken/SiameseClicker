@@ -119,27 +119,15 @@
 
 <script>
     let game = { 
-        points: 0n, 
-        clickPower: 1n, 
-        pps: 0n, 
-        rebirths: 0n, 
-        agencyIdx: 0, 
-        jarvisIdx: 0, 
-        ashcroftIdx: 0,
-        page: 0, 
-        muted: false, 
-        gems: 0, 
-        musicStarted: false,
-        pointMultiplier: 100n, 
-        gemsMultiplier: 1, 
-        hasOversallsOpal: false, 
-        hasExtraLife: false 
+        points: 0n, clickPower: 1n, pps: 0n, rebirths: 0n, agencyIdx: 0, jarvisIdx: 0, page: 0, 
+        muted: false, gems: 0, musicStarted: false, pointMultiplier: 100n, gemsMultiplier: 1, 
+        hasOversallsOpal: false, hasExtraLife: false 
     };
     
     let ashcroftPurchases = { dylan: 0 };
+    // Fixed image filenames
     const ashcroftImgs = ["dylandiamond.jpg", "oliversopal.jpg", "stevenssaphire.jpg"];
 
-    // Rebirth cost logic
     function getRebirthCost() {
         return 10n ** (100n * (game.rebirths + 1n));
     }
@@ -168,7 +156,8 @@
             createCard(getLockedName(game.agencyIdx), agencyImgs[game.agencyIdx % agencyImgs.length], cost, () => { game.points -= cost; game.clickPower += (cost / 10n) + 3n; game.agencyIdx++; render(); });
         } else if (game.page === 1) {
             const cost = 1000n * (15n ** BigInt(game.jarvisIdx));
-            createCard(`Jarvis Bot Mk ${game.jarvisIdx + 1}`, "togif.gif", cost, () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); });
+            // Fixed Jarvis Bot image reference to togif-1.gif
+            createCard(`Jarvis Bot Mk ${game.jarvisIdx + 1}`, "togif-1.gif", cost, () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); });
         } else {
             renderJewels();
         }
@@ -180,29 +169,18 @@
 
     function renderJewels() {
         const list = document.getElementById('upgrades-list');
-        
-        // Dylan's Diamond
         const gemCost = BigInt(5 * (2 ** ashcroftPurchases['dylan']));
+        
         createJewelCard("Dylans Diamond", ashcroftImgs[0], gemCost, () => {
-            game.gems -= Number(gemCost); 
-            game.gemsMultiplier *= 2; 
-            ashcroftPurchases['dylan']++; 
-            render();
+            game.gems -= Number(gemCost); game.gemsMultiplier *= 2; ashcroftPurchases['dylan']++; render();
         }, game.gems < Number(gemCost));
 
-        // Oliver's Opal
         createJewelCard("Olivers Opal", ashcroftImgs[1], 250n, () => {
-            game.gems -= 250; 
-            game.pointMultiplier = 150n; 
-            game.hasOversallsOpal = true; 
-            render();
+            game.gems -= 250; game.pointMultiplier = 150n; game.hasOversallsOpal = true; render();
         }, game.gems < 250 || game.hasOversallsOpal);
 
-        // Steven Bradley's Sapphire
         createJewelCard("Steven Bradleys Saphire", ashcroftImgs[2], 5000n, () => {
-            game.gems -= 5000; 
-            game.hasExtraLife = true; 
-            render();
+            game.gems -= 5000; game.hasExtraLife = true; render();
         }, game.gems < 5000 || game.hasExtraLife);
     }
 
@@ -216,12 +194,9 @@
 
     function rebirth() { 
         const rCost = getRebirthCost();
-        if(game.points >= rCost) { 
-            game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); 
-        } 
+        if(game.points >= rCost) { game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); } 
     }
 
-    // Spacebar to click logic
     window.addEventListener('keydown', (e) => {
         if(e.code === 'Space' && !fActive) {
             const rebirthMulti = 2n ** game.rebirths;
@@ -232,7 +207,6 @@
         }
     });
 
-    // Formatting, standard upgrades, and minigame code remains untouched below...
     const agencyImgs = ["Annotation 2025-12-18 203140.png","IMG_1114.png","IMG_3018.png","OIP (1).webp","OIP.webp","Screenshot 2026-01-11 211640.png","abstract-wavy-shapes-marble-effect-backgrou...","baldi.png-removebg-preview.png","blossom.gif","bradarwhatisthis.gif","dahmer-jeffrey.gif","image.png","rhythia-steam.png","rrxc12ej6dqtf7a18m4dy3vdk9vm.jpg","togif-1.gif","whoisalter.png"];
     const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg"];
     function format(n) { if (n < 1000n) return n.toString(); let s = n.toString(); let unitIdx = Math.floor((s.length - 1) / 3); if (unitIdx >= suffixes.length) return s[0] + "." + s.substring(1,3) + "e" + (s.length - 1); let digits = s.length % 3 || 3; return s.substring(0, digits) + "." + s.substring(digits, digits + 2) + suffixes[unitIdx]; }
