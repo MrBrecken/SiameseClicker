@@ -66,6 +66,10 @@
             animation: flashScale 0.2s infinite alternate;
         }
         @keyframes flashScale { from { transform: scale(1); } to { transform: scale(1.1); } }
+
+        /* DEATH SCREEN CSS */
+        #death-screen { display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .death-stat { font-weight: 900; font-size: 1.5rem; margin: 5px 0; }
     </style>
 </head>
 <body>
@@ -124,16 +128,27 @@
 </div>
 
 <div id="flappy-container">
-    <div style="color: black; font-weight: 900; font-size: 2rem; margin-bottom: 10px;">Score: <span id="f-score">0</span></div>
-    <canvas id="flappy-canvas"></canvas>
-    <button onclick="endFlappy()" style="margin-top: 20px; padding: 15px 30px; background: #000; color: #fff; border: none; border-radius: 10px; font-weight: 900; cursor: pointer;">QUIT GAME</button>
+    <div id="flappy-gameplay" style="display: flex; flex-direction: column; align-items: center;">
+        <div style="color: black; font-weight: 900; font-size: 2rem; margin-bottom: 10px;">Score: <span id="f-score">0</span></div>
+        <canvas id="flappy-canvas"></canvas>
+        <button onclick="endFlappy()" style="margin-top: 20px; padding: 15px 30px; background: #000; color: #fff; border: none; border-radius: 10px; font-weight: 900; cursor: pointer;">QUIT GAME</button>
+    </div>
+
+    <div id="death-screen" class="popup-box" style="display: none;">
+        <h2 style="font-weight: 900; font-size: 3rem; margin-top: 0;">YOU DIED</h2>
+        <div class="death-stat">SCORE: <span id="death-score">0</span></div>
+        <div class="death-stat">BEST: <span id="death-best">0</span></div>
+        <div class="death-stat" style="color: #007AFF;">GEMS EARNED: <span id="death-gems">0</span></div>
+        <button onclick="startFlappy()" style="width:100%; padding:20px; background:#000; color:#fff; border-radius:15px; font-weight:900; margin-top: 20px;">RETRY</button>
+        <button onclick="endFlappy()" style="width:100%; padding:20px; background:#f0f0f0; color:#000; border-radius:15px; font-weight:900; margin-top: 10px;">EXIT</button>
+    </div>
 </div>
 
 <script>
     let game = { 
         points: 0n, clickPower: 1n, pps: 0n, rebirths: 0n, agencyIdx: 0, jarvisIdx: 0, page: 0, 
         muted: false, gems: 0, musicStarted: false, pointMultiplier: 100n, gemsMultiplier: 1, 
-        hasOversallsOpal: false, hasExtraLife: false 
+        hasOversallsOpal: false, hasExtraLife: false, flappyRecord: 0
     };
     
     let ashcroftPurchases = { dylan: 0 };
@@ -239,11 +254,16 @@
     function rebirth() { const rCost = getRebirthCost(); if(game.points >= rCost) { game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); } }
 
     window.addEventListener('keydown', (e) => {
-        if(e.code === 'Space' && !fActive) {
-            const rebirthMulti = 2n ** game.rebirths;
-            const ptsMultNum = Number(game.pointMultiplier) / 100;
-            game.points += game.clickPower * rebirthMulti * BigInt(Math.floor(ptsMultNum));
-            render(); e.preventDefault();
+        if(e.code === 'Space') {
+            if(!fActive) {
+                const rebirthMulti = 2n ** game.rebirths;
+                const ptsMultNum = Number(game.pointMultiplier) / 100;
+                game.points += game.clickPower * rebirthMulti * BigInt(Math.floor(ptsMultNum));
+                render(); 
+            } else {
+                birdV = -4.5;
+            }
+            e.preventDefault();
         }
     });
 
@@ -270,11 +290,36 @@
     function drawBg() { bgCtx.fillStyle = '#fff'; bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height); bgCtx.filter = 'blur(50px)'; bgBlobs.forEach(b => { bgCtx.fillStyle = b.c; bgCtx.beginPath(); bgCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); bgCtx.fill(); b.x += b.vx; b.y += b.vy; if(b.x < -b.r || b.x > bgCanvas.width+b.r) b.vx *= -1; if(b.y < -b.r || b.y > bgCanvas.height+b.r) b.vy *= -1; }); bgCtx.filter = 'none'; requestAnimationFrame(drawBg); }
     window.addEventListener('resize', initBg); initBg(); drawBg();
 
-    const fc = document.getElementById('flappy-canvas'); const fctx = fc.getContext('2d'); let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim;
-    function startFlappy() { toggleOverlay('minigame-menu'); document.getElementById('flappy-container').style.display = 'flex'; fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; document.getElementById('f-score').innerText = "0"; flappyLoop(); }
-    function endFlappy() { if(game.hasExtraLife) { game.hasExtraLife = false; birdY = 250; birdV = -4.5; return; } fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
+    const fc = document.getElementById('flappy-canvas'); const fctx = fc.getContext('2d'); let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim, sessionGems = 0;
+    function startFlappy() { 
+        if(document.getElementById('minigame-menu').style.display === 'flex') toggleOverlay('minigame-menu'); 
+        document.getElementById('death-screen').style.display = 'none';
+        document.getElementById('flappy-gameplay').style.display = 'flex';
+        document.getElementById('flappy-container').style.display = 'flex'; 
+        fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; sessionGems = 0;
+        document.getElementById('f-score').innerText = "0"; flappyLoop(); 
+    }
+    function endFlappy() { 
+        if(game.hasExtraLife) { game.hasExtraLife = false; birdY = 250; birdV = -4.5; return; } 
+        fActive = false; cancelAnimationFrame(fAnim); 
+        
+        if(fScore > (game.flappyRecord || 0)) game.flappyRecord = fScore;
+        
+        document.getElementById('flappy-gameplay').style.display = 'none';
+        document.getElementById('death-screen').style.display = 'block';
+        document.getElementById('death-score').innerText = fScore;
+        document.getElementById('death-best').innerText = game.flappyRecord;
+        document.getElementById('death-gems').innerText = sessionGems;
+        render(); 
+    }
+    function exitFlappy() { document.getElementById('flappy-container').style.display = 'none'; render(); }
     fc.onmousedown = (e) => { if(fActive) { birdV = -4.5; e.preventDefault(); } };
-    function flappyLoop() { if(!fActive) return; fctx.fillStyle = '#4ec0ca'; fctx.fillRect(0,0,400,500); birdV += 0.2; birdY += birdV; fctx.drawImage(birdSprite, 50, birdY, 40, 40); if(pipes.length === 0 || pipes[pipes.length-1].x < 180) pipes.push({ x: 400, h: Math.random()*200+50, scored: false }); pipes.forEach((p, i) => { p.x -= 1.5; fctx.drawImage(pipeSprite, p.x, 0, 60, p.h); fctx.drawImage(pipeSprite, p.x, p.h + 140, 60, 500); if(!p.scored && p.x < 50) { p.scored = true; fScore++; document.getElementById('f-score').innerText = fScore; if(fScore % 10 === 0) game.gems += game.gemsMultiplier; } if(p.x < 90 && p.x + 60 > 50) { if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy(); } if(p.x < -60) pipes.splice(i, 1); }); if(birdY > 500 || birdY < -40) endFlappy(); fAnim = requestAnimationFrame(flappyLoop); }
+    function flappyLoop() { if(!fActive) return; fctx.fillStyle = '#4ec0ca'; fctx.fillRect(0,0,400,500); birdV += 0.2; birdY += birdV; fctx.drawImage(birdSprite, 50, birdY, 40, 40); if(pipes.length === 0 || pipes[pipes.length-1].x < 180) pipes.push({ x: 400, h: Math.random()*200+50, scored: false }); pipes.forEach((p, i) => { p.x -= 1.5; fctx.drawImage(pipeSprite, p.x, 0, 60, p.h); fctx.drawImage(pipeSprite, p.x, p.h + 140, 60, 500); if(!p.scored && p.x < 50) { p.scored = true; fScore++; document.getElementById('f-score').innerText = fScore; if(fScore % 10 === 0) { let earned = game.gemsMultiplier; game.gems += earned; sessionGems += earned; } } if(p.x < 90 && p.x + 60 > 50) { if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy(); } if(p.x < -60) pipes.splice(i, 1); }); if(birdY > 500 || birdY < -40) endFlappy(); fAnim = requestAnimationFrame(flappyLoop); }
+    function endFlappyQuiet() { fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
+    
+    // Override endFlappy call in Quit button to bypass death screen
+    document.querySelector('#flappy-gameplay button').onclick = endFlappyQuiet;
+
     render();
 </script>
 </body>
