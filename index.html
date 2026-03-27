@@ -56,9 +56,21 @@
         @keyframes pOut { 0% { transform: translate(-50%,-50%); opacity: 1; } 100% { transform: translate(-50%,-200px); opacity: 0; } }
         
         .io-btn { margin-top: 10px; width: 100%; padding: 12px; background: #f0f0f0; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 0.7rem; }
+
+        /* FLASH EFFECT CSS */
+        #dylan-flash {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: white; color: black; z-index: 9999;
+            display: none; align-items: center; justify-content: center;
+            font-size: 8rem; font-weight: 900; text-align: center;
+            animation: flashScale 0.2s infinite alternate;
+        }
+        @keyframes flashScale { from { transform: scale(1); } to { transform: scale(1.1); } }
     </style>
 </head>
 <body>
+
+<div id="dylan-flash">DYLAN JARVIS</div>
 
 <canvas id="bg-canvas"></canvas>
 
@@ -125,43 +137,52 @@
     };
     
     let ashcroftPurchases = { dylan: 0 };
-    const ashcroftImgs = ["dylandiamond.png", "oliversopal.png", "stevenssaphire.png"];
-
+    const ashcroftImgs = ["dylandiamond.jpg", "oliversopal.jpg", "stevenssaphire.jpg"];
     const birdSprite = new Image(); birdSprite.src = 'IMG_3017.jpg';
     const pipeSprite = new Image(); pipeSprite.src = 'image0_15.gif.jpg';
 
-    // --- IMPORT / EXPORT LOGIC ---
+    // --- BRAILLE LOGIC (FIXED OFFSET) ---
+    function toBraille(str) {
+        return str.split('').map(c => String.fromCharCode(0x2800 + (c.charCodeAt(0) - 7))).join('');
+    }
+
+    function fromBraille(brl) {
+        return brl.split('').map(c => String.fromCharCode((c.charCodeAt(0) - 0x2800) + 7)).join('');
+    }
+
     function exportData() {
-        const saveData = JSON.stringify({game, ashcroftPurchases}, (key, value) => 
+        const json = JSON.stringify({game, ashcroftPurchases}, (key, value) => 
             typeof value === 'bigint' ? value.toString() + 'n' : value
         );
-        const encoded = btoa(saveData);
-        navigator.clipboard.writeText(encoded);
-        alert("BRAILLE DATA COPIED TO CLIPBOARD");
+        navigator.clipboard.writeText(toBraille(json));
+        alert("BRAILLE DATA COPIED");
     }
 
     function importData() {
         const raw = prompt("PASTE BRAILLE DATA:");
         if(!raw) return;
         try {
-            const decoded = atob(raw);
+            const decoded = fromBraille(raw);
             const parsed = JSON.parse(decoded, (key, value) => {
                 if(typeof value === 'string' && /^\d+n$/.test(value)) return BigInt(value.slice(0, -1));
                 return value;
             });
-            game = parsed.game;
-            ashcroftPurchases = parsed.ashcroftPurchases;
-            render();
-            alert("DATA IMPORTED SUCCESSFULLY");
+            game = parsed.game; ashcroftPurchases = parsed.ashcroftPurchases;
+            render(); alert("DATA IMPORTED");
         } catch(e) { alert("INVALID BRAILLE DATA"); }
+    }
+
+    function triggerFlash() {
+        const flash = document.getElementById('dylan-flash');
+        flash.style.display = 'flex';
+        setTimeout(() => { flash.style.display = 'none'; }, 1500);
     }
 
     function getRebirthCost() { return 10n ** (100n * (game.rebirths + 1n)); }
 
     function changePage(dir) { 
         game.page = (game.page + dir + 3) % 3; 
-        const titles = ["UPGRADES", "JARVIS BOTS", "ASHCROFTS JEWELS"];
-        document.getElementById('page-title').innerText = titles[game.page];
+        document.getElementById('page-title').innerText = ["UPGRADES", "JARVIS BOTS", "ASHCROFTS JEWELS"][game.page];
         render(); 
     }
 
@@ -177,13 +198,19 @@
         
         if (game.page === 0) {
             const cost = 50n * (12n ** BigInt(game.agencyIdx));
-            createCard(getLockedName(game.agencyIdx), agencyImgs[game.agencyIdx % agencyImgs.length], cost, () => { game.points -= cost; game.clickPower += (cost / 10n) + 3n; game.agencyIdx++; render(); });
+            createCard(getLockedName(game.agencyIdx), agencyImgs[game.agencyIdx % agencyImgs.length], cost, () => { 
+                if(game.agencyIdx === 0) triggerFlash();
+                game.points -= cost; game.clickPower += (cost / 10n) + 3n; game.agencyIdx++; render(); 
+            });
         } else if (game.page === 1) {
             const cost = 1000n * (15n ** BigInt(game.jarvisIdx));
             const card = document.createElement('div');
             card.className = `upgrade-card ${game.points < cost ? 'locked' : ''}`;
             card.innerHTML = `<div class="upgrade-icon" style="display:flex; align-items:center; justify-content:center; color:red; font-weight:900; font-size:0.75rem; text-align:center;">Jarvis Error</div><div style="flex:1"><span class="u-name">Mk ${game.jarvisIdx + 1}</span><span class="u-cost">${format(cost)} Points</span></div>`;
-            if (game.points >= cost) card.onclick = () => { game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); };
+            if (game.points >= cost) card.onclick = () => { 
+                if(game.jarvisIdx === 0 && game.agencyIdx === 0) triggerFlash();
+                game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); 
+            };
             list.appendChild(card);
         } else {
             renderJewels();
@@ -216,12 +243,11 @@
             const rebirthMulti = 2n ** game.rebirths;
             const ptsMultNum = Number(game.pointMultiplier) / 100;
             game.points += game.clickPower * rebirthMulti * BigInt(Math.floor(ptsMultNum));
-            render();
-            e.preventDefault();
+            render(); e.preventDefault();
         }
     });
 
-    const agencyImgs = ["Annotation 2025-12-18 203140.png","IMG_1114.png","IMG_3018.png","OIP (1).webp","OIP.webp","Screenshot 2026-01-11 211640.png","abstract-wavy-shapes-marble-effect-backgrou...","baldi.png-removebg-preview.png","blossom.gif","bradarwhatisthis.gif","dahmer-jeffrey.gif","image.png","rhythia-steam.png","rrxc12ej6dqtf7a18m4dy3vdk9vm.jpg","togif-1.gif","whoisalter.png"];
+    const agencyImgs = ["Annotation 2025-12-18 203140.png","IMG_1114.png","IMG_3018.png","OIP (1).webp","OIP.webp","Screenshot 2026-01-11 211640.png","baldi.png-removebg-preview.png","blossom.gif","bradarwhatisthis.gif","dahmer-jeffrey.gif","image.png","rhythia-steam.png","rrxc12ej6dqtf7a18m4dy3vdk9vm.jpg","togif-1.gif","whoisalter.png"];
     const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg"];
     function format(n) { if (n < 1000n) return n.toString(); let s = n.toString(); let unitIdx = Math.floor((s.length - 1) / 3); if (unitIdx >= suffixes.length) return s[0] + "." + s.substring(1,3) + "e" + (s.length - 1); let digits = s.length % 3 || 3; return s.substring(0, digits) + "." + s.substring(digits, digits + 2) + suffixes[unitIdx]; }
     function createCard(name, src, cost, onClick) { const card = document.createElement('div'); card.className = `upgrade-card ${game.points < cost ? 'locked' : ''}`; card.innerHTML = `<img src="${src}" class="upgrade-icon" onerror="this.src='OIP.webp'"><div style="flex:1"><span class="u-name">${name}</span><span class="u-cost">${format(cost)} Points</span></div>`; if (game.points >= cost) card.onclick = onClick; document.getElementById('upgrades-list').appendChild(card); }
