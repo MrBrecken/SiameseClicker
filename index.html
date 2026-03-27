@@ -125,8 +125,13 @@
     };
     
     let ashcroftPurchases = { dylan: 0 };
-    // Jewels in order 1. dylandiamond 2. oliversopal 3. stevenssaphire
-    const ashcroftImgs = ["dylandiamond.jpg", "oliversopal.jpg", "stevenssaphire.jpg"];
+    const ashcroftImgs = ["dylandiamond.png", "oliversopal.png", "stevenssaphire.png"];
+
+    // Flappy Bird Image Preloading
+    const birdSprite = new Image();
+    birdSprite.src = 'IMG_3017.jpg';
+    const pipeSprite = new Image();
+    pipeSprite.src = 'image0_15.gif.jpg';
 
     function getRebirthCost() {
         return 10n ** (100n * (game.rebirths + 1n));
@@ -156,7 +161,6 @@
             createCard(getLockedName(game.agencyIdx), agencyImgs[game.agencyIdx % agencyImgs.length], cost, () => { game.points -= cost; game.clickPower += (cost / 10n) + 3n; game.agencyIdx++; render(); });
         } else if (game.page === 1) {
             const cost = 1000n * (15n ** BigInt(game.jarvisIdx));
-            // Jarvis Bots: No image, red text "Jarvis Error"
             const card = document.createElement('div');
             card.className = `upgrade-card ${game.points < cost ? 'locked' : ''}`;
             card.innerHTML = `<div class="upgrade-icon" style="display:flex; align-items:center; justify-content:center; color:red; font-weight:900; font-size:0.75rem; text-align:center;">Jarvis Error</div><div style="flex:1"><span class="u-name">Mk ${game.jarvisIdx + 1}</span><span class="u-cost">${format(cost)} Points</span></div>`;
@@ -234,30 +238,44 @@
     function drawBg() { bgCtx.fillStyle = '#fff'; bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height); bgCtx.filter = 'blur(50px)'; bgBlobs.forEach(b => { bgCtx.fillStyle = b.c; bgCtx.beginPath(); bgCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); bgCtx.fill(); b.x += b.vx; b.y += b.vy; if(b.x < -b.r || b.x > bgCanvas.width+b.r) b.vx *= -1; if(b.y < -b.r || b.y > bgCanvas.height+b.r) b.vy *= -1; }); bgCtx.filter = 'none'; requestAnimationFrame(drawBg); }
     window.addEventListener('resize', initBg); initBg(); drawBg();
 
-    // FLAPPY FIX: Pre-loading images outside the loop
-    const birdImg = new Image(); birdImg.src = 'IMG_3017.jpg';
-    const pipeImg = new Image(); pipeImg.src = 'image0_15.gif.jpg';
-
     const fc = document.getElementById('flappy-canvas'); const fctx = fc.getContext('2d'); let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim;
+    
     function startFlappy() { toggleOverlay('minigame-menu'); document.getElementById('flappy-container').style.display = 'flex'; fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; document.getElementById('f-score').innerText = "0"; flappyLoop(); }
     function endFlappy() { if(game.hasExtraLife) { game.hasExtraLife = false; birdY = 250; birdV = -4.5; return; } fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
     fc.onmousedown = (e) => { if(fActive) { birdV = -4.5; e.preventDefault(); } };
+    
     function flappyLoop() { 
         if(!fActive) return; 
         fctx.fillStyle = '#4ec0ca'; 
         fctx.fillRect(0,0,400,500); 
         birdV += 0.2; 
         birdY += birdV; 
-        fctx.drawImage(birdImg, 50, birdY, 40, 40); 
+        
+        // Use pre-loaded sprite
+        fctx.drawImage(birdSprite, 50, birdY, 40, 40); 
+        
         if(pipes.length === 0 || pipes[pipes.length-1].x < 180) pipes.push({ x: 400, h: Math.random()*200+50, scored: false }); 
+        
         pipes.forEach((p, i) => { 
             p.x -= 1.5; 
-            fctx.drawImage(pipeImg, p.x, 0, 60, p.h); 
-            fctx.drawImage(pipeImg, p.x, p.h + 140, 60, 500); 
-            if(!p.scored && p.x < 50) { p.scored = true; fScore++; document.getElementById('f-score').innerText = fScore; if(fScore % 10 === 0) game.gems += game.gemsMultiplier; } 
-            if(p.x < 90 && p.x + 60 > 50) { if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy(); } 
+            // Use pre-loaded sprites for pipes
+            fctx.drawImage(pipeSprite, p.x, 0, 60, p.h); 
+            fctx.drawImage(pipeSprite, p.x, p.h + 140, 60, 500); 
+            
+            if(!p.scored && p.x < 50) { 
+                p.scored = true; 
+                fScore++; 
+                document.getElementById('f-score').innerText = fScore; 
+                if(fScore % 10 === 0) game.gems += game.gemsMultiplier; 
+            } 
+            
+            if(p.x < 90 && p.x + 60 > 50) { 
+                if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy(); 
+            } 
+            
             if(p.x < -60) pipes.splice(i, 1); 
         }); 
+        
         if(birdY > 500 || birdY < -40) endFlappy(); 
         fAnim = requestAnimationFrame(flappyLoop); 
     }
