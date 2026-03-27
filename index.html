@@ -127,15 +127,36 @@
     let ashcroftPurchases = { dylan: 0 };
     const ashcroftImgs = ["dylandiamond.png", "oliversopal.png", "stevenssaphire.png"];
 
-    // Flappy Bird Image Preloading
-    const birdSprite = new Image();
-    birdSprite.src = 'IMG_3017.jpg';
-    const pipeSprite = new Image();
-    pipeSprite.src = 'image0_15.gif.jpg';
+    const birdSprite = new Image(); birdSprite.src = 'IMG_3017.jpg';
+    const pipeSprite = new Image(); pipeSprite.src = 'image0_15.gif.jpg';
 
-    function getRebirthCost() {
-        return 10n ** (100n * (game.rebirths + 1n));
+    // --- IMPORT / EXPORT LOGIC ---
+    function exportData() {
+        const saveData = JSON.stringify({game, ashcroftPurchases}, (key, value) => 
+            typeof value === 'bigint' ? value.toString() + 'n' : value
+        );
+        const encoded = btoa(saveData);
+        navigator.clipboard.writeText(encoded);
+        alert("BRAILLE DATA COPIED TO CLIPBOARD");
     }
+
+    function importData() {
+        const raw = prompt("PASTE BRAILLE DATA:");
+        if(!raw) return;
+        try {
+            const decoded = atob(raw);
+            const parsed = JSON.parse(decoded, (key, value) => {
+                if(typeof value === 'string' && /^\d+n$/.test(value)) return BigInt(value.slice(0, -1));
+                return value;
+            });
+            game = parsed.game;
+            ashcroftPurchases = parsed.ashcroftPurchases;
+            render();
+            alert("DATA IMPORTED SUCCESSFULLY");
+        } catch(e) { alert("INVALID BRAILLE DATA"); }
+    }
+
+    function getRebirthCost() { return 10n ** (100n * (game.rebirths + 1n)); }
 
     function changePage(dir) { 
         game.page = (game.page + dir + 3) % 3; 
@@ -147,12 +168,10 @@
     function render() {
         const rebirthMulti = 2n ** game.rebirths;
         const ptsMultNum = Number(game.pointMultiplier) / 100;
-        
         document.getElementById('points').innerText = format(game.points);
         document.getElementById('gem-count').innerText = game.gems;
         document.getElementById('stats').innerText = `+${format(game.clickPower * rebirthMulti * BigInt(Math.floor(ptsMultNum)))}/CLICK • ${format(game.pps * rebirthMulti * BigInt(Math.floor(ptsMultNum)))}/SEC`;
         document.getElementById('rebirth-count').innerText = `${game.rebirths} TOTAL REBIRTHS`;
-        
         const list = document.getElementById('upgrades-list');
         list.innerHTML = "";
         
@@ -169,7 +188,6 @@
         } else {
             renderJewels();
         }
-        
         const rCost = getRebirthCost();
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
         document.getElementById('rebirth-btn').disabled = game.points < rCost;
@@ -178,18 +196,9 @@
     function renderJewels() {
         const list = document.getElementById('upgrades-list');
         const gemCost = BigInt(5 * (2 ** ashcroftPurchases['dylan']));
-        
-        createJewelCard("Dylans Diamond", ashcroftImgs[0], gemCost, () => {
-            game.gems -= Number(gemCost); game.gemsMultiplier *= 2; ashcroftPurchases['dylan']++; render();
-        }, game.gems < Number(gemCost));
-
-        createJewelCard("Olivers Opal", ashcroftImgs[1], 250n, () => {
-            game.gems -= 250; game.pointMultiplier = 150n; game.hasOversallsOpal = true; render();
-        }, game.gems < 250 || game.hasOversallsOpal);
-
-        createJewelCard("Steven Bradleys Saphire", ashcroftImgs[2], 5000n, () => {
-            game.gems -= 5000; game.hasExtraLife = true; render();
-        }, game.gems < 5000 || game.hasExtraLife);
+        createJewelCard("Dylans Diamond", ashcroftImgs[0], gemCost, () => { game.gems -= Number(gemCost); game.gemsMultiplier *= 2; ashcroftPurchases['dylan']++; render(); }, game.gems < Number(gemCost));
+        createJewelCard("Olivers Opal", ashcroftImgs[1], 250n, () => { game.gems -= 250; game.pointMultiplier = 150n; game.hasOversallsOpal = true; render(); }, game.gems < 250 || game.hasOversallsOpal);
+        createJewelCard("Steven Bradleys Saphire", ashcroftImgs[2], 5000n, () => { game.gems -= 5000; game.hasExtraLife = true; render(); }, game.gems < 5000 || game.hasExtraLife);
     }
 
     function createJewelCard(name, src, cost, onClick, isLocked) {
@@ -200,10 +209,7 @@
         document.getElementById('upgrades-list').appendChild(card);
     }
 
-    function rebirth() { 
-        const rCost = getRebirthCost();
-        if(game.points >= rCost) { game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); } 
-    }
+    function rebirth() { const rCost = getRebirthCost(); if(game.points >= rCost) { game.points=0n; game.clickPower=1n; game.pps=0n; game.agencyIdx=0; game.jarvisIdx=0; game.rebirths++; render(); } }
 
     window.addEventListener('keydown', (e) => {
         if(e.code === 'Space' && !fActive) {
@@ -239,46 +245,10 @@
     window.addEventListener('resize', initBg); initBg(); drawBg();
 
     const fc = document.getElementById('flappy-canvas'); const fctx = fc.getContext('2d'); let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim;
-    
     function startFlappy() { toggleOverlay('minigame-menu'); document.getElementById('flappy-container').style.display = 'flex'; fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; document.getElementById('f-score').innerText = "0"; flappyLoop(); }
     function endFlappy() { if(game.hasExtraLife) { game.hasExtraLife = false; birdY = 250; birdV = -4.5; return; } fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
     fc.onmousedown = (e) => { if(fActive) { birdV = -4.5; e.preventDefault(); } };
-    
-    function flappyLoop() { 
-        if(!fActive) return; 
-        fctx.fillStyle = '#4ec0ca'; 
-        fctx.fillRect(0,0,400,500); 
-        birdV += 0.2; 
-        birdY += birdV; 
-        
-        // Use pre-loaded sprite
-        fctx.drawImage(birdSprite, 50, birdY, 40, 40); 
-        
-        if(pipes.length === 0 || pipes[pipes.length-1].x < 180) pipes.push({ x: 400, h: Math.random()*200+50, scored: false }); 
-        
-        pipes.forEach((p, i) => { 
-            p.x -= 1.5; 
-            // Use pre-loaded sprites for pipes
-            fctx.drawImage(pipeSprite, p.x, 0, 60, p.h); 
-            fctx.drawImage(pipeSprite, p.x, p.h + 140, 60, 500); 
-            
-            if(!p.scored && p.x < 50) { 
-                p.scored = true; 
-                fScore++; 
-                document.getElementById('f-score').innerText = fScore; 
-                if(fScore % 10 === 0) game.gems += game.gemsMultiplier; 
-            } 
-            
-            if(p.x < 90 && p.x + 60 > 50) { 
-                if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy(); 
-            } 
-            
-            if(p.x < -60) pipes.splice(i, 1); 
-        }); 
-        
-        if(birdY > 500 || birdY < -40) endFlappy(); 
-        fAnim = requestAnimationFrame(flappyLoop); 
-    }
+    function flappyLoop() { if(!fActive) return; fctx.fillStyle = '#4ec0ca'; fctx.fillRect(0,0,400,500); birdV += 0.2; birdY += birdV; fctx.drawImage(birdSprite, 50, birdY, 40, 40); if(pipes.length === 0 || pipes[pipes.length-1].x < 180) pipes.push({ x: 400, h: Math.random()*200+50, scored: false }); pipes.forEach((p, i) => { p.x -= 1.5; fctx.drawImage(pipeSprite, p.x, 0, 60, p.h); fctx.drawImage(pipeSprite, p.x, p.h + 140, 60, 500); if(!p.scored && p.x < 50) { p.scored = true; fScore++; document.getElementById('f-score').innerText = fScore; if(fScore % 10 === 0) game.gems += game.gemsMultiplier; } if(p.x < 90 && p.x + 60 > 50) { if(birdY + 5 < p.h || birdY + 35 > p.h + 140) endFlappy(); } if(p.x < -60) pipes.splice(i, 1); }); if(birdY > 500 || birdY < -40) endFlappy(); fAnim = requestAnimationFrame(flappyLoop); }
     render();
 </script>
 </body>
