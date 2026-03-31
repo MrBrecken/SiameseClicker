@@ -189,12 +189,13 @@
         const raw = prompt("PASTE BRAILLE DATA:");
         if(!raw) return;
         try {
-            const decoded = fromBraille(raw);
+            const decoded = fromBraille(raw.trim());
             const parsed = JSON.parse(decoded, (key, value) => {
-                if(typeof value === 'string' && /^\d+n$/.test(value)) return BigInt(value.slice(0, -1));
+                if(typeof value === 'string' && /^-?\d+n$/.test(value)) return BigInt(value.slice(0, -1));
                 return value;
             });
-            game = parsed.game; ashcroftPurchases = parsed.ashcroftPurchases;
+            Object.assign(game, parsed.game); 
+            Object.assign(ashcroftPurchases, parsed.ashcroftPurchases);
             render(); alert("DATA IMPORTED");
         } catch(e) { alert("INVALID BRAILLE DATA"); }
     }
@@ -295,7 +296,7 @@
         const p = document.createElement('div'); p.className = 'particle'; p.innerText = `+${format(val)}`; p.style.left = e.clientX + "px"; p.style.top = e.clientY + "px"; document.body.appendChild(p); setTimeout(() => p.remove(), 800); render();
     };
 
-    setInterval(() => { const rebirthMulti = 2n ** game.rebirths; const ptsMultNum = Number(game.pointMultiplier) / 100; game.points += (game.pps * rebirthMulti * BigInt(Math.floor(ptsMultNum))); render(); }, 1000);
+    setInterval(() => { const rebirthMulti = 2n ** game.rebirths; const ptsMultNum = Number(game.pointMultiplier) / 100; game.points += (game.pps * rebirthMulti * BigInt(Math.floor(ptsMultNum))); render(); localStorage.setItem('siameseSave', JSON.stringify({game, ashcroftPurchases}, (k, v) => typeof v === 'bigint' ? v.toString() + 'n' : v)); }, 1000);
     function toggleOverlay(id) { const s = document.getElementById(id); s.style.display = s.style.display === 'flex' ? 'none' : 'flex'; }
     function toggleMute() { const m = document.getElementById('main-music'); game.muted = !game.muted; m.muted = game.muted; document.getElementById('mute-btn').innerText = game.muted ? "AUDIO: OFF" : "AUDIO: ON"; }
 
@@ -356,6 +357,7 @@
     }
     setInterval(spawnJarvisCoin, 60000); // Check every minute
 
+    try { const saved = localStorage.getItem('siameseSave'); if (saved) { const parsed = JSON.parse(saved, (k, v) => typeof v === 'string' && /^-?\d+n$/.test(v) ? BigInt(v.slice(0, -1)) : v); Object.assign(game, parsed.game); Object.assign(ashcroftPurchases, parsed.ashcroftPurchases); } } catch(e) {}
     render();
 </script>
 </body>
