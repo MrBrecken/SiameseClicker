@@ -152,7 +152,7 @@
         <div class="death-stat">BEST: <span id="death-best">0</span></div>
         <div class="death-stat" style="color: #007AFF;">GEMS EARNED: <span id="death-gems">0</span></div>
         <button onclick="startFlappy()" style="width:100%; padding:20px; background:#000; color:#fff; border-radius:15px; font-weight:900; margin-top: 20px;">RETRY</button>
-        <button onclick="endFlappy()" style="width:100%; padding:20px; background:#f0f0f0; color:#000; border-radius:15px; font-weight:900; margin-top: 10px;">EXIT</button>
+        <button onclick="exitFlappy()" style="width:100%; padding:20px; background:#f0f0f0; color:#000; border-radius:15px; font-weight:900; margin-top: 10px;">EXIT</button>
     </div>
 </div>
 
@@ -393,7 +393,7 @@
 
     // --- JARVIS COIN LOGIC ---
     function spawnJarvisCoin() {
-        if (Math.random() > 0.05) return; // 5% chance
+        if (Math.random() > 0.4) return; // 40% chance
         const coin = document.createElement('img');
         coin.src = 'jiojoijio.png';
         coin.className = 'jarvis-coin';
