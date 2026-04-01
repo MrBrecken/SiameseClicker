@@ -52,8 +52,8 @@
         #flappy-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #4ec0ca; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         #flappy-canvas { background: #fff; display: block; border: 5px solid #000; border-radius: 20px; cursor: pointer; }
 
-        #rebirth-btn { width: 100%; padding: 25px; background: #000; color: #fff; border: none; font-weight: 900; border-radius: 20px; font-size: 1.3rem; cursor: pointer; }
-        #rebirth-btn:disabled { background: #eee; color: #aaa; }
+        #rebirth-btn { width: 100%; padding: 25px; background: #000; color: #fff; border: none; font-weight: 900; border-radius: 20px; font-size: 1.3rem; cursor: pointer; transition: 0.3s; }
+        #rebirth-btn:disabled { background: #eee !important; color: #aaa !important; box-shadow: none !important; }
         .particle { position: absolute; font-weight: 900; pointer-events: none; color: #000; animation: pOut 0.8s forwards; font-size: 2.2rem; z-index: 99; }
         @keyframes pOut { 0% { transform: translate(-50%,-50%); opacity: 1; } 100% { transform: translate(-50%,-200px); opacity: 0; } }
         
@@ -161,8 +161,8 @@
         points: 0n, clickPower: 1n, pps: 0n, rebirths: 0n, megaRebirths: 0n, agencyIdx: 0, jarvisIdx: 0, page: 0, 
         muted: false, gems: 0, jarvisCoins: 0, musicStarted: false, pointMultiplier: 100n, gemsMultiplier: 1, 
         hasOversallsOpal: false, hasExtraLife: false, flappyRecord: 0,
-        jarvisMultiplier: 1, // NEW: multiplier for jarvis coins
-        dingleberry: { b: false, s: false, g: false, d: false } // NEW: one-time dingleberry purchases
+        jarvisMultiplier: 1, // multiplier for jarvis coins
+        dingleberry: { b: false, s: false, g: false, d: false } // one-time dingleberry purchases
     };
     
     let ashcroftPurchases = { dylan: 0 };
@@ -197,7 +197,6 @@
                 if(typeof value === 'string' && /^-?\d+n$/.test(value)) return BigInt(value.slice(0, -1));
                 return value;
             });
-            // NEW: Anti-break checks for older braille saves
             if (!parsed.game.dingleberry) parsed.game.dingleberry = { b: false, s: false, g: false, d: false };
             if (parsed.game.jarvisMultiplier === undefined) parsed.game.jarvisMultiplier = 1;
             if (parsed.game.megaRebirths === undefined) parsed.game.megaRebirths = 0n;
@@ -218,19 +217,23 @@
     function getMegaRebirthCost() { return 10n ** (1000n * (game.megaRebirths + 1n)); }
 
     function changePage(dir) { 
-        game.page = (game.page + dir + 4) % 4; // Changed mod logic to 4 to accommodate new page
+        game.page = (game.page + dir + 4) % 4; 
         document.getElementById('page-title').innerText = ["UPGRADES", "JARVIS BOTS", "ASHCROFTS JEWELS", "DYLANS DINGLEBERRIES"][game.page];
         render(); 
     }
 
     function render() {
         const rebirthMulti = 2n ** game.rebirths;
+        const megaMulti = 5n ** game.megaRebirths; // 5x multiplier per Mega Rebirth
         const ptsMultNum = Number(game.pointMultiplier) / 100;
+        
         document.getElementById('points').innerText = format(game.points);
         document.getElementById('gem-count').innerText = game.gems;
         document.getElementById('jarvis-count').innerText = game.jarvisCoins;
-        document.getElementById('stats').innerText = `+${format(game.clickPower * rebirthMulti * BigInt(Math.floor(ptsMultNum)))}/CLICK • ${format(game.pps * rebirthMulti * BigInt(Math.floor(ptsMultNum)))}/SEC`;
-        document.getElementById('rebirth-count').innerText = `${game.rebirths} TOTAL REBIRTHS`;
+        
+        document.getElementById('stats').innerText = `+${format(game.clickPower * rebirthMulti * megaMulti * BigInt(Math.floor(ptsMultNum)))}/CLICK • ${format(game.pps * rebirthMulti * megaMulti * BigInt(Math.floor(ptsMultNum)))}/SEC`;
+        document.getElementById('rebirth-count').innerText = `${game.rebirths} REBIRTHS | ${game.megaRebirths} MEGA`;
+        
         const list = document.getElementById('upgrades-list');
         list.innerHTML = "";
         
@@ -263,13 +266,17 @@
             rBtn.innerText = `MEGA REBIRTH (${format(mCost)})`;
             rBtn.onclick = megaRebirth;
             rBtn.disabled = game.points < mCost;
-            rBtn.style.background = "#ff9d00"; // Give it a unique look
+            rBtn.style.background = "#333"; // DARK GREY
+            rBtn.style.boxShadow = "0 0 15px #ff9d00, inset 0 0 5px #ff9d00"; // GLOWING GOLD OUTLINE
+            rBtn.style.color = "#ff9d00";
         } else {
             const rCost = getRebirthCost();
             rBtn.innerText = `REBIRTH (${format(rCost)})`;
             rBtn.onclick = rebirth;
             rBtn.disabled = game.points < rCost;
             rBtn.style.background = "#000";
+            rBtn.style.boxShadow = "none";
+            rBtn.style.color = "#fff";
         }
     }
 
@@ -337,7 +344,7 @@
     function rebirth() { 
         const rCost = getRebirthCost(); 
         if(game.points >= rCost) { 
-            game.points = 0n; // ONLY RESET SIAMESE POINTS
+            game.points = 0n; 
             game.rebirths++; 
             render(); 
         } 
@@ -346,7 +353,6 @@
     function megaRebirth() {
         const mCost = getMegaRebirthCost();
         if(game.points >= mCost) {
-            // COMPLETE NUKE
             game.points = 0n;
             game.clickPower = 1n;
             game.pps = 0n;
@@ -363,9 +369,9 @@
             game.dingleberry = { b: false, s: false, g: false, d: false };
             ashcroftPurchases = { dylan: 0 };
             
-            game.megaRebirths++; // Increments exponent by 1000 next time
+            game.megaRebirths++; // Apply the 5x multiplier per rebirth
             render();
-            alert("MEGA REBIRTH COMPLETE. EVERYTHING IS GONE.");
+            alert("MEGA REBIRTH COMPLETE. ALL PROGRESS RESET, BUT YOU NOW HAVE A 5x MULTIPLIER.");
         }
     }
 
@@ -373,8 +379,9 @@
         if(e.code === 'Space') {
             if(!fActive) {
                 const rebirthMulti = 2n ** game.rebirths;
+                const megaMulti = 5n ** game.megaRebirths;
                 const ptsMultNum = Number(game.pointMultiplier) / 100;
-                game.points += game.clickPower * rebirthMulti * BigInt(Math.floor(ptsMultNum));
+                game.points += game.clickPower * rebirthMulti * megaMulti * BigInt(Math.floor(ptsMultNum));
                 render(); 
             } else {
                 birdV = -4.5;
@@ -391,13 +398,22 @@
     document.getElementById('clicker-container').onmousedown = (e) => {
         if(!game.musicStarted) { document.getElementById('main-music').play(); game.musicStarted = true; }
         const rebirthMulti = 2n ** game.rebirths;
+        const megaMulti = 5n ** game.megaRebirths;
         const ptsMultNum = Number(game.pointMultiplier) / 100;
-        const val = game.clickPower * rebirthMulti * BigInt(Math.floor(ptsMultNum));
+        const val = game.clickPower * rebirthMulti * megaMulti * BigInt(Math.floor(ptsMultNum));
         game.points += val;
         const p = document.createElement('div'); p.className = 'particle'; p.innerText = `+${format(val)}`; p.style.left = e.clientX + "px"; p.style.top = e.clientY + "px"; document.body.appendChild(p); setTimeout(() => p.remove(), 800); render();
     };
 
-    setInterval(() => { const rebirthMulti = 2n ** game.rebirths; const ptsMultNum = Number(game.pointMultiplier) / 100; game.points += (game.pps * rebirthMulti * BigInt(Math.floor(ptsMultNum))); render(); localStorage.setItem('siameseSave', JSON.stringify({game, ashcroftPurchases}, (k, v) => typeof v === 'bigint' ? v.toString() + 'n' : v)); }, 1000);
+    setInterval(() => { 
+        const rebirthMulti = 2n ** game.rebirths; 
+        const megaMulti = 5n ** game.megaRebirths;
+        const ptsMultNum = Number(game.pointMultiplier) / 100; 
+        game.points += (game.pps * rebirthMulti * megaMulti * BigInt(Math.floor(ptsMultNum))); 
+        render(); 
+        localStorage.setItem('siameseSave', JSON.stringify({game, ashcroftPurchases}, (k, v) => typeof v === 'bigint' ? v.toString() + 'n' : v)); 
+    }, 1000);
+    
     function toggleOverlay(id) { const s = document.getElementById(id); s.style.display = s.style.display === 'flex' ? 'none' : 'flex'; }
     function toggleMute() { const m = document.getElementById('main-music'); game.muted = !game.muted; m.muted = game.muted; document.getElementById('mute-btn').innerText = game.muted ? "AUDIO: OFF" : "AUDIO: ON"; }
 
@@ -417,9 +433,7 @@
     function endFlappy() { 
         if(game.hasExtraLife) { game.hasExtraLife = false; birdY = 250; birdV = -4.5; return; } 
         fActive = false; cancelAnimationFrame(fAnim); 
-        
         if(fScore > (game.flappyRecord || 0)) game.flappyRecord = fScore;
-        
         document.getElementById('flappy-gameplay').style.display = 'none';
         document.getElementById('death-screen').style.display = 'block';
         document.getElementById('death-score').innerText = fScore;
@@ -434,41 +448,33 @@
     
     document.querySelector('#flappy-gameplay button').onclick = endFlappyQuiet;
 
-    // --- JARVIS COIN LOGIC ---
     function spawnJarvisCoin() {
-        if (Math.random() > 0.5) return; // 50% chance
+        if (Math.random() > 0.5) return; 
         const coin = document.createElement('img');
-        const fallTime = Math.floor(Math.random() * 11) + 5; // RANDOM 5 to 15 seconds
+        const fallTime = Math.floor(Math.random() * 11) + 5; 
         coin.src = 'jiojoijio.png';
         coin.className = 'jarvis-coin';
         coin.style.left = Math.random() * (window.innerWidth - 80) + 'px';
         coin.style.top = '-100px';
         coin.style.transition = `top ${fallTime}s linear`;
         document.body.appendChild(coin);
-
-        // Force reflow and start fall
         setTimeout(() => { coin.style.top = (window.innerHeight + 100) + 'px'; }, 100);
-
         coin.onclick = () => {
             game.jarvisCoins += (1 * game.jarvisMultiplier);
             render();
             coin.remove();
         };
-
-        // Remove if missed
         setTimeout(() => { if(coin.parentNode) coin.remove(); }, (fallTime + 1) * 1000);
     }
-    setInterval(spawnJarvisCoin, 60000); // Check every minute
+    setInterval(spawnJarvisCoin, 60000); 
 
     try { 
         const saved = localStorage.getItem('siameseSave'); 
         if (saved) { 
             const parsed = JSON.parse(saved, (k, v) => typeof v === 'string' && /^-?\d+n$/.test(v) ? BigInt(v.slice(0, -1)) : v); 
-            // NEW: Anti-break checks for older local storage saves
             if (!parsed.game.dingleberry) parsed.game.dingleberry = { b: false, s: false, g: false, d: false };
             if (parsed.game.jarvisMultiplier === undefined) parsed.game.jarvisMultiplier = 1;
             if (parsed.game.megaRebirths === undefined) parsed.game.megaRebirths = 0n;
-            
             Object.assign(game, parsed.game); 
             Object.assign(ashcroftPurchases, parsed.ashcroftPurchases); 
         } 
