@@ -79,7 +79,7 @@
             width: 80px;
             cursor: pointer;
             z-index: 500;
-            transition: top 60s linear;
+            transition: top 20s linear; /* CHANGED FROM 60s TO 20s */
         }
     </style>
 </head>
@@ -160,7 +160,9 @@
     let game = { 
         points: 0n, clickPower: 1n, pps: 0n, rebirths: 0n, agencyIdx: 0, jarvisIdx: 0, page: 0, 
         muted: false, gems: 0, jarvisCoins: 0, musicStarted: false, pointMultiplier: 100n, gemsMultiplier: 1, 
-        hasOversallsOpal: false, hasExtraLife: false, flappyRecord: 0
+        hasOversallsOpal: false, hasExtraLife: false, flappyRecord: 0,
+        jarvisMultiplier: 1, // NEW: multiplier for jarvis coins
+        dingleberry: { b: false, s: false, g: false, d: false } // NEW: one-time dingleberry purchases
     };
     
     let ashcroftPurchases = { dylan: 0 };
@@ -194,6 +196,10 @@
                 if(typeof value === 'string' && /^-?\d+n$/.test(value)) return BigInt(value.slice(0, -1));
                 return value;
             });
+            // NEW: Anti-break checks for older braille saves
+            if (!parsed.game.dingleberry) parsed.game.dingleberry = { b: false, s: false, g: false, d: false };
+            if (parsed.game.jarvisMultiplier === undefined) parsed.game.jarvisMultiplier = 1;
+
             Object.assign(game, parsed.game); 
             Object.assign(ashcroftPurchases, parsed.ashcroftPurchases);
             render(); alert("DATA IMPORTED");
@@ -209,8 +215,8 @@
     function getRebirthCost() { return 10n ** (100n * (game.rebirths + 1n)); }
 
     function changePage(dir) { 
-        game.page = (game.page + dir + 3) % 3; 
-        document.getElementById('page-title').innerText = ["UPGRADES", "JARVIS BOTS", "ASHCROFTS JEWELS"][game.page];
+        game.page = (game.page + dir + 4) % 4; // Changed mod logic to 4 to accommodate new page
+        document.getElementById('page-title').innerText = ["UPGRADES", "JARVIS BOTS", "ASHCROFTS JEWELS", "DYLANS DINGLEBERRIES"][game.page];
         render(); 
     }
 
@@ -241,8 +247,10 @@
                 game.points -= cost; game.pps += (cost / 8n) + 10n; game.jarvisIdx++; render(); 
             };
             list.appendChild(card);
-        } else {
+        } else if (game.page === 2) {
             renderJewels();
+        } else if (game.page === 3) {
+            renderDingleberries();
         }
         const rCost = getRebirthCost();
         document.getElementById('rebirth-btn').innerText = `REBIRTH (${format(rCost)})`;
@@ -262,6 +270,56 @@
         card.className = `upgrade-card ${isLocked ? 'locked' : ''}`;
         card.innerHTML = `<img src="${src}" class="upgrade-icon" onerror="this.src='OIP.webp'"><div style="flex:1"><span class="u-name">${name}</span><span class="u-cost">${format(cost)} Gems</span></div>`;
         if (!isLocked) card.onclick = onClick;
+        document.getElementById('upgrades-list').appendChild(card);
+    }
+
+    // --- NEW DINGLEBERRY LOGIC ---
+    function renderDingleberries() {
+        // Bronze
+        createDingleberryCard("Bronze Jarvis Coin", "bronzejarvis.png", 5, () => {
+            game.jarvisCoins -= 5;
+            game.jarvisMultiplier *= 5;
+            game.pointMultiplier = BigInt(Math.floor(Number(game.pointMultiplier) * 1.5));
+            game.dingleberry.b = true;
+            render();
+        }, game.jarvisCoins < 5 || game.dingleberry.b, game.dingleberry.b);
+        
+        // Silver
+        createDingleberryCard("Silver Jarvis Coin", "silverjarvis.png", 25, () => {
+            game.jarvisCoins -= 25;
+            game.gemsMultiplier *= 2;
+            game.jarvisMultiplier *= 2;
+            game.pointMultiplier *= 2n;
+            game.dingleberry.s = true;
+            render();
+        }, game.jarvisCoins < 25 || game.dingleberry.s, game.dingleberry.s);
+        
+        // Gold
+        createDingleberryCard("Gold Jarvis Coin", "goldjarvis.png", 500, () => {
+            game.jarvisCoins -= 500;
+            game.jarvisMultiplier *= 10;
+            game.pointMultiplier = BigInt(Math.floor(Number(game.pointMultiplier) * 2.5));
+            game.dingleberry.g = true;
+            render();
+        }, game.jarvisCoins < 500 || game.dingleberry.g, game.dingleberry.g);
+        
+        // Diamond
+        createDingleberryCard("Diamond Jarvis Coin", "diamondjarvis.png", 50000, () => {
+            game.jarvisCoins -= 50000;
+            game.jarvisMultiplier *= 100;
+            game.pointMultiplier *= 5n;
+            game.gemsMultiplier *= 3;
+            game.dingleberry.d = true;
+            render();
+        }, game.jarvisCoins < 50000 || game.dingleberry.d, game.dingleberry.d);
+    }
+
+    function createDingleberryCard(name, src, cost, onClick, isLocked, isBought) {
+        const card = document.createElement('div');
+        card.className = `upgrade-card ${isLocked ? 'locked' : ''}`;
+        let costText = isBought ? "SOLD OUT" : `${format(BigInt(cost))} Jarvis Coins`;
+        card.innerHTML = `<img src="${src}" class="upgrade-icon" onerror="this.src='OIP.webp'"><div style="flex:1"><span class="u-name">${name}</span><span class="u-cost">${costText}</span></div>`;
+        if (!isBought && !isLocked) card.onclick = onClick;
         document.getElementById('upgrades-list').appendChild(card);
     }
 
@@ -347,17 +405,28 @@
         setTimeout(() => { coin.style.top = (window.innerHeight + 100) + 'px'; }, 100);
 
         coin.onclick = () => {
-            game.jarvisCoins++;
+            game.jarvisCoins += (1 * game.jarvisMultiplier);
             render();
             coin.remove();
         };
 
         // Remove if missed
-        setTimeout(() => { if(coin.parentNode) coin.remove(); }, 61000);
+        setTimeout(() => { if(coin.parentNode) coin.remove(); }, 21000); // CHANGED TO 21000 (21s)
     }
     setInterval(spawnJarvisCoin, 60000); // Check every minute
 
-    try { const saved = localStorage.getItem('siameseSave'); if (saved) { const parsed = JSON.parse(saved, (k, v) => typeof v === 'string' && /^-?\d+n$/.test(v) ? BigInt(v.slice(0, -1)) : v); Object.assign(game, parsed.game); Object.assign(ashcroftPurchases, parsed.ashcroftPurchases); } } catch(e) {}
+    try { 
+        const saved = localStorage.getItem('siameseSave'); 
+        if (saved) { 
+            const parsed = JSON.parse(saved, (k, v) => typeof v === 'string' && /^-?\d+n$/.test(v) ? BigInt(v.slice(0, -1)) : v); 
+            // NEW: Anti-break checks for older local storage saves
+            if (!parsed.game.dingleberry) parsed.game.dingleberry = { b: false, s: false, g: false, d: false };
+            if (parsed.game.jarvisMultiplier === undefined) parsed.game.jarvisMultiplier = 1;
+            
+            Object.assign(game, parsed.game); 
+            Object.assign(ashcroftPurchases, parsed.ashcroftPurchases); 
+        } 
+    } catch(e) {}
     render();
 </script>
 </body>
