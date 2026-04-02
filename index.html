@@ -48,10 +48,9 @@
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); z-index: 1000; display: none; align-items: center; justify-content: center; }
         .popup-box { background: #fff; padding: 40px; border-radius: 30px; width: 400px; text-align: center; }
 
-        /* MINIGAME CONTAINERS */
         #flappy-container, #dash-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         #flappy-container { background: #4ec0ca; }
-        #dash-container { background: #000; }
+        #dash-container { background: #1a1a1a; }
         
         canvas.minigame-canvas { background: #fff; display: block; border: 5px solid #000; border-radius: 20px; cursor: pointer; }
 
@@ -75,18 +74,13 @@
         .death-stat { font-weight: 900; font-size: 1.5rem; margin: 5px 0; }
 
         .jarvis-coin {
-            position: fixed;
-            width: 80px;
-            cursor: pointer;
-            z-index: 500;
-            transition: top linear; 
+            position: fixed; width: 80px; cursor: pointer; z-index: 500; transition: top linear; 
         }
     </style>
 </head>
 <body>
 
 <div id="dylan-flash">DYLAN JARVIS</div>
-
 <canvas id="bg-canvas"></canvas>
 
 <audio id="main-music" loop>
@@ -152,7 +146,6 @@
         <canvas id="flappy-canvas" class="minigame-canvas"></canvas>
         <button onclick="exitFlappy()" style="margin-top: 20px; padding: 15px 30px; background: #000; color: #fff; border: none; border-radius: 10px; font-weight: 900; cursor: pointer;">QUIT GAME</button>
     </div>
-
     <div id="flappy-death" class="popup-box death-screen">
         <h2 style="font-weight: 900; font-size: 3rem; margin-top: 0;">YOU DIED</h2>
         <div class="death-stat">SCORE: <span id="f-death-score">0</span></div>
@@ -169,7 +162,6 @@
         <canvas id="dash-canvas" class="minigame-canvas"></canvas>
         <button onclick="exitDash()" style="margin-top: 20px; padding: 15px 30px; background: #fff; color: #000; border: none; border-radius: 10px; font-weight: 900; cursor: pointer;">QUIT GAME</button>
     </div>
-
     <div id="dash-death" class="popup-box death-screen">
         <h2 style="font-weight: 900; font-size: 3rem; margin-top: 0;">YOU DIED</h2>
         <div class="death-stat">SPIKES JUMPED: <span id="d-death-score">0</span></div>
@@ -195,7 +187,6 @@
     
     const birdSprite = new Image(); birdSprite.src = 'IMG_3017.jpg';
     const pipeSprite = new Image(); pipeSprite.src = 'image0_15.gif.jpg';
-    
     const dylanSprite = new Image(); dylanSprite.src = 'jdash.png';
     const spikeSprite = new Image(); spikeSprite.src = 'spike1---image.png';
     const dashBgImg = new Image(); dashBgImg.src = 'background.webp';
@@ -343,7 +334,6 @@
     }
 
     function rebirth() { const rCost = getRebirthCost(); if(game.points >= rCost) { game.points = 0n; game.rebirths++; render(); } }
-
     function megaRebirth() {
         const mCost = getMegaRebirthCost();
         if(game.points >= mCost) {
@@ -351,24 +341,9 @@
             game.gems = 0; game.jarvisCoins = 0; game.pointMultiplier = 100n; game.gemsMultiplier = 1; game.jarvisMultiplier = 1;
             game.hasOversallsOpal = false; game.hasExtraLife = false; game.dingleberry = { b: false, s: false, g: false, d: false };
             ashcroftPurchases = { dylan: 0 }; game.megaRebirths++; render();
-            alert("MEGA REBIRTH COMPLETE. ALL PROGRESS RESET, BUT YOU NOW HAVE A 5x MULTIPLIER.");
+            alert("MEGA REBIRTH COMPLETE.");
         }
     }
-
-    window.addEventListener('keydown', (e) => {
-        if(e.code === 'Space') {
-            if(fActive) { birdV = -4.5; }
-            else if(dActive) { if(!dJumping) { dV = -10; dJumping = true; } }
-            else {
-                const rebirthMulti = 2n ** game.rebirths;
-                const megaMulti = 5n ** game.megaRebirths;
-                const ptsMultNum = Number(game.pointMultiplier) / 100;
-                game.points += game.clickPower * rebirthMulti * megaMulti * BigInt(Math.floor(ptsMultNum));
-                render(); 
-            }
-            e.preventDefault();
-        }
-    });
 
     const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg"];
     function format(n) { if (n < 1000n) return n.toString(); let s = n.toString(); let unitIdx = Math.floor((s.length - 1) / 3); if (unitIdx >= suffixes.length) return s[0] + "." + s.substring(1,3) + "e" + (s.length - 1); let digits = s.length % 3 || 3; return s.substring(0, digits) + "." + s.substring(digits, digits + 2) + suffixes[unitIdx]; }
@@ -386,8 +361,7 @@
     };
 
     setInterval(() => { 
-        const rebirthMulti = 2n ** game.rebirths; 
-        const megaMulti = 5n ** game.megaRebirths;
+        const rebirthMulti = 2n ** game.rebirths; const megaMulti = 5n ** game.megaRebirths;
         const ptsMultNum = Number(game.pointMultiplier) / 100; 
         game.points += (game.pps * rebirthMulti * megaMulti * BigInt(Math.floor(ptsMultNum))); 
         render(); 
@@ -405,21 +379,15 @@
     const fc = document.getElementById('flappy-canvas'); const fctx = fc.getContext('2d'); let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim, fSessionGems = 0;
     function startFlappy() { 
         if(document.getElementById('minigame-menu').style.display === 'flex') toggleOverlay('minigame-menu'); 
-        document.getElementById('flappy-death').style.display = 'none';
-        document.getElementById('flappy-gameplay').style.display = 'flex';
-        document.getElementById('flappy-container').style.display = 'flex'; 
+        document.getElementById('flappy-death').style.display = 'none'; document.getElementById('flappy-gameplay').style.display = 'flex'; document.getElementById('flappy-container').style.display = 'flex'; 
         fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; fSessionGems = 0;
         document.getElementById('f-score').innerText = "0"; flappyLoop(); 
     }
     function dieFlappy() { 
-        if(game.hasExtraLife) { game.hasExtraLife = false; birdY = 250; birdV = -4.5; return; } 
-        fActive = false; cancelAnimationFrame(fAnim); 
+        if(game.hasExtraLife) { game.hasExtraLife = false; birdY = 250; birdV = -4.5; return; } fActive = false; cancelAnimationFrame(fAnim); 
         if(fScore > (game.flappyRecord || 0)) game.flappyRecord = fScore;
-        document.getElementById('flappy-gameplay').style.display = 'none';
-        document.getElementById('flappy-death').style.display = 'flex';
-        document.getElementById('f-death-score').innerText = fScore;
-        document.getElementById('f-death-best').innerText = game.flappyRecord;
-        document.getElementById('f-death-gems').innerText = fSessionGems;
+        document.getElementById('flappy-gameplay').style.display = 'none'; document.getElementById('flappy-death').style.display = 'flex';
+        document.getElementById('f-death-score').innerText = fScore; document.getElementById('f-death-best').innerText = game.flappyRecord; document.getElementById('f-death-gems').innerText = fSessionGems;
         render(); 
     }
     function exitFlappy() { fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
@@ -431,9 +399,7 @@
     let dActive = false, dAnim, dScore = 0, dGems = 0, dSpeed = 4, dDylanY = 350, dV = 0, dJumping = false, dSpikes = [], dScroll = 0, dGemGain = 1;
     function startDylanDash() {
         if(document.getElementById('minigame-menu').style.display === 'flex') toggleOverlay('minigame-menu');
-        document.getElementById('dash-death').style.display = 'none';
-        document.getElementById('dash-gameplay').style.display = 'flex';
-        document.getElementById('dash-container').style.display = 'flex';
+        document.getElementById('dash-death').style.display = 'none'; document.getElementById('dash-gameplay').style.display = 'flex'; document.getElementById('dash-container').style.display = 'flex';
         dc.width = 600; dc.height = 450; dScore = 0; dGems = 0; dSpeed = 4; dDylanY = 350; dV = 0; dJumping = false; dSpikes = []; dScroll = 0; dActive = true; dGemGain = 1;
         document.getElementById('d-score').innerText = "0"; dashLoop();
     }
@@ -450,7 +416,10 @@
             s.x -= dSpeed; dctx.drawImage(spikeSprite, s.x, 360, 50, 50);
             if(!s.scored && s.x < 50) {
                 s.scored = true; dScore++; document.getElementById('d-score').innerText = dScore;
-                if(dScore % 5 === 0) { dGems += dGemGain; game.gems += dGemGain; dSpeed += 0.5; }
+                if(dScore % 5 === 0) { 
+                    let earned = dGemGain * game.gemsMultiplier;
+                    dGems += earned; game.gems += earned; dSpeed += 0.5; 
+                }
                 if(dScore % 10 === 0) { dGemGain++; }
             }
             if(s.x < 100 && s.x + 40 > 60 && dDylanY + 50 > 360) dieDash();
@@ -462,20 +431,15 @@
         if(game.hasExtraLife) { game.hasExtraLife = false; dDylanY = 350; dV = -10; dJumping = true; return; }
         dActive = false; cancelAnimationFrame(dAnim);
         if(dScore > (game.dashRecord || 0)) game.dashRecord = dScore;
-        document.getElementById('dash-gameplay').style.display = 'none';
-        document.getElementById('dash-death').style.display = 'flex';
-        document.getElementById('d-death-score').innerText = dScore;
-        document.getElementById('d-death-best').innerText = game.dashRecord;
-        document.getElementById('d-death-gems').innerText = dGems;
+        document.getElementById('dash-gameplay').style.display = 'none'; document.getElementById('dash-death').style.display = 'flex';
+        document.getElementById('d-death-score').innerText = dScore; document.getElementById('d-death-best').innerText = game.dashRecord; document.getElementById('d-death-gems').innerText = dGems;
         render();
     }
 
     function spawnJarvisCoin() {
         if (Math.random() > 0.5) return; 
-        const coin = document.createElement('img');
-        const fallTime = Math.floor(Math.random() * 11) + 5; 
-        coin.src = 'jiojoijio.png'; coin.className = 'jarvis-coin';
-        coin.style.left = Math.random() * (window.innerWidth - 80) + 'px'; coin.style.top = '-100px'; coin.style.transition = `top ${fallTime}s linear`;
+        const coin = document.createElement('img'); const fallTime = Math.floor(Math.random() * 11) + 5; 
+        coin.src = 'jiojoijio.png'; coin.className = 'jarvis-coin'; coin.style.left = Math.random() * (window.innerWidth - 80) + 'px'; coin.style.top = '-100px'; coin.style.transition = `top ${fallTime}s linear`;
         document.body.appendChild(coin);
         setTimeout(() => { coin.style.top = (window.innerHeight + 100) + 'px'; }, 100);
         coin.onclick = () => { game.jarvisCoins += (1 * game.jarvisMultiplier); render(); coin.remove(); };
