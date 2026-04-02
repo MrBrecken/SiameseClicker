@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neal.fun</title>
+    <title>Siamese Agency Clicker</title>
     
     <link rel="icon" type="image/png" href="ecc268d7-06ed-40cb-8294-4bd7479bc3d0.png">
     
@@ -72,10 +72,6 @@
 
         .death-screen { display: none; flex-direction: column; align-items: center; justify-content: center; }
         .death-stat { font-weight: 900; font-size: 1.5rem; margin: 5px 0; }
-
-        .jarvis-coin {
-            position: fixed; width: 80px; cursor: pointer; z-index: 500; transition: top linear; 
-        }
     </style>
 </head>
 <body>
@@ -336,16 +332,8 @@
     function rebirth() { 
         const rCost = getRebirthCost(); 
         if(game.points >= rCost) { 
-            // RESET POINT-BASED UPGRADES ONLY
-            game.points = 0n; 
-            game.clickPower = 1n;
-            game.pps = 0n;
-            game.agencyIdx = 0;
-            game.jarvisIdx = 0;
-            
-            // INCREMENT REBIRTH
-            game.rebirths++; 
-            render(); 
+            game.points = 0n; game.clickPower = 1n; game.pps = 0n; game.agencyIdx = 0; game.jarvisIdx = 0;
+            game.rebirths++; render(); 
         } 
     }
 
@@ -389,6 +377,14 @@
     const bgCanvas = document.getElementById('bg-canvas'); const bgCtx = bgCanvas.getContext('2d'); let bgBlobs = []; function initBg() { bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight; bgBlobs = Array.from({length: 8}, (v, i) => ({ x: Math.random()*bgCanvas.width, y: Math.random()*bgCanvas.height, vx: Math.random()*1.5-0.75, vy: Math.random()*1.5-0.75, r: Math.random()*400+200, c: ['#8A2BE2', '#4169E1', '#FF69B4', '#00BFFF', '#9370DB'][i % 5] })); }
     function drawBg() { bgCtx.fillStyle = '#fff'; bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height); bgCtx.filter = 'blur(50px)'; bgBlobs.forEach(b => { bgCtx.fillStyle = b.c; bgCtx.beginPath(); bgCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); bgCtx.fill(); b.x += b.vx; b.y += b.vy; if(b.x < -b.r || b.x > bgCanvas.width+b.r) b.vx *= -1; if(b.y < -b.r || b.y > bgCanvas.height+b.r) b.vy *= -1; }); bgCtx.filter = 'none'; requestAnimationFrame(drawBg); }
     window.addEventListener('resize', initBg); initBg(); drawBg();
+
+    /* FIXED MINIGAME KEYBOARD LISTENER */
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            if (fActive) { birdV = -4.5; e.preventDefault(); }
+            else if (dActive && !dJumping) { dV = -10; dJumping = true; e.preventDefault(); }
+        }
+    });
 
     /* FLAPPY LOGIC */
     const fc = document.getElementById('flappy-canvas'); const fctx = fc.getContext('2d'); let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim, fSessionGems = 0;
@@ -446,31 +442,13 @@
         if(game.hasExtraLife) { game.hasExtraLife = false; dDylanY = 350; dV = -10; dJumping = true; return; }
         dActive = false; cancelAnimationFrame(dAnim);
         if(dScore > (game.dashRecord || 0)) game.dashRecord = dScore;
-        document.getElementById('dash-gameplay').style.display = 'none'; document.getElementById('dash-death').style.display = 'flex';
-        document.getElementById('d-death-score').innerText = dScore; document.getElementById('d-death-best').innerText = game.dashRecord; document.getElementById('d-death-gems').innerText = dGems;
+        document.getElementById('dash-gameplay').style.display = 'none';
+        document.getElementById('dash-death').style.display = 'flex';
+        document.getElementById('d-death-score').innerText = dScore;
+        document.getElementById('d-death-best').innerText = game.dashRecord;
+        document.getElementById('d-death-gems').innerText = dGems;
         render();
     }
-
-    function spawnJarvisCoin() {
-        if (Math.random() > 0.5) return; 
-        const coin = document.createElement('img'); const fallTime = Math.floor(Math.random() * 11) + 5; 
-        coin.src = 'jiojoijio.png'; coin.className = 'jarvis-coin'; coin.style.left = Math.random() * (window.innerWidth - 80) + 'px'; coin.style.top = '-100px'; coin.style.transition = `top ${fallTime}s linear`;
-        document.body.appendChild(coin);
-        setTimeout(() => { coin.style.top = (window.innerHeight + 100) + 'px'; }, 100);
-        coin.onclick = () => { game.jarvisCoins += (1 * game.jarvisMultiplier); render(); coin.remove(); };
-        setTimeout(() => { if(coin.parentNode) coin.remove(); }, (fallTime + 1) * 1000);
-    }
-    setInterval(spawnJarvisCoin, 60000); 
-
-    try { 
-        const saved = localStorage.getItem('siameseSave'); 
-        if (saved) { 
-            const parsed = JSON.parse(saved, (k, v) => typeof v === 'string' && /^-?\d+n$/.test(v) ? BigInt(v.slice(0, -1)) : v); 
-            if (!parsed.game.dingleberry) parsed.game.dingleberry = { b: false, s: false, g: false, d: false };
-            Object.assign(game, parsed.game); Object.assign(ashcroftPurchases, parsed.ashcroftPurchases); 
-        } 
-    } catch(e) {}
-    render();
 </script>
 </body>
 </html>
