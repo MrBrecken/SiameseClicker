@@ -187,11 +187,23 @@
     const spikeSprite = new Image(); spikeSprite.src = 'spike1---image.png';
     const dashBgImg = new Image(); dashBgImg.src = 'background.webp';
 
+    /* FIXED BRAILLE & SAVE LOGIC */
     function toBraille(str) { return str.split('').map(c => String.fromCharCode(0x2800 + (c.charCodeAt(0) - 7))).join(''); }
     function fromBraille(brl) { return brl.split('').map(c => String.fromCharCode((c.charCodeAt(0) - 0x2800) + 7)).join(''); }
 
+    function stringifyGame(obj) {
+        return JSON.stringify(obj, (key, value) => typeof value === 'bigint' ? value.toString() + 'n' : value);
+    }
+
+    function parseGame(json) {
+        return JSON.parse(json, (key, value) => {
+            if (typeof value === 'string' && /^-?\d+n$/.test(value)) return BigInt(value.slice(0, -1));
+            return value;
+        });
+    }
+
     function exportData() {
-        const json = JSON.stringify({game, ashcroftPurchases}, (key, value) => typeof value === 'bigint' ? value.toString() + 'n' : value);
+        const json = stringifyGame({game, ashcroftPurchases});
         navigator.clipboard.writeText(toBraille(json));
         alert("BRAILLE DATA COPIED");
     }
@@ -201,16 +213,34 @@
         if(!raw) return;
         try {
             const decoded = fromBraille(raw.trim());
-            const parsed = JSON.parse(decoded, (key, value) => {
-                if(typeof value === 'string' && /^-?\d+n$/.test(value)) return BigInt(value.slice(0, -1));
-                return value;
-            });
+            const parsed = parseGame(decoded);
             if (!parsed.game.dingleberry) parsed.game.dingleberry = { b: false, s: false, g: false, d: false };
             Object.assign(game, parsed.game); 
             Object.assign(ashcroftPurchases, parsed.ashcroftPurchases);
             render(); alert("DATA IMPORTED");
         } catch(e) { alert("INVALID BRAILLE DATA"); }
     }
+
+    function saveToLocal() {
+        const json = stringifyGame({game, ashcroftPurchases});
+        localStorage.setItem('siameseSave', json);
+    }
+
+    function loadFromLocal() {
+        const saved = localStorage.getItem('siameseSave');
+        if (saved) {
+            try {
+                const parsed = parseGame(saved);
+                Object.assign(game, parsed.game);
+                Object.assign(ashcroftPurchases, parsed.ashcroftPurchases);
+            } catch(e) { console.error("Autosave Corrupted"); }
+        }
+    }
+
+    window.onload = () => {
+        loadFromLocal();
+        render();
+    };
 
     function triggerFlash() {
         const flash = document.getElementById('dylan-flash');
@@ -281,7 +311,6 @@
     }
 
     function renderJewels() {
-        const list = document.getElementById('upgrades-list');
         const gemCost = BigInt(5 * (2 ** ashcroftPurchases['dylan']));
         createJewelCard("Dylans Diamond", ashcroftImgs[0], gemCost, () => { game.gems -= Number(gemCost); game.gemsMultiplier *= 2; ashcroftPurchases['dylan']++; render(); }, game.gems < Number(gemCost));
         createJewelCard("Olivers Opal", ashcroftImgs[1], 250n, () => { game.gems -= 250; game.pointMultiplier = 150n; game.hasOversallsOpal = true; render(); }, game.gems < 250 || game.hasOversallsOpal);
@@ -302,18 +331,15 @@
             game.pointMultiplier = BigInt(Math.floor(Number(game.pointMultiplier) * 1.5));
             game.dingleberry.b = true; render();
         }, game.jarvisCoins < 5 || game.dingleberry.b, game.dingleberry.b);
-        
         createDingleberryCard("Silver Jarvis Coin", "silverjarvis.png", 25, () => {
             game.jarvisCoins -= 25; game.gemsMultiplier *= 2; game.jarvisMultiplier *= 2; game.pointMultiplier *= 2n;
             game.dingleberry.s = true; render();
         }, game.jarvisCoins < 25 || game.dingleberry.s, game.dingleberry.s);
-        
         createDingleberryCard("Gold Jarvis Coin", "goldjarvis.png", 500, () => {
             game.jarvisCoins -= 500; game.jarvisMultiplier *= 10;
             game.pointMultiplier = BigInt(Math.floor(Number(game.pointMultiplier) * 2.5));
             game.dingleberry.g = true; render();
         }, game.jarvisCoins < 500 || game.dingleberry.g, game.dingleberry.g);
-        
         createDingleberryCard("Diamond Jarvis Coin", "diamondjarvis.png", 50000, () => {
             game.jarvisCoins -= 50000; game.jarvisMultiplier *= 100; game.pointMultiplier *= 5n; game.gemsMultiplier *= 3;
             game.dingleberry.d = true; render();
@@ -368,7 +394,7 @@
         const ptsMultNum = Number(game.pointMultiplier) / 100; 
         game.points += (game.pps * rebirthMulti * megaMulti * BigInt(Math.floor(ptsMultNum))); 
         render(); 
-        localStorage.setItem('siameseSave', JSON.stringify({game, ashcroftPurchases}, (k, v) => typeof v === 'bigint' ? v.toString() + 'n' : v)); 
+        saveToLocal(); // AUTOSAVE EVERY SECOND
     }, 1000);
     
     function toggleOverlay(id) { const s = document.getElementById(id); s.style.display = s.style.display === 'flex' ? 'none' : 'flex'; }
@@ -378,7 +404,7 @@
     function drawBg() { bgCtx.fillStyle = '#fff'; bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height); bgCtx.filter = 'blur(50px)'; bgBlobs.forEach(b => { bgCtx.fillStyle = b.c; bgCtx.beginPath(); bgCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); bgCtx.fill(); b.x += b.vx; b.y += b.vy; if(b.x < -b.r || b.x > bgCanvas.width+b.r) b.vx *= -1; if(b.y < -b.r || b.y > bgCanvas.height+b.r) b.vy *= -1; }); bgCtx.filter = 'none'; requestAnimationFrame(drawBg); }
     window.addEventListener('resize', initBg); initBg(); drawBg();
 
-    /* FIXED MINIGAME KEYBOARD LISTENER */
+    /* FIXED SPACEBAR JUMP BUG */
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space') {
             if (fActive) { birdV = -4.5; e.preventDefault(); }
