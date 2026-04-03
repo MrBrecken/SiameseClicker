@@ -310,4 +310,57 @@
     /* FIXED COIN MULTIPLIER LOGIC */
     function spawnJarvisCoin() {
         if (fActive || dActive) return;
-        const coin =
+        const coin = document.createElement('img');
+        coin.src = 'goldjarvis.png'; coin.setAttribute('onerror', "this.src='OIP.webp'");
+        coin.className = 'falling-jarvis';
+        coin.style.left = Math.max(20, Math.random() * (window.innerWidth - 100)) + "px";
+        coin.style.animation = "jarvisFall 6s linear forwards";
+        
+        coin.onmousedown = (e) => {
+            e.stopPropagation();
+            // Apply Jarvis Multiplier here
+            const reward = 1 * game.jarvisMultiplier;
+            game.jarvisCoins += reward;
+            render();
+            coin.remove();
+            
+            const p = document.createElement('div'); p.className = 'particle'; 
+            p.innerText = `+${reward} JARVIS COINS`; 
+            p.style.color = "#ff9d00"; p.style.left = e.clientX + "px"; p.style.top = e.clientY + "px"; 
+            document.body.appendChild(p); setTimeout(() => p.remove(), 800);
+        };
+        document.body.appendChild(coin);
+        setTimeout(() => { if(coin.parentElement) coin.remove(); }, 6000);
+    }
+
+    setInterval(spawnJarvisCoin, 60000);
+
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            if (fActive) { birdV = -4.5; e.preventDefault(); } 
+            else if (dActive && !dJumping) { dV = -10; dJumping = true; e.preventDefault(); } 
+            else if (!fActive && !dActive && document.getElementById('settings-overlay').style.display !== 'flex' && document.getElementById('minigame-menu').style.display !== 'flex') {
+                const img = document.getElementById('clicker-container'); img.style.transform = 'scale(0.9)'; setTimeout(() => img.style.transform = 'scale(1)', 50);
+                triggerMainClick(window.innerWidth / 2, window.innerHeight / 2);
+                e.preventDefault();
+            }
+        }
+    });
+
+    const fc = document.getElementById('flappy-canvas'); const fctx = fc.getContext('2d'); let fScore = 0, birdY = 250, birdV = 0, pipes = [], fActive = false, fAnim, fSessionGems = 0;
+    function startFlappy() { if(document.getElementById('minigame-menu').style.display === 'flex') toggleOverlay('minigame-menu'); document.getElementById('flappy-death').style.display = 'none'; document.getElementById('flappy-gameplay').style.display = 'flex'; document.getElementById('flappy-container').style.display = 'flex'; fc.width = 400; fc.height = 500; fScore = 0; birdY = 250; birdV = 0; pipes = []; fActive = true; fSessionGems = 0; document.getElementById('f-score').innerText = "0"; flappyLoop(); }
+    function dieFlappy() { if(game.hasExtraLife) { game.hasExtraLife = false; birdY = 250; birdV = -4.5; return; } fActive = false; cancelAnimationFrame(fAnim); if(fScore > (game.flappyRecord || 0)) game.flappyRecord = fScore; document.getElementById('flappy-gameplay').style.display = 'none'; document.getElementById('flappy-death').style.display = 'flex'; document.getElementById('f-death-score').innerText = fScore; document.getElementById('f-death-best').innerText = game.flappyRecord; document.getElementById('f-death-gems').innerText = fSessionGems; render(); }
+    function exitFlappy() { fActive = false; cancelAnimationFrame(fAnim); document.getElementById('flappy-container').style.display = 'none'; render(); }
+    fc.onmousedown = (e) => { if(fActive) { birdV = -4.5; e.preventDefault(); } };
+    function flappyLoop() { if(!fActive) return; fctx.fillStyle = '#4ec0ca'; fctx.fillRect(0,0,400,500); birdV += 0.2; birdY += birdV; fctx.drawImage(birdSprite, 50, birdY, 40, 40); if(pipes.length === 0 || pipes[pipes.length-1].x < 180) pipes.push({ x: 400, h: Math.random()*200+50, scored: false }); pipes.forEach((p, i) => { p.x -= 1.5; fctx.drawImage(pipeSprite, p.x, 0, 60, p.h); fctx.drawImage(pipeSprite, p.x, p.h + 140, 60, 500); if(!p.scored && p.x < 50) { p.scored = true; fScore++; document.getElementById('f-score').innerText = fScore; if(fScore % 10 === 0) { let earned = game.gemsMultiplier; game.gems += earned; fSessionGems += earned; } } if(p.x < 90 && p.x + 60 > 50) { if(birdY + 5 < p.h || birdY + 35 > p.h + 140) dieFlappy(); } if(p.x < -60) pipes.splice(i, 1); }); if(birdY > 500 || birdY < -40) dieFlappy(); fAnim = requestAnimationFrame(flappyLoop); }
+
+    const dc = document.getElementById('dash-canvas'); const dctx = dc.getContext('2d');
+    let dActive = false, dAnim, dScore = 0, dGems = 0, dSpeed = 4, dDylanY = 350, dV = 0, dJumping = false, dSpikes = [], dScroll = 0, dGemGain = 1;
+    function startDylanDash() { if(document.getElementById('minigame-menu').style.display === 'flex') toggleOverlay('minigame-menu'); document.getElementById('dash-death').style.display = 'none'; document.getElementById('dash-gameplay').style.display = 'flex'; document.getElementById('dash-container').style.display = 'flex'; dc.width = 600; dc.height = 450; dScore = 0; dGems = 0; dSpeed = 4; dDylanY = 350; dV = 0; dJumping = false; dSpikes = []; dScroll = 0; dActive = true; dGemGain = 1; document.getElementById('d-score').innerText = "0"; dashLoop(); }
+    function exitDash() { dActive = false; cancelAnimationFrame(dAnim); document.getElementById('dash-container').style.display = 'none'; render(); }
+    dc.onmousedown = (e) => { if(dActive && !dJumping) { dV = -10; dJumping = true; e.preventDefault(); } };
+    function dashLoop() { if(!dActive) return; dScroll -= dSpeed; if(dScroll <= -600) dScroll = 0; dctx.drawImage(dashBgImg, dScroll, 0, 600, 450); dctx.drawImage(dashBgImg, dScroll + 600, 0, 600, 450); dV += 0.5; dDylanY += dV; if(dDylanY > 350) { dDylanY = 350; dV = 0; dJumping = false; } dctx.drawImage(dylanSprite, 50, dDylanY, 60, 60); if(dSpikes.length === 0 || dSpikes[dSpikes.length-1].x < (600 - (200 + Math.random() * 150))) dSpikes.push({ x: 600, scored: false }); dSpikes.forEach((s, i) => { s.x -= dSpeed; dctx.drawImage(spikeSprite, s.x, 360, 50, 50); if(!s.scored && s.x < 50) { s.scored = true; dScore++; document.getElementById('d-score').innerText = dScore; if(dScore % 5 === 0) { let earned = dGemGain * game.gemsMultiplier; dGems += earned; game.gems += earned; dSpeed += 0.5; } if(dScore % 10 === 0) { dGemGain++; } } if(s.x < 100 && s.x + 40 > 60 && dDylanY + 50 > 360) dieDash(); if(s.x < -50) dSpikes.splice(i, 1); }); dAnim = requestAnimationFrame(dashLoop); }
+    function dieDash() { if(game.hasExtraLife) { game.hasExtraLife = false; dDylanY = 350; dV = -10; dJumping = true; return; } dActive = false; cancelAnimationFrame(dAnim); if(dScore > (game.dashRecord || 0)) game.dashRecord = dScore; document.getElementById('dash-gameplay').style.display = 'none'; document.getElementById('dash-death').style.display = 'flex'; document.getElementById('d-death-score').innerText = dScore; document.getElementById('d-death-best').innerText = game.dashRecord; document.getElementById('d-death-gems').innerText = dGems; render(); }
+</script>
+</body>
+</html>
