@@ -204,8 +204,6 @@
 </div>
 
 <script>
-    const MAX_VAL = 10n ** (10n ** 9n); // 1e1 Billion Cap
-
     let game = { 
         points: 0n, clickPower: 1n, pps: 0n, rebirths: 0n, megaRebirths: 0n, agencyIdx: 0, jarvisIdx: 0, page: 0, 
         muted: false, gems: 0, jarvisCoins: 0n, musicStarted: false, pointMultiplier: 100n, gemsMultiplier: 1, 
@@ -317,7 +315,7 @@
         const cheatMult = cheats.multi ? 1000n : 1n; // APPLY CHEAT LOGIC
         const val = game.clickPower * rebirthMulti * megaMulti * ptsMultNum * cheatMult;
         
-        game.points += val; if(game.points > MAX_VAL) game.points = MAX_VAL;
+        game.points += val; 
         const p = document.createElement('div'); p.className = 'particle'; p.innerText = `+${format(val)}`; p.style.left = x + "px"; p.style.top = y + "px"; document.body.appendChild(p); setTimeout(() => p.remove(), 800); render();
     }
 
@@ -399,7 +397,6 @@
         const rM = 2n**game.rebirths; const mM = 5n**game.megaRebirths; const pM = game.pointMultiplier/100n; 
         const cheatMult = cheats.multi ? 1000n : 1n; // APPLY CHEAT PASSIVE
         game.points += (game.pps * rM * mM * pM * cheatMult); 
-        if(game.points > MAX_VAL) game.points = MAX_VAL; 
         render(); saveToLocal(); 
     }, 1000);
 
