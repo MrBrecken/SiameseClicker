@@ -4,12 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Siamese Agency Clicker 2</title>
-    
-    <link rel="icon" type="image/png" href="ecc268d7-06ed-40cb-8294-4bd7479bc3d0.png">
-    <meta property="og:title" content="Siamese Agency Clicker 2">
-    <meta property="og:description" content="Click your way to the top of the agency.">
-    <meta property="og:image" content="IMG_3017.jpg">
-    <meta name="twitter:card" content="summary_large_image">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
@@ -58,11 +52,22 @@
         #clicker-image { 
             width: 320px; 
             height: 320px; 
-            object-fit: contain; 
+            object-fit: cover; 
             border-radius: 50%;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             background: #fff;
             padding: 10px;
+        }
+        /* Fallback if the image name is wrong */
+        #clicker-fallback {
+            width: 320px; height: 320px;
+            background: #f1f5f9; border-radius: 50%;
+            border: 4px dashed #cbd5e1;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: var(--danger); font-weight: 800; font-size: 1.5rem;
+            text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 20px;
         }
         #clicker-container:active { transform: scale(0.92); }
 
@@ -114,7 +119,11 @@
         .upgrade-card:hover:not(.locked) { transform: translateY(-3px); box-shadow: var(--shadow-sm); border-color: #cbd5e1; }
         .upgrade-card.locked { opacity: 0.4; filter: grayscale(1); cursor: not-allowed; }
         
-        .upgrade-icon { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: #fff; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .upgrade-icon { 
+            width: 60px; height: 60px; border-radius: 12px; 
+            background: #fff; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); 
+            display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0;
+        }
         .u-name { font-weight: 800; font-size: 1.1rem; display: block; color: var(--text-main); margin-bottom: 2px; }
         .u-cost { font-weight: 600; font-size: 0.9rem; color: var(--accent); }
         .u-desc { display: block; font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.2; }
@@ -189,7 +198,7 @@
         .particle { position: absolute; font-weight: 900; pointer-events: none; color: var(--accent); animation: pOut 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; font-size: 2rem; z-index: 99; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         @keyframes pOut { 0% { transform: translate(-50%,-50%) scale(0.8); opacity: 1; } 100% { transform: translate(-50%,-150px) scale(1.2); opacity: 0; } }
 
-        .falling-jarvis { position: fixed; top: -100px; width: 60px; height: 60px; cursor: pointer; z-index: 500; object-fit: contain; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); }
+        .falling-jarvis { position: fixed; top: -100px; font-size: 50px; cursor: pointer; z-index: 500; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); }
         @keyframes jarvisFall { 0% { top: -100px; transform: rotate(0deg); } 100% { top: 110vh; transform: rotate(360deg); } }
 
         #dylan-flash {
@@ -214,25 +223,6 @@
         .death-screen { display: none; flex-direction: column; align-items: center; justify-content: center; }
         .death-stat { font-weight: 800; font-size: 1.2rem; margin: 8px 0; color: var(--text-muted); }
         .death-stat span { color: var(--text-main); }
-
-        /* Jarvis Matrix Client */
-        #jarvis-client-menu {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(5, 5, 5, 0.98); border: 1px solid #10b981; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(16, 185, 129, 0.1);
-            padding: 40px; z-index: 99999; border-radius: 12px; width: 480px;
-            font-family: 'Courier New', Courier, monospace; color: #10b981;
-        }
-        .jarvis-title { text-align: center; font-size: 1.8rem; font-weight: 900; margin-bottom: 20px; letter-spacing: 2px; }
-        .jarvis-hr { border: none; height: 1px; background: #10b981; margin: 20px 0; opacity: 0.5; }
-        .jarvis-label { display: flex; align-items: center; font-size: 1.1rem; cursor: pointer; margin: 20px 0; font-weight: bold; }
-        .jarvis-checkbox { width: 20px; height: 20px; margin-right: 15px; accent-color: #10b981; cursor: pointer; }
-        .jarvis-btn { width: 100%; padding: 15px; font-family: 'Courier New', Courier, monospace; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 15px; border-radius: 6px; transition: 0.2s; border: 1px solid #10b981; }
-        .jarvis-btn-nuke { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); }
-        .jarvis-btn-nuke:hover { background: var(--danger); color: #fff; }
-        .jarvis-btn-close { background: #10b981; color: #000; }
-        .jarvis-btn-close:hover { background: #059669; color: #fff; }
-
     </style>
 </head>
 <body>
@@ -240,19 +230,21 @@
 <div id="dylan-flash">DYLAN JARVIS</div>
 <canvas id="bg-canvas"></canvas>
 
-<!-- Ensure your audio file extension is correct -->
-<audio id="main-music" loop>
-    <source src="background.mp3" type="audio/mpeg">
-</audio>
-
 <div id="game-view">
     <div style="text-align: center;">
-        <div class="agency-label">The Siamese Agency</div>
+        <div class="agency-label">Siamese Agency Clicker 2</div>
         <h1 id="points">0</h1>
         <div id="stats">+1/CLICK • 0/SEC</div>
     </div>
     <div id="clicker-container">
-        <img id="clicker-image" src="siamese-Photoroom.jpg" onerror="this.src='https://via.placeholder.com/320?text=Click+Me'">
+        <img id="clicker-image" src="siamese-Photoroom.jpg">
+        <div id="clicker-fallback">
+            <span>⚠️ IMAGE ERROR</span>
+            <span style="font-size:1rem; font-weight:normal; margin-top:10px; color:#475569;">
+                Make sure your image on Github is named EXACTLY:<br><b>siamese-Photoroom.jpg</b><br>(Case-sensitive!)
+            </span>
+            <span style="font-size:0.9rem; margin-top:15px; color:#3b82f6;">(Click me anyway!)</span>
+        </div>
     </div>
 </div>
 
@@ -264,7 +256,7 @@
     </div>
     <div id="upgrades-list"></div>
     <div class="rebirth-container">
-        <button id="rebirth-btn" onclick="rebirth()">REBIRTH (1e100)</button>
+        <button id="rebirth-btn" onclick="rebirth()">REBIRTH</button>
         <div id="rebirth-count">0 TOTAL REBIRTHS</div>
     </div>
 </div>
@@ -278,9 +270,7 @@
 <div id="settings-overlay" class="overlay" onclick="if(event.target.id==='settings-overlay') toggleOverlay('settings-overlay')">
     <div class="popup-box">
         <h2>OPTIONS</h2>
-        <button onclick="toggleMute()" id="mute-btn" class="menu-btn btn-primary">AUDIO: ON</button>
-        <button onclick="exportData()" class="menu-btn btn-outline">EXPORT BRAILLE DATA</button>
-        <button onclick="importData()" class="menu-btn btn-outline">IMPORT BRAILLE DATA</button>
+        <button onclick="nukeData()" class="menu-btn btn-primary" style="background:var(--danger)">WIPE SAVE DATA</button>
         
         <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
             <p style="font-weight: 800; font-size: 0.85rem; color: #94a3b8; margin-bottom: 10px;">Brought To You By JHub Productions</p>
@@ -331,84 +321,53 @@
     </div>
 </div>
 
-<div id="jarvis-client-menu">
-    <h2 class="jarvis-title">JARVIS CLIENT // ROOT</h2>
-    <hr class="jarvis-hr">
-    <label class="jarvis-label">
-        <input type="checkbox" class="jarvis-checkbox" onchange="cheats.multi = this.checked">
-        [OVERRIDE] 1000x Currency Multiplier
-    </label>
-    <label class="jarvis-label">
-        <input type="checkbox" class="jarvis-checkbox" onchange="cheats.noclip = this.checked">
-        [INJECT] Infinite Minigame Noclip
-    </label>
-    <button onclick="nukeData()" class="jarvis-btn jarvis-btn-nuke">EXECUTE // CLEAR DATA</button>
-    <button onclick="toggleJarvisClient()" class="jarvis-btn jarvis-btn-close">DISCONNECT</button>
-</div>
 
 <script>
-    // --- Global State ---
-    let cheats = { multi: false, noclip: false };
+    // --- Image Fallback Logic ---
+    const mainImg = document.getElementById('clicker-image');
+    const fallbackBox = document.getElementById('clicker-fallback');
     
+    mainImg.onerror = () => {
+        mainImg.style.display = 'none';
+        fallbackBox.style.display = 'flex';
+    };
+
+    // --- Global State (Now using standard Numbers to prevent saving crashes) ---
     let game = { 
-        points: 0n, clickPower: 1n, pps: 0n, rebirths: 0n, megaRebirths: 0n, 
+        points: 0, clickPower: 1, pps: 0, rebirths: 0, megaRebirths: 0, 
         agencyIdx: 0, jarvisIdx: 0, page: 0, 
-        muted: false, gems: 0, jarvisCoins: 0, musicStarted: false, 
-        pointMultiplier: 100n, /* Stored as percentage (100n = 1x) to preserve math precision */
-        gemsMultiplier: 1, jarvisMultiplier: 1, 
+        gems: 0, jarvisCoins: 0, 
+        pointMultiplier: 1.0, gemsMultiplier: 1.0, jarvisMultiplier: 1.0, 
         hasOversallsOpal: false, hasExtraLife: false, flappyRecord: 0, dashRecord: 0,
         dingleberry: { b: false, s: false, g: false, d: false }
     };
-    
     let ashcroftPurchases = { dylan: 0 };
     
-    // Fallback logic for images
-    const agencyImgs = ["img1.png","img2.png","img3.png"];
-    const ashcroftImgs = ["dylandiamond.png", "oliversopal.png", "stevenssaphire.png"];
-    
-    const fallbackImg = "https://via.placeholder.com/60?text=Item";
-    const birdSprite = new Image(); birdSprite.src = 'siamese-Photoroom.jpg';
-    const pipeSprite = new Image(); pipeSprite.src = 'https://via.placeholder.com/60x500/22c55e/22c55e';
-    const dylanSprite = new Image(); dylanSprite.src = 'siamese-Photoroom.jpg';
-    const spikeSprite = new Image(); spikeSprite.src = 'https://via.placeholder.com/50x50/ef4444/ef4444';
-    const dashBgImg = new Image(); dashBgImg.src = 'https://via.placeholder.com/600x450/1e293b/1e293b';
+    // Icon Emojis instead of external images
+    const agencyIcons = ["🏢", "🕴️", "🌍", "🚀"];
+    const jarvisIcons = ["🤖", "💻", "⚙️", "🔋"];
+    const jewelIcons = ["💎", "🔮", "💍"];
+    const dingleIcons = ["🪙", "💿", "🥇", "💠"];
 
-    // --- Save/Load & Data Management ---
-    function toBraille(str) { return str.split('').map(c => String.fromCharCode(0x2800 + (c.charCodeAt(0) - 7))).join(''); }
-    function fromBraille(brl) { return brl.split('').map(c => String.fromCharCode((c.charCodeAt(0) - 0x2800) + 7)).join(''); }
-    function stringifyGame(obj) { return JSON.stringify(obj, (key, value) => typeof value === 'bigint' ? value.toString() + 'n' : value); }
-    function parseGame(json) { return JSON.parse(json, (key, value) => { if (typeof value === 'string' && /^-?\d+n$/.test(value)) return BigInt(value.slice(0, -1)); return value; }); }
-
-    function exportData() { 
-        const json = stringifyGame({game, ashcroftPurchases}); 
-        navigator.clipboard.writeText(toBraille(json)); 
-        alert("BRAILLE DATA COPIED"); 
-    }
-    function importData() { 
-        const raw = prompt("PASTE BRAILLE DATA:"); 
-        if(!raw) return; 
-        try { 
-            const decoded = fromBraille(raw.trim()); 
-            const parsed = parseGame(decoded); 
-            if (!parsed.game.dingleberry) parsed.game.dingleberry = { b: false, s: false, g: false, d: false }; 
-            Object.assign(game, parsed.game); 
-            Object.assign(ashcroftPurchases, parsed.ashcroftPurchases); 
-            render(); 
-            alert("DATA IMPORTED SUCCESSFULLY"); 
-        } catch(e) { alert("INVALID BRAILLE DATA"); } 
+    // --- Save/Load System ---
+    function saveToLocal() { 
+        localStorage.setItem('siameseSaveFinal', JSON.stringify({game, ashcroftPurchases})); 
     }
     
-    function saveToLocal() { localStorage.setItem('siameseSave2', stringifyGame({game, ashcroftPurchases})); }
     function loadFromLocal() { 
-        const saved = localStorage.getItem('siameseSave2'); 
+        const saved = localStorage.getItem('siameseSaveFinal'); 
         if (saved) { 
             try { 
-                const parsed = parseGame(saved); 
-                Object.assign(game, parsed.game); 
-                Object.assign(ashcroftPurchases, parsed.ashcroftPurchases); 
-            } catch(e) { console.error("Autosave Corrupted"); } 
+                const parsed = JSON.parse(saved); 
+                game = { ...game, ...parsed.game }; // Merge correctly
+                ashcroftPurchases = { ...ashcroftPurchases, ...parsed.ashcroftPurchases }; 
+            } catch(e) { console.error("Save Corrupted - Restarting"); } 
         } 
     }
+
+    // Auto-save every 2 seconds and on tab close
+    setInterval(saveToLocal, 2000);
+    window.addEventListener('beforeunload', saveToLocal);
 
     window.onload = () => { loadFromLocal(); render(); };
 
@@ -419,8 +378,8 @@
         setTimeout(() => { flash.style.display = 'none'; }, 1500); 
     }
     
-    function getRebirthCost() { return 10n ** (100n * (game.rebirths + 1n)); }
-    function getMegaRebirthCost() { return 10n ** (1000n * (game.megaRebirths + 1n)); }
+    function getRebirthCost() { return Math.pow(10, 15 + (game.rebirths * 10)); }
+    function getMegaRebirthCost() { return Math.pow(10, 50 + (game.megaRebirths * 25)); }
     
     function changePage(dir) { 
         game.page = (game.page + dir + 4) % 4; 
@@ -428,32 +387,28 @@
         render(); 
     }
 
-    // Number formatting for clean UI
-    const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg"];
+    // Clean number formatting for large values
+    const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td"];
     function format(n) { 
-        if (n < 1000n) return n.toString(); 
-        let s = n.toString(); 
-        let len = s.length;
-        let unitIdx = Math.floor((len - 1) / 3); 
-        if (unitIdx >= suffixes.length) return s[0] + "." + s.substring(1,3) + "e" + (len - 1); 
-        let digits = len % 3 || 3; 
-        return s.substring(0, digits) + "." + s.substring(digits, digits + 2) + suffixes[unitIdx]; 
+        if (n < 1000) return Math.floor(n).toString(); 
+        let exp = Math.floor(Math.log10(n) / 3); 
+        if (exp >= suffixes.length) return n.toExponential(2); 
+        let val = n / Math.pow(10, exp * 3); 
+        return val.toFixed(2) + suffixes[exp]; 
     }
 
     function render() {
-        // Compute active Multipliers safely with BigInt math
-        const rebirthMulti = 2n ** game.rebirths;
-        const megaMulti = 5n ** game.megaRebirths;
-        const cheatMult = cheats.multi ? 1000n : 1n; 
-        const baseClick = game.clickPower * rebirthMulti * megaMulti * cheatMult;
-        const baseIdle = game.pps * rebirthMulti * megaMulti * cheatMult;
+        const rebirthMulti = Math.pow(2, game.rebirths);
+        const megaMulti = Math.pow(5, game.megaRebirths);
+        const baseClick = game.clickPower * rebirthMulti * megaMulti;
+        const baseIdle = game.pps * rebirthMulti * megaMulti;
         
-        const clickRate = (baseClick * game.pointMultiplier) / 100n;
-        const idleRate = (baseIdle * game.pointMultiplier) / 100n;
+        const clickRate = baseClick * game.pointMultiplier;
+        const idleRate = baseIdle * game.pointMultiplier;
         
         document.getElementById('points').innerText = format(game.points);
-        document.getElementById('gem-count').innerText = game.gems;
-        document.getElementById('jarvis-count').innerText = game.jarvisCoins;
+        document.getElementById('gem-count').innerText = Math.floor(game.gems);
+        document.getElementById('jarvis-count').innerText = Math.floor(game.jarvisCoins);
         document.getElementById('stats').innerText = `+${format(clickRate)}/CLICK • ${format(idleRate)}/SEC`;
         document.getElementById('rebirth-count').innerText = `${game.rebirths} REBIRTHS | ${game.megaRebirths} MEGA`;
         
@@ -461,24 +416,25 @@
         list.innerHTML = "";
         
         if (game.page === 0) {
-            const cost = 50n * (12n ** BigInt(game.agencyIdx));
-            const img = agencyImgs[game.agencyIdx % agencyImgs.length] || fallbackImg;
-            createCard(getLockedName(game.agencyIdx), img, cost, "", () => { 
+            const cost = 50 * Math.pow(12, game.agencyIdx);
+            const icon = agencyIcons[game.agencyIdx % agencyIcons.length];
+            createCard(getLockedName(game.agencyIdx), icon, cost, "", () => { 
                 if(game.agencyIdx === 0) triggerFlash(); 
                 game.points -= cost; 
-                game.clickPower += (cost / 10n) + 3n; 
+                game.clickPower += Math.floor(cost / 10) + 3; 
                 game.agencyIdx++; 
-                render(); 
+                saveToLocal(); render(); 
             });
         } else if (game.page === 1) {
-            const cost = 1000n * (15n ** BigInt(game.jarvisIdx));
-            const desc = `Generates +${format((cost / 8n) + 10n)} PPS`;
-            createCard(`Jarvis Mk ${game.jarvisIdx + 1}`, fallbackImg, cost, desc, () => { 
+            const cost = 1000 * Math.pow(15, game.jarvisIdx);
+            const ppsGain = Math.floor(cost / 8) + 10;
+            const icon = jarvisIcons[game.jarvisIdx % jarvisIcons.length];
+            createCard(`Jarvis Mk ${game.jarvisIdx + 1}`, icon, cost, `Generates +${format(ppsGain)} PPS`, () => { 
                 if(game.jarvisIdx === 0 && game.agencyIdx === 0) triggerFlash(); 
                 game.points -= cost; 
-                game.pps += (cost / 8n) + 10n; 
+                game.pps += ppsGain; 
                 game.jarvisIdx++; 
-                render(); 
+                saveToLocal(); render(); 
             });
         } else if (game.page === 2) {
             renderJewels();
@@ -502,12 +458,12 @@
         }
     }
 
-    function createCard(name, src, cost, desc, onClick) { 
+    function createCard(name, icon, cost, desc, onClick) { 
         const isLocked = game.points < cost;
         const card = document.createElement('div'); 
         card.className = `upgrade-card ${isLocked ? 'locked' : ''}`; 
         card.innerHTML = `
-            <img src="${src}" class="upgrade-icon" onerror="this.src='${fallbackImg}'">
+            <div class="upgrade-icon">${icon}</div>
             <div style="flex:1">
                 <span class="u-name">${name}</span>
                 <span class="u-cost">${format(cost)} Points</span>
@@ -518,16 +474,16 @@
     }
 
     function renderJewels() {
-        const gemCost = BigInt(5 * (2 ** ashcroftPurchases['dylan']));
-        createJewelCard("Dylan's Diamond", ashcroftImgs[0], gemCost, "2x Gem Multiplier", () => { game.gems -= Number(gemCost); game.gemsMultiplier *= 2; ashcroftPurchases['dylan']++; render(); }, game.gems < Number(gemCost));
-        createJewelCard("Oliver's Opal", ashcroftImgs[1], 250, "+50% Point Multiplier", () => { game.gems -= 250; game.pointMultiplier += 50n; game.hasOversallsOpal = true; render(); }, game.gems < 250 || game.hasOversallsOpal);
-        createJewelCard("Steven's Sapphire", ashcroftImgs[2], 5000, "+1 Extra Life in Minigames", () => { game.gems -= 5000; game.hasExtraLife = true; render(); }, game.gems < 5000 || game.hasExtraLife);
+        const gemCost = 5 * Math.pow(2, ashcroftPurchases['dylan']);
+        createJewelCard("Dylan's Diamond", jewelIcons[0], gemCost, "2x Gem Multiplier", () => { game.gems -= gemCost; game.gemsMultiplier *= 2; ashcroftPurchases['dylan']++; saveToLocal(); render(); }, game.gems < gemCost);
+        createJewelCard("Oliver's Opal", jewelIcons[1], 250, "+50% Point Multiplier", () => { game.gems -= 250; game.pointMultiplier += 0.5; game.hasOversallsOpal = true; saveToLocal(); render(); }, game.gems < 250 || game.hasOversallsOpal);
+        createJewelCard("Steven's Sapphire", jewelIcons[2], 5000, "+1 Extra Life in Minigames", () => { game.gems -= 5000; game.hasExtraLife = true; saveToLocal(); render(); }, game.gems < 5000 || game.hasExtraLife);
     }
 
-    function createJewelCard(name, src, cost, desc, onClick, isLocked) {
+    function createJewelCard(name, icon, cost, desc, onClick, isLocked) {
         const card = document.createElement('div'); card.className = `upgrade-card ${isLocked ? 'locked' : ''}`;
         card.innerHTML = `
-            <img src="${src}" class="upgrade-icon" onerror="this.src='${fallbackImg}'">
+            <div class="upgrade-icon">${icon}</div>
             <div style="flex:1">
                 <span class="u-name">${name}</span>
                 <span class="u-cost">${cost} Gems</span>
@@ -538,17 +494,17 @@
     }
 
     function renderDingleberries() {
-        createDingleberryCard("Bronze Jarvis Coin", "bronzejarvis.png", 5, "5x Jarvis Coins, +50% Points", () => { game.jarvisCoins -= 5; game.jarvisMultiplier *= 5; game.pointMultiplier += 50n; game.dingleberry.b = true; render(); }, game.jarvisCoins < 5 || game.dingleberry.b, game.dingleberry.b);
-        createDingleberryCard("Silver Jarvis Coin", "silverjarvis.png", 25, "2x Gems, 2x Jarvis, 2x Points", () => { game.jarvisCoins -= 25; game.gemsMultiplier *= 2; game.jarvisMultiplier *= 2; game.pointMultiplier *= 2n; game.dingleberry.s = true; render(); }, game.jarvisCoins < 25 || game.dingleberry.s, game.dingleberry.s);
-        createDingleberryCard("Gold Jarvis Coin", "goldjarvis.png", 500, "10x Jarvis Coins, +150% Points", () => { game.jarvisCoins -= 500; game.jarvisMultiplier *= 10; game.pointMultiplier += 150n; game.dingleberry.g = true; render(); }, game.jarvisCoins < 500 || game.dingleberry.g, game.dingleberry.g);
-        createDingleberryCard("Diamond Jarvis Coin", "diamondjarvis.png", 50000, "100x Jarvis Coins, 5x Points, 3x Gems", () => { game.jarvisCoins -= 50000; game.jarvisMultiplier *= 100; game.pointMultiplier *= 5n; game.gemsMultiplier *= 3; game.dingleberry.d = true; render(); }, game.jarvisCoins < 50000 || game.dingleberry.d, game.dingleberry.d);
+        createDingleberryCard("Bronze Jarvis", dingleIcons[0], 5, "5x Jarvis Coins, +50% Points", () => { game.jarvisCoins -= 5; game.jarvisMultiplier *= 5; game.pointMultiplier += 0.5; game.dingleberry.b = true; saveToLocal(); render(); }, game.jarvisCoins < 5 || game.dingleberry.b, game.dingleberry.b);
+        createDingleberryCard("Silver Jarvis", dingleIcons[1], 25, "2x Gems, 2x Jarvis, 2x Points", () => { game.jarvisCoins -= 25; game.gemsMultiplier *= 2; game.jarvisMultiplier *= 2; game.pointMultiplier *= 2; game.dingleberry.s = true; saveToLocal(); render(); }, game.jarvisCoins < 25 || game.dingleberry.s, game.dingleberry.s);
+        createDingleberryCard("Gold Jarvis", dingleIcons[2], 500, "10x Jarvis Coins, +150% Points", () => { game.jarvisCoins -= 500; game.jarvisMultiplier *= 10; game.pointMultiplier += 1.5; game.dingleberry.g = true; saveToLocal(); render(); }, game.jarvisCoins < 500 || game.dingleberry.g, game.dingleberry.g);
+        createDingleberryCard("Diamond Jarvis", dingleIcons[3], 50000, "100x Jarvis Coins, 5x Points", () => { game.jarvisCoins -= 50000; game.jarvisMultiplier *= 100; game.pointMultiplier *= 5; game.gemsMultiplier *= 3; game.dingleberry.d = true; saveToLocal(); render(); }, game.jarvisCoins < 50000 || game.dingleberry.d, game.dingleberry.d);
     }
 
-    function createDingleberryCard(name, src, cost, desc, onClick, isLocked, isBought) {
+    function createDingleberryCard(name, icon, cost, desc, onClick, isLocked, isBought) {
         const card = document.createElement('div'); card.className = `upgrade-card ${isLocked ? 'locked' : ''}`;
         let costText = isBought ? "SOLD OUT" : `${cost} Jarvis Coins`;
         card.innerHTML = `
-            <img src="${src}" class="upgrade-icon" onerror="this.src='${fallbackImg}'">
+            <div class="upgrade-icon">${icon}</div>
             <div style="flex:1">
                 <span class="u-name">${name}</span>
                 <span class="u-cost">${costText}</span>
@@ -570,38 +526,31 @@
     function rebirth() { 
         const rCost = getRebirthCost(); 
         if(game.points >= rCost) { 
-            game.points = 0n; game.clickPower = 1n; game.pps = 0n; 
+            game.points = 0; game.clickPower = 1; game.pps = 0; 
             game.agencyIdx = 0; game.jarvisIdx = 0; game.rebirths++; 
-            render(); 
+            saveToLocal(); render(); 
         } 
     }
     function megaRebirth() { 
         const mCost = getMegaRebirthCost(); 
         if(game.points >= mCost) { 
-            game.points = 0n; game.clickPower = 1n; game.pps = 0n; game.rebirths = 0n; 
+            game.points = 0; game.clickPower = 1; game.pps = 0; game.rebirths = 0; 
             game.agencyIdx = 0; game.jarvisIdx = 0; game.gems = 0; game.jarvisCoins = 0; 
-            game.pointMultiplier = 100n; game.gemsMultiplier = 1; game.jarvisMultiplier = 1; 
+            game.pointMultiplier = 1.0; game.gemsMultiplier = 1.0; game.jarvisMultiplier = 1.0; 
             game.hasOversallsOpal = false; game.hasExtraLife = false; 
             game.dingleberry = { b: false, s: false, g: false, d: false }; 
             ashcroftPurchases = { dylan: 0 }; game.megaRebirths++; 
-            render(); alert("MEGA REBIRTH COMPLETE."); 
+            saveToLocal(); render(); alert("MEGA REBIRTH COMPLETE."); 
         } 
     }
 
     // --- Core Interaction ---
     function triggerMainClick(x, y) {
-        if(!game.musicStarted) { 
-            const music = document.getElementById('main-music');
-            music.play().catch(()=>{}); 
-            game.musicStarted = true; 
-        }
+        const rebirthMulti = Math.pow(2, game.rebirths); 
+        const megaMulti = Math.pow(5, game.megaRebirths); 
         
-        const rebirthMulti = 2n ** game.rebirths; 
-        const megaMulti = 5n ** game.megaRebirths; 
-        const cheatMult = cheats.multi ? 1000n : 1n; 
-        
-        const base = game.clickPower * rebirthMulti * megaMulti * cheatMult;
-        const val = (base * game.pointMultiplier) / 100n;
+        const base = game.clickPower * rebirthMulti * megaMulti;
+        const val = base * game.pointMultiplier;
         
         game.points += val;
         
@@ -618,27 +567,18 @@
     };
 
     setInterval(() => { 
-        const rebirthMulti = 2n ** game.rebirths; 
-        const megaMulti = 5n ** game.megaRebirths; 
-        const cheatMult = cheats.multi ? 1000n : 1n; 
-        const base = game.pps * rebirthMulti * megaMulti * cheatMult; 
+        const rebirthMulti = Math.pow(2, game.rebirths); 
+        const megaMulti = Math.pow(5, game.megaRebirths); 
+        const base = game.pps * rebirthMulti * megaMulti; 
         
-        game.points += (base * game.pointMultiplier) / 100n; 
+        game.points += base * game.pointMultiplier; 
         render(); 
-        saveToLocal(); 
     }, 1000);
     
-    // --- Visuals & Audio ---
+    // --- Visuals & Interface ---
     function toggleOverlay(id) { 
         const s = document.getElementById(id); 
         s.style.display = s.style.display === 'flex' ? 'none' : 'flex'; 
-    }
-    
-    function toggleMute() { 
-        const m = document.getElementById('main-music'); 
-        game.muted = !game.muted; 
-        m.muted = game.muted; 
-        document.getElementById('mute-btn').innerText = game.muted ? "AUDIO: OFF" : "AUDIO: ON"; 
     }
 
     const bgCanvas = document.getElementById('bg-canvas'); 
@@ -670,9 +610,8 @@
 
     function spawnJarvisCoin() {
         if (fActive || dActive) return;
-        const coin = document.createElement('img');
-        coin.src = 'goldjarvis.png'; 
-        coin.setAttribute('onerror', `this.src='${fallbackImg}'`);
+        const coin = document.createElement('div');
+        coin.innerText = "🟡";
         coin.className = 'falling-jarvis';
         coin.style.left = Math.max(20, Math.random() * (window.innerWidth - 100)) + "px";
         coin.style.animation = "jarvisFall 6s linear forwards";
@@ -681,7 +620,7 @@
             e.stopPropagation();
             const reward = 1 * game.jarvisMultiplier;
             game.jarvisCoins += reward;
-            render();
+            saveToLocal(); render();
             coin.remove();
             
             const p = document.createElement('div'); p.className = 'particle'; 
@@ -718,7 +657,7 @@
         document.getElementById('f-death-score').innerText = fScore; 
         document.getElementById('f-death-best').innerText = game.flappyRecord; 
         document.getElementById('f-death-gems').innerText = fSessionGems; 
-        render(); 
+        saveToLocal(); render(); 
     }
     
     function exitFlappy() { 
@@ -733,39 +672,42 @@
         fctx.clearRect(0,0,400,500); 
         birdV += 0.2; birdY += birdV; 
         
-        try { fctx.drawImage(birdSprite, 50, birdY, 40, 40); } catch(e) { fctx.fillStyle='yellow'; fctx.fillRect(50,birdY,40,40); }
+        // Draw the Bird natively to avoid broken images
+        if(mainImg.complete && mainImg.naturalWidth !== 0) {
+            fctx.drawImage(mainImg, 50, birdY, 40, 40);
+        } else {
+            fctx.fillStyle = '#f59e0b';
+            fctx.beginPath(); fctx.arc(70, birdY+20, 20, 0, Math.PI*2); fctx.fill();
+        }
         
         if(pipes.length === 0 || pipes[pipes.length-1].x < 180) pipes.push({ x: 400, h: Math.random()*200+50, scored: false }); 
         
         pipes.forEach((p, i) => { 
             p.x -= 1.5; 
-            try {
-                fctx.drawImage(pipeSprite, p.x, 0, 60, p.h); 
-                fctx.drawImage(pipeSprite, p.x, p.h + 140, 60, 500); 
-            } catch(e) {
-                fctx.fillStyle='green'; fctx.fillRect(p.x, 0, 60, p.h); fctx.fillRect(p.x, p.h+140, 60, 500);
-            }
+            
+            // Draw clean canvas pipes instead of images
+            fctx.fillStyle = '#22c55e'; fctx.strokeStyle = '#166534'; fctx.lineWidth = 3;
+            fctx.fillRect(p.x, 0, 60, p.h); fctx.strokeRect(p.x, 0, 60, p.h);
+            fctx.fillRect(p.x, p.h + 140, 60, 500); fctx.strokeRect(p.x, p.h + 140, 60, 500);
+            
             if(!p.scored && p.x < 50) { 
                 p.scored = true; fScore++; document.getElementById('f-score').innerText = fScore; 
                 if(fScore % 10 === 0) { 
-                    let earned = game.gemsMultiplier; 
+                    let earned = 1 * game.gemsMultiplier; 
                     game.gems += earned; fSessionGems += earned; 
                 } 
             } 
-            if(p.x < 90 && p.x + 60 > 50) { if(!cheats.noclip) dieFlappy(); } 
+            if(p.x < 90 && p.x + 60 > 50) { dieFlappy(); } 
             if(p.x < -60) pipes.splice(i, 1); 
         }); 
         
-        if(birdY > 500 || birdY < -40) { 
-            if(!cheats.noclip) dieFlappy(); 
-            else if(birdY > 500) birdV = -5; else if(birdY < -40) birdV = 1; 
-        } 
+        if(birdY > 500 || birdY < -40) { dieFlappy(); } 
         fAnim = requestAnimationFrame(flappyLoop); 
     }
 
     // --- Dash Minigame ---
     const dc = document.getElementById('dash-canvas'); const dctx = dc.getContext('2d');
-    let dActive = false, dAnim, dScore = 0, dGems = 0, dSpeed = 4, dDylanY = 350, dV = 0, dJumping = false, dSpikes = [], dScroll = 0, dGemGain = 1;
+    let dActive = false, dAnim, dScore = 0, dGems = 0, dSpeed = 4, dDylanY = 350, dV = 0, dJumping = false, dSpikes = [], dGemGain = 1;
     
     function startDylanDash() { 
         if(document.getElementById('minigame-menu').style.display === 'flex') toggleOverlay('minigame-menu'); 
@@ -773,7 +715,7 @@
         document.getElementById('dash-gameplay').style.display = 'flex'; 
         document.getElementById('dash-container').style.display = 'flex'; 
         dc.width = 600; dc.height = 450; 
-        dScore = 0; dGems = 0; dSpeed = 4; dDylanY = 350; dV = 0; dJumping = false; dSpikes = []; dScroll = 0; dActive = true; dGemGain = 1; 
+        dScore = 0; dGems = 0; dSpeed = 4; dDylanY = 350; dV = 0; dJumping = false; dSpikes = []; dActive = true; dGemGain = 1; 
         document.getElementById('d-score').innerText = "0"; 
         dashLoop(); 
     }
@@ -787,7 +729,7 @@
         document.getElementById('d-death-score').innerText = dScore; 
         document.getElementById('d-death-best').innerText = game.dashRecord; 
         document.getElementById('d-death-gems').innerText = dGems; 
-        render(); 
+        saveToLocal(); render(); 
     }
     
     function exitDash() { 
@@ -800,22 +742,30 @@
     function dashLoop() { 
         if(!dActive) return; 
         dctx.clearRect(0,0,600,450);
-        dScroll -= dSpeed; if(dScroll <= -600) dScroll = 0; 
-        try {
-            dctx.drawImage(dashBgImg, dScroll, 0, 600, 450); 
-            dctx.drawImage(dashBgImg, dScroll + 600, 0, 600, 450); 
-        } catch(e) {}
         
         dV += 0.5; dDylanY += dV; 
         if(dDylanY > 350) { dDylanY = 350; dV = 0; dJumping = false; } 
         
-        try { dctx.drawImage(dylanSprite, 50, dDylanY, 60, 60); } catch(e) { dctx.fillStyle='blue'; dctx.fillRect(50,dDylanY,60,60); }
+        // Draw native character
+        if(mainImg.complete && mainImg.naturalWidth !== 0) {
+            dctx.drawImage(mainImg, 50, dDylanY, 60, 60);
+        } else {
+            dctx.fillStyle = '#3b82f6'; dctx.fillRect(50, dDylanY, 60, 60);
+        }
         
         if(dSpikes.length === 0 || dSpikes[dSpikes.length-1].x < (600 - (200 + Math.random() * 150))) dSpikes.push({ x: 600, scored: false }); 
         
         dSpikes.forEach((s, i) => { 
             s.x -= dSpeed; 
-            try { dctx.drawImage(spikeSprite, s.x, 360, 50, 50); } catch(e) { dctx.fillStyle='red'; dctx.fillRect(s.x, 360, 50, 50); }
+            
+            // Draw clean canvas spikes (Triangles)
+            dctx.fillStyle = '#ef4444'; 
+            dctx.beginPath();
+            dctx.moveTo(s.x + 25, 360);
+            dctx.lineTo(s.x + 50, 410);
+            dctx.lineTo(s.x, 410);
+            dctx.closePath(); dctx.fill();
+
             if(!s.scored && s.x < 50) { 
                 s.scored = true; dScore++; document.getElementById('d-score').innerText = dScore; 
                 if(dScore % 5 === 0) { 
@@ -824,45 +774,31 @@
                 } 
                 if(dScore % 10 === 0) { dGemGain++; } 
             } 
-            if(s.x < 100 && s.x + 40 > 60 && dDylanY + 50 > 360) { if(!cheats.noclip) dieDash(); } 
+            if(s.x < 110 && s.x + 50 > 50 && dDylanY + 60 > 360) { dieDash(); } 
             if(s.x < -50) dSpikes.splice(i, 1); 
         }); 
         dAnim = requestAnimationFrame(dashLoop); 
     }
 
-    // --- Jarvis Client Matrix ---
-    function toggleJarvisClient() {
-        const m = document.getElementById('jarvis-client-menu');
-        m.style.display = m.style.display === 'block' ? 'none' : 'block';
-    }
-    
     function nukeData() {
         if(confirm("WARNING: ALL SAVE DATA WILL BE PERMANENTLY ERASED. PROCEED?")) {
-            localStorage.removeItem('siameseSave2');
+            localStorage.clear();
             location.reload();
         }
     }
 
-    // Keyboard & Global bindings
+    // Keyboard bindings
     window.addEventListener('keydown', (e) => {
-        if(e.ctrlKey && e.key.toLowerCase() === 'j') {
-            e.preventDefault();
-            toggleJarvisClient();
-        }
-        
         if (e.code === 'Space') {
             e.preventDefault(); 
-            if (fActive) { 
-                birdV = -4.5; 
-            } else if (dActive && !dJumping) { 
-                dV = -10; dJumping = true; 
-            } else if (!fActive && !dActive && document.getElementById('settings-overlay').style.display !== 'flex' && document.getElementById('minigame-menu').style.display !== 'flex' && document.getElementById('jarvis-client-menu').style.display !== 'block') {
+            if (fActive) { birdV = -4.5; } 
+            else if (dActive && !dJumping) { dV = -10; dJumping = true; } 
+            else if (!fActive && !dActive && document.getElementById('settings-overlay').style.display !== 'flex' && document.getElementById('minigame-menu').style.display !== 'flex') {
                 const img = document.getElementById('clicker-container'); 
                 if(img) { img.style.transform = 'scale(0.92)'; setTimeout(() => img.style.transform = 'scale(1)', 80); }
                 triggerMainClick(window.innerWidth / 2, window.innerHeight / 2);
             }
         }
-        
         if (e.key.toLowerCase() === 'b') {
             if (!fActive && !dActive && document.getElementById('settings-overlay').style.display !== 'flex' && document.getElementById('minigame-menu').style.display !== 'flex') {
                 const firstAffordable = document.querySelector('.upgrade-card:not(.locked)');
