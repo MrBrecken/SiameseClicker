@@ -645,7 +645,7 @@ const SETTINGS_DEFAULTS={
   noteSpeed:1.0, noteDistance:1.0, noteSize:1.0, noteOpacity:.42, bloom:1.0, bgBrightness:.7, minimalFx:false,
   hitRings:true, hitParticles:true, hitPop:true, judgeText:true,
   showFps:false, vsync:true, fpsLimit:0,
-  speedMod:1, noFail:false, parallax:.6, fov:70, hitboxSize:1.14,
+  speedMod:1, noFail:false, parallax:.6, fov:70,
   borderStyle:'round', colorMode:'set', ghostMode:'off',
   uiParallax:0, camParallax:0,
   communityRepo:'',
@@ -657,7 +657,7 @@ const SETTING_HARD={
   cursorSize:[.05,20], sensitivity:[.01,100], bloom:[0,20],
   noteOpacity:[0,1], bgBrightness:[0,3],
   parallax:[-30,30], uiParallax:[-30,30], camParallax:[-15,15],
-  fov:[20,170], hitboxSize:[.3,1.4],
+  fov:[20,170],
   audioOffset:[-2000,2000], judgeOffset:[-1000,1000],
   masterVol:[0,1], musicVol:[0,1], hitVol:[0,1],
   fpsLimit:[0,1000], speedMod:[.25,3],
@@ -1498,7 +1498,8 @@ const APPROACH_DIST=HITZ-SPAWNZ;
 /* Timing windows (seconds). Rhythia's default hit window is tight; perfect/
    great are inner bands. These no longer scale with any visual setting. */
 const MISSW=.05, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
-const NOTE_HALF=.45;       // note hitbox half-width, in cells
+const NOTE_HALF=.45;       // visual note half-size, in cells
+const NOTE_HITBOX=1.14;    // Rhythia note_hitbox_size (fixed); hbs = /2
 const MAXHP=10;            // miss: -2, hit: +1; death at 0
 const modMult=m=>m===1?1:(m>1?1+(m-1)*.5:1-(1-m)*.6);
 
@@ -2055,6 +2056,9 @@ const Game={
       const cp=Settings.get('camParallax')||0;
       this.camera.position.x=offX*cp*HLM;
       this.camera.position.y=offY*cp*HLM;
+      /* keep the lens pointed straight ahead so shifting the camera slides the
+         view without tilting/skewing the notes */
+      this.camera.rotation.set(0,0,0);
       const grm=(Settings.get('parallax')||0)*.1;
       /* reference offsets the border layer by (-1,+1); scaled to our smaller field */
       this.frame.position.x=-(offX*HLM*grm)-CELL*.02;
@@ -2074,7 +2078,7 @@ const Game={
        on the note. It does NOT grow with note size or cursor size — that was
        the leniency. hbs is in grid cells (note_hitbox_size is in the 1-unit
        grid where a cell = 1, so we scale by our CELL-based half). */
-    const hbs=Settings.get('hitboxSize')*.5;
+    const hbs=NOTE_HITBOX*.5;   /* fixed Rhythia note_hitbox_size, not user-tunable */
     /* notes */
     for(let i=this.active.length-1;i>=0;i--){
       const n=this.active[i],d=n.data;
@@ -2082,7 +2086,6 @@ const Game={
         n.group.position.x=d.x*CELL+this._uiOffX;
         n.group.position.y=d.y*CELL+this._uiOffY;
         n.group.position.z=HITZ-(d.t-t)*speed;
-        if(n.style==='3d'||n.style==='custom'){n.group.rotation.x+=n.spin*dt;n.group.rotation.y+=n.spin*1.4*dt;}
         const am=this.noteAlphaMul((d.t-t)*speed,approach*speed);
         if(n.style==='custom'&&n.mesh)n.mesh.material.opacity=n.baseMain*am;
         else if(n.style==='3d'){n.cube.material.opacity=n.baseMain*am;
@@ -2159,7 +2162,7 @@ const Game={
     const setCol=useSet?this._setCols[this.spawnIdx%this._setCols.length]:null;
     if(n.mesh)n.mesh.visible=false;
     if(style==='custom'&&this.customMeshReady()){
-      n.spin=.35+((hashStr(''+((d.t*997)|0))%100)/100)*.5;
+      n.spin=0;
       n.cube.visible=false;n.edges.visible=false;n.flat.visible=false;n.mesh.visible=true;
       const col=setCol||((this.spawnIdx&1)?this.colB:this.colA);
       n.mesh.material.color.copy(col);
@@ -2169,7 +2172,7 @@ const Game={
       n.glow.material.color.copy(col);
       n.glow.material.opacity=n.baseGlow=.3*bloom;
     }else if(style==='3d'){
-      n.spin=.35+((hashStr(''+((d.t*997)|0))%100)/100)*.5;
+      n.spin=0;
       n.cube.visible=true;n.edges.visible=true;n.flat.visible=false;
       if(setCol){n.cube.material.color.copy(setCol);
         n.edges.material.color.copy(setCol);n.glow.material.color.copy(setCol);}
@@ -2355,7 +2358,6 @@ const SETTINGS_SCHEMA=[
   {tab:'gameplay',key:'sensitivity',label:'Mouse Sensitivity',type:'range',min:.05,max:10,step:.1,fmt:v=>v.toFixed(2)+'×'},
   {tab:'gameplay',key:'parallax',label:'Grid Parallax',sub:'border layer shifts against your cursor, rhythia-style',type:'range',min:-5,max:5,step:.05,fmt:v=>v.toFixed(2)+'×'},
   {tab:'gameplay',key:'uiParallax',label:'Note Parallax',sub:'the note field itself shifts against your cursor (hitbox follows)',type:'range',min:-5,max:5,step:.05,fmt:v=>v.toFixed(2)+'×'},
-  {tab:'gameplay',key:'hitboxSize',label:'Hitbox Size',sub:'rhythia note_hitbox_size — 1.14 is default; lower is stricter',type:'range',min:.5,max:1.4,step:.01,fmt:v=>v.toFixed(2)},
   {tab:'gameplay',key:'camParallax',label:'Camera Parallax (Half Lock)',sub:'the camera follows your cursor',type:'range',min:-2,max:2,step:.05,fmt:v=>v.toFixed(2)+'×'},
   {tab:'gameplay',key:'fov',label:'Field of View',type:'range',min:40,max:115,step:1,fmt:v=>v+'°'},
   {tab:'gameplay',key:'ghostMode',label:'Ghost Notes',sub:'notes fade as they get close — half dims them, full makes them vanish',type:'select',
