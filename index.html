@@ -196,6 +196,32 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 .set-text:focus{border-color:var(--ion)}
 .song-row .dlst{font-family:var(--mono);font-size:9.5px;color:var(--ion-dim);letter-spacing:.06em}
 
+/* ---------- stats screen + menu identity ---------- */
+#menu-rank img{width:26px;height:26px;border-radius:50%;border:1px solid var(--line-brt);
+  object-fit:cover}
+#mr-user{color:var(--text);font-size:12px;letter-spacing:.08em}
+#stats-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,190px));gap:12px;
+  margin-bottom:24px;max-width:min(880px,94vw)}
+.stat-tile{background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  padding:15px 16px 12px;text-align:left}
+.stat-tile .v{font-family:var(--mono);font-size:21px;font-weight:600;color:#fff;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat-tile .k{font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--text-dim);margin-top:5px}
+#stats-profile{display:flex;align-items:center;gap:18px;background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;padding:16px 22px;
+  width:min(560px,94vw)}
+#sp-ava{width:58px;height:58px;border-radius:50%;border:2px solid var(--line-brt);object-fit:cover}
+.sp-col{flex:1;min-width:0}
+#sp-name{font-size:18px;font-weight:600;color:#fff;letter-spacing:.04em}
+#sp-rank{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  margin:4px 0 8px}
+#sp-lvlbar{height:6px;background:rgba(120,160,255,.13);border-radius:3px;overflow:hidden}
+#sp-lvlfill{height:100%;width:0%;border-radius:3px;
+  background:linear-gradient(90deg,var(--violet),var(--ion))}
+#sp-lvltext{font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:5px;letter-spacing:.06em}
+@media (max-width:820px){#stats-grid{grid-template-columns:repeat(2,minmax(140px,1fr))}}
+
 /* ---------- mods bar ---------- */
 #mods-bar{display:flex;align-items:center;gap:12px;margin:-8px 0 22px;font-family:var(--mono)}
 .mods-lbl{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--text-dim)}
@@ -401,9 +427,10 @@ select.ed-in{cursor:pointer}
   <div class="logo">JARVIA</div>
   <div class="tagline">rhythm in the void</div>
   <div class="menu-col">
-    <div id="menu-rank"><span id="mr-lv"></span><span id="mr-name"></span></div>
+    <div id="menu-rank"><img id="mr-ava" alt="" style="display:none"><span id="mr-user">Guest</span><span id="mr-lv"></span><span id="mr-name"></span></div>
     <button class="btn primary" id="btn-play">Play</button>
     <button class="btn" id="btn-editor">Map Editor</button>
+    <button class="btn" id="btn-stats">Stats</button>
     <button class="btn" id="btn-settings">Settings</button>
   </div>
   <div class="hint-footer">glide your cursor over the incoming notes · <b>hover to hit — never click</b><br>esc pauses · settings save automatically</div>
@@ -490,6 +517,24 @@ select.ed-in{cursor:pointer}
 <input type="file" id="file-hitsound" accept="audio/*,.wav,.ogg,.mp3" style="display:none">
 <input type="file" id="file-sspm" accept=".sspm" style="display:none">
 <input type="file" id="file-colors" accept=".txt,text/plain" style="display:none">
+
+<!-- ================= STATS ================= -->
+<div class="screen" id="screen-stats">
+  <h2 class="screen-title">Stats</h2>
+  <div class="screen-sub">lifetime totals · saved to your account</div>
+  <div id="stats-grid"></div>
+  <div id="stats-profile">
+    <img id="sp-ava" alt="" style="display:none">
+    <div class="sp-col">
+      <div id="sp-name">Guest</div>
+      <div id="sp-rank"></div>
+      <div id="sp-lvlbar"><div id="sp-lvlfill"></div></div>
+      <div id="sp-lvltext"></div>
+    </div>
+    <button class="btn small" id="btn-discord">Log in with Discord</button>
+  </div>
+  <div class="menu-col"><button class="btn ghost small" id="btn-stats-back">Back</button></div>
+</div>
 
 <!-- ================= DIFFICULTY SELECT ================= -->
 <div class="screen" id="screen-diff">
@@ -598,7 +643,7 @@ const SETTINGS_DEFAULTS={
   speedMod:1, noFail:false, parallax:.6, fov:70,
   borderStyle:'round', colorMode:'set', ghostMode:'off',
   uiParallax:0, camParallax:0,
-  communityRepo:'',
+  communityRepo:'', discordClientId:'',
 };
 /* Absolute bounds for typed setting values. Sliders keep their friendly
    ranges; typing lets you go further, up to these engine-safe limits. */
@@ -654,14 +699,21 @@ const Settings={
     try{if(this.persistOk)localStorage.setItem(this.CKEY,JSON.stringify(list));}catch(e){}
   },
   /* ---- xp / level progress ---- */
+  _xpKey(){
+    try{if(typeof Account!=='undefined'&&Account.profile)
+      return 'jarvia_xp_d'+Account.profile.id;}catch(e){}
+    return 'jarvia_xp';
+  },
   getBP(){
-    try{if(this.persistOk){const v=localStorage.getItem('jarvia_xp');if(v!=null)return +v||0;}}catch(e){}
-    return this._bp||0;
+    const k=this._xpKey();
+    try{if(this.persistOk){const v=localStorage.getItem(k);if(v!=null)return +v||0;}}catch(e){}
+    return (this._bpMem&&this._bpMem[k])||0;
   },
   addBP(n){
+    const k=this._xpKey();
     const v=Math.max(0,Math.floor(this.getBP()+n));
-    this._bp=v;
-    try{if(this.persistOk)localStorage.setItem('jarvia_xp',String(v));}catch(e){}
+    this._bpMem=this._bpMem||{};this._bpMem[k]=v;
+    try{if(this.persistOk)localStorage.setItem(k,String(v));}catch(e){}
     return v;
   },
   /* ---- note colorsets (hex list, cycled per note) ---- */
@@ -2206,6 +2258,13 @@ const SETTINGS_SCHEMA=[
   {tab:'other',key:'hitsoundFile',label:'Custom Hit Sound',
     sub:'import a short audio file (wav/ogg/mp3, keep it under ~1s)',
     type:'audiofile',imgKind:'hitsound'},
+  {tab:'other',sec:'Account'},
+  {tab:'other',key:'discordClientId',label:'Discord Client ID',
+    sub:'for the stats-screen login \u2014 create a free app at discord.com/developers, add the redirect url below under oauth2, paste the client id here'+
+      ((typeof location!=='undefined'&&/^https?:$/.test(location.protocol))
+        ?' \u00b7 register this exact redirect: '+location.origin+location.pathname
+        :' \u00b7 host the game on a real url first (github pages works great)'),
+    type:'text',placeholder:'application client id'},
   {tab:'other',sec:'Community'},
   {tab:'other',key:'communityRepo',label:'Community Maps Repo',
     sub:'default is the official '+OFFICIAL_REPO+' \u2014 point it elsewhere to play other repos, but only official maps earn xp',
@@ -2229,6 +2288,9 @@ const UI={
   setText(id,v){this.$(id).textContent=v;},
   init(){
     this.hud=this.$('hud');
+    Account.load();
+    Career.load(Account.uid());
+    Account.handleRedirect();   /* async: finishes the discord round-trip */
     this.buildSongList();this.buildSettings();this.updateRank();
     const on=(id,fn)=>this.$(id).addEventListener('click',fn);
     this.$('set-tabs').addEventListener('click',e=>{
@@ -2275,6 +2337,12 @@ const UI={
     on('btn-quit',()=>Game.quit('screen-songs'));
     on('btn-res-retry',()=>Game.retry());
     on('btn-res-practice',()=>Game.startPractice());
+    on('btn-stats',()=>this.show('screen-stats'));
+    on('btn-stats-back',()=>this.show('screen-main'));
+    on('btn-discord',()=>{
+      if(Account.profile)Account.logout();else Account.login();
+      this.buildStats();
+    });
     on('btn-res-songs',()=>Game.quit('screen-songs'));
     on('btn-res-menu',()=>Game.quit('screen-main'));
     document.addEventListener('visibilitychange',()=>{
@@ -2284,6 +2352,7 @@ const UI={
     document.body.classList.add('menus');
     if(id==='screen-songs'){this.buildSongList();this.buildCustomList();}
     if(id==='screen-main')this.updateRank();
+    if(id==='screen-stats')this.buildStats();
     for(const s of this.screens)this.$(s).classList.toggle('active',s===id);
   },
   hideScreens(){for(const s of this.screens)this.$(s).classList.remove('active');},
@@ -2620,6 +2689,51 @@ const UI={
     this.setText('mr-lv','LV '+p.level);
     const nm=this.$('mr-name');nm.textContent=r.name;nm.style.color=r.color;
     this.$('mr-lv').style.borderColor=r.color;
+    const av=this.$('mr-ava'),us=this.$('mr-user');
+    if(av&&us){
+      if(Account.profile){av.src=Account.profile.avatarUrl;av.style.display='';
+        us.textContent=Account.profile.name;}
+      else{av.style.display='none';us.textContent='Guest';}
+    }
+  },
+  /* ---------- stats screen ---------- */
+  fmtDur(sec){
+    sec=Math.floor(sec||0);
+    const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
+    return h?h+'h '+m+'m':(m?m+'m '+s+'s':s+'s');
+  },
+  buildStats(){
+    const d=Career.data||Career.BLANK;
+    const p=XP.progress(Settings.getBP()),r=XP.rankFor(p.level);
+    /* profile card */
+    const av=this.$('sp-ava');
+    if(Account.profile){av.src=Account.profile.avatarUrl;av.style.display='';
+      this.setText('sp-name',Account.profile.name);}
+    else{av.style.display='none';this.setText('sp-name','Guest');}
+    const rk=this.$('sp-rank');
+    rk.innerHTML='<span style="color:'+r.color+'">'+r.name+'</span> \u00b7 LV '+p.level;
+    this.$('sp-lvlfill').style.width=Math.min(100,100*p.into/Math.max(1,p.need))+'%';
+    this.setText('sp-lvltext',fmtNum(p.into)+' / '+fmtNum(p.need)+' xp to LV '+(p.level+1));
+    const b=this.$('btn-discord');
+    b.textContent=Account.profile?'Log out':'Log in with Discord';
+    /* tiles */
+    const avgAcc=d.accRuns?d.accSum/d.accRuns:0;
+    const tiles=[
+      [fmtNum(d.notesHit),'total notes hit'],
+      [fmtNum(Settings.getBP()),'total xp'],
+      [fmtNum(d.mapsPlayed),'maps played'],
+      [fmtNum(d.mapsPassed),'maps passed'],
+      [fmtNum(d.fullCombos),'full combos'],
+      [fmtNum(d.totalScore),'total score'],
+      [fmtNum(d.bestScore),'best score'],
+      [this.fmtDur(d.timePlayed),'time played'],
+      [fmtNum(d.perfects),'perfect hits'],
+      [fmtNum(d.misses),'total misses'],
+      [fmtNum(d.bestCombo)+'\u00d7','best combo'],
+      [d.accRuns?avgAcc.toFixed(2)+'%':'\u2014','avg accuracy'],
+    ];
+    this.$('stats-grid').innerHTML=tiles.map(t=>
+      '<div class="stat-tile"><div class="v">'+t[0]+'</div><div class="k">'+t[1]+'</div></div>').join('');
   },
   setHp(hp){
     const wrap=this.$('hud-hp');if(!wrap.children)return;
@@ -2740,6 +2854,7 @@ const UI={
       if(failed)gain*=.15;
       else if(stats.died)gain*=.3;
       gain=Math.floor(gain);
+      this._lastXpGain=gain;
       const bp=Settings.addBP(gain);
       const p=XP.progress(bp),r=XP.rankFor(p.level);
       xpEl.textContent='+'+fmtNum(gain);
@@ -2758,6 +2873,20 @@ const UI={
         :'\u2014 (custom maps earn no xp)');
       xpEl.style.color='var(--text-dim)';
       this.$('res-lvlwrap').style.display='none';
+    }
+    /* lifetime stats: one record per finished/failed run */
+    {
+      const passed=!failed&&!stats.died;
+      const tEnd=(stats.died&&Game.deathT)?Game.deathT:(Game.endT||0);
+      Career.record({
+        hit:stats.p+stats.gr+stats.gd, p:stats.p, miss:stats.m,
+        xp:this._lastXpGain||0,
+        score:stats.score, maxCombo:stats.maxCombo, acc,
+        passed, fc:passed&&stats.m===0&&stats.judged>0,
+        practice:!!Game.practice,
+        time:Math.max(0,tEnd-(Game.startAt||0)),
+      });
+      this._lastXpGain=0;
     }
     this.hud.classList.remove('active');
     this.show('screen-results');
@@ -2862,6 +2991,134 @@ function parseSSPM(ab){
   }
   throw new Error('unsupported .sspm version '+ver);
 }
+
+/* ============ ACCOUNT (Discord login) + LIFETIME STATS ============
+   Login uses Discord's OAuth2 implicit grant, entirely client-side:
+   create a free application at discord.com/developers, add this page's
+   URL as an OAuth2 redirect, paste the Client ID into settings, and the
+   Log In button round-trips through Discord and back. Works anywhere the
+   game is hosted on a real URL (e.g. GitHub Pages). */
+const Account={
+  profile:null,
+  load(){
+    try{if(Settings.persistOk){const raw=localStorage.getItem('jarvia_account');
+      if(raw)this.profile=JSON.parse(raw);}}catch(e){}
+  },
+  save(){
+    try{if(Settings.persistOk){
+      if(this.profile)localStorage.setItem('jarvia_account',JSON.stringify(this.profile));
+      else localStorage.removeItem('jarvia_account');}}catch(e){}
+  },
+  uid(){return this.profile?'d'+this.profile.id:'guest';},
+  canOAuth(){
+    try{return typeof location!=='undefined'&&/^https?:$/.test(location.protocol);}
+    catch(e){return false;}
+  },
+  login(){
+    const cid=(Settings.get('discordClientId')||'').trim();
+    const say=m=>{try{if(typeof alert==='function')alert(m);}catch(e){}};
+    if(!cid){
+      let where='';
+      try{if(this.canOAuth())where='\n\nRegister this exact Redirect URL:\n'+
+        location.origin+location.pathname;}catch(e){}
+      say('First set your Discord Client ID in Settings \u2192 Other.\n\n'+
+        'Free setup: discord.com/developers \u2192 New Application \u2192 OAuth2 \u2192 '+
+        'add a Redirect, then copy the Client ID into settings.'+where);return;}
+    if(!this.canOAuth()){say('Discord login needs the game hosted on a real URL '+
+      '(like GitHub Pages) \u2014 Discord can\u2019t redirect back to a local file.');return;}
+    const state=Math.random().toString(36).slice(2)+Date.now().toString(36);
+    try{localStorage.setItem('jarvia_oauth_state',state);}catch(e){}
+    const redirect=location.origin+location.pathname;
+    location.href='https://discord.com/oauth2/authorize?client_id='+encodeURIComponent(cid)+
+      '&response_type=token&scope=identify&state='+encodeURIComponent(state)+
+      '&redirect_uri='+encodeURIComponent(redirect);
+  },
+  logout(){
+    this.profile=null;this.save();
+    Career.load(this.uid());
+    UI.updateRank();
+    if(UI.$('screen-stats')&&UI.$('screen-stats').classList.contains('active'))UI.buildStats();
+  },
+  /** On boot: consume the #access_token Discord sent us back with. */
+  async handleRedirect(){
+    let hash='';
+    try{hash=(typeof location!=='undefined'&&location.hash)||'';}catch(e){return;}
+    if(hash.indexOf('access_token=')<0)return;
+    const h={};
+    for(const kv of hash.slice(1).split('&')){const i=kv.indexOf('=');
+      h[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1));}
+    let stOk=true;
+    try{stOk=h.state===localStorage.getItem('jarvia_oauth_state');}catch(e){}
+    try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+    if(!stOk||!h.access_token)return;
+    try{
+      const r=await fetch('https://discord.com/api/users/@me',
+        {headers:{'Authorization':'Bearer '+h.access_token}});
+      if(!r.ok)throw new Error('discord said '+r.status);
+      const u=await r.json();
+      this.profile={id:String(u.id),name:u.global_name||u.username||'Discord User',
+        avatarUrl:u.avatar
+          ?'https://cdn.discordapp.com/avatars/'+u.id+'/'+u.avatar+'.png?size=128'
+          :'https://cdn.discordapp.com/embed/avatars/'+((parseInt(String(u.id).slice(-4),10)||0)%6)+'.png'};
+      this.save();
+      /* first login keeps your guest progress: adopt xp + stats */
+      try{if(Settings.persistOk){
+        const k='jarvia_xp_d'+this.profile.id;
+        if(localStorage.getItem(k)==null){
+          const g=localStorage.getItem('jarvia_xp');
+          if(g!=null)localStorage.setItem(k,g);
+        }}}catch(e){}
+      Career.load(this.uid());
+      Career.adoptGuestIfEmpty();
+      UI.updateRank();
+    }catch(e){/* bad/expired token: stay guest */}
+  }
+};
+
+/** Lifetime stats, keyed per account (guest until you log in). */
+const Career={
+  BLANK:{notesHit:0,perfects:0,misses:0,xpEarned:0,mapsPlayed:0,mapsPassed:0,
+    fullCombos:0,totalScore:0,bestScore:0,bestCombo:0,timePlayed:0,accSum:0,accRuns:0},
+  data:{...{}},uid:'guest',_mem:{},
+  key(){return 'jarvia_stats_'+this.uid;},
+  load(uid){
+    this.uid=uid||'guest';
+    this.data={...this.BLANK};
+    try{if(Settings.persistOk){const raw=localStorage.getItem(this.key());
+      if(raw)Object.assign(this.data,JSON.parse(raw));return;}}catch(e){}
+    if(this._mem[this.uid])Object.assign(this.data,this._mem[this.uid]);
+  },
+  save(){
+    this._mem[this.uid]={...this.data};
+    try{if(Settings.persistOk)localStorage.setItem(this.key(),JSON.stringify(this.data));}catch(e){}
+  },
+  adoptGuestIfEmpty(){
+    if(this.uid==='guest')return;
+    if(this.data.mapsPlayed||this.data.notesHit)return;
+    let g=null;
+    try{if(Settings.persistOk){const raw=localStorage.getItem('jarvia_stats_guest');
+      if(raw)g=JSON.parse(raw);}}catch(e){}
+    if(!g)g=this._mem.guest;
+    if(g){Object.assign(this.data,g);this.save();}
+  },
+  /** One results screen = one record. Practice adds notes/time only. */
+  record(run){
+    const d=this.data;
+    d.notesHit+=run.hit;d.perfects+=run.p;d.misses+=run.miss;
+    d.xpEarned+=run.xp||0;
+    d.timePlayed+=Math.max(0,run.time||0);
+    d.accSum+=run.acc;d.accRuns++;
+    if(!run.practice){
+      d.mapsPlayed++;
+      if(run.passed)d.mapsPassed++;
+      if(run.fc)d.fullCombos++;
+      d.totalScore+=run.score;
+      if(run.score>d.bestScore)d.bestScore=run.score;
+      if(run.maxCombo>d.bestCombo)d.bestCombo=run.maxCombo;
+    }
+    this.save();
+  }
+};
 
 /* ============ COMMUNITY MAPS (GitHub-backed) ============
    Point the "Community Maps Repo" setting at a public GitHub repo holding
