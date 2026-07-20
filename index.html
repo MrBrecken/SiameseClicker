@@ -641,7 +641,7 @@ const SETTINGS_DEFAULTS={
   audioOffset:0, judgeOffset:0,
   sensitivity:1.0, cursorSize:1.0, cursorColor:'#7df9ff',
   cursorStyle:'dot', cursorTrail:true,
-  noteStyle:'2d', bgStyle:'space',
+  noteStyle:'2d', bgStyle:'space', notePushback:false,
   noteSpeed:1.0, noteDistance:1.0, noteSize:1.0, noteOpacity:.42, bloom:1.0, bgBrightness:.7, minimalFx:false,
   hitRings:true, hitParticles:true, hitPop:true, judgeText:true,
   showFps:false, vsync:true, fpsLimit:0,
@@ -2038,6 +2038,7 @@ const Game={
     const approach=Math.min(12,APPROACH_DIST*Settings.get('noteDistance')/speed);
     const joff=Settings.get('judgeOffset')/1000;
     const nsz=Settings.get('noteSize'),bloom=Settings.get('minimalFx')?0:Settings.get('bloom');
+    const pushback=!!Settings.get('notePushback');
     const cubeSize=CELL*.84*nsz;
     UI.updateCountdownFromT(t);
     /* spawn notes due to appear */
@@ -2085,7 +2086,11 @@ const Game={
       if(n.state===0){
         n.group.position.x=d.x*CELL+this._uiOffX;
         n.group.position.y=d.y*CELL+this._uiOffY;
-        n.group.position.z=HITZ-(d.t-t)*speed;
+        let nz=HITZ-(d.t-t)*speed;
+        /* pushback off: don't let an un-judged note travel past the plane toward
+           the camera — pin it at HITZ so it never covers the notes behind it */
+        if(!pushback&&nz>HITZ)nz=HITZ;
+        n.group.position.z=nz;
         const am=this.noteAlphaMul((d.t-t)*speed,approach*speed);
         if(n.style==='custom'&&n.mesh)n.mesh.material.opacity=n.baseMain*am;
         else if(n.style==='3d'){n.cube.material.opacity=n.baseMain*am;
@@ -2115,20 +2120,30 @@ const Game={
         n.glow.material.opacity=Math.max(0,.7*bloom*(1-e));
         if(n.popT>.15)this._recycle(i);
         continue;
-      }else{ /* missed — fade out in place (reference culls missed notes) */
+      }else{ /* missed */
         n.missT=(n.missT||0)+dt;
-        /* stay exactly where it was judged: same x/y, pinned at the hit plane
-           so it never travels forward and covers upcoming notes */
         n.group.position.x=d.x*CELL+this._uiOffX;
         n.group.position.y=d.y*CELL+this._uiOffY;
-        n.group.position.z=HITZ;
-        const f=1-Math.min(1,n.missT/.16);      // quick ~160ms fade
-        n.cube.material.opacity=n.cube.material.opacity*0+ .42*f;
-        n.edges.material.opacity=.85*f;
-        n.flat.material.opacity=Math.min(1,.5+Settings.get('noteOpacity'))*f;
-        if(n.mesh)n.mesh.material.opacity=(n.baseMain||.9)*f;
-        n.glow.material.opacity=0;               // no glow bleed on a miss
-        if(n.missT>=.16){this._recycle(i);continue;}
+        if(pushback){
+          /* pushback ON: the note keeps flying forward past the plane before
+             being culled (reference grid_pushback / do_pushback behavior) */
+          n.group.position.z=HITZ-(d.t-t)*speed;
+          n.cube.material.opacity*=.93;n.edges.material.opacity*=.93;
+          n.flat.material.opacity*=.93;n.glow.material.opacity*=.9;
+          if(n.mesh)n.mesh.material.opacity*=.93;
+          if(n.group.position.z>6){this._recycle(i);continue;}
+        }else{
+          /* pushback OFF: fade out in place at the plane, never covering the
+             notes coming up behind it */
+          n.group.position.z=HITZ;
+          const f=1-Math.min(1,n.missT/.16);
+          n.cube.material.opacity=.42*f;
+          n.edges.material.opacity=.85*f;
+          n.flat.material.opacity=Math.min(1,.5+Settings.get('noteOpacity'))*f;
+          if(n.mesh)n.mesh.material.opacity=(n.baseMain||.9)*f;
+          n.glow.material.opacity=0;
+          if(n.missT>=.16){this._recycle(i);continue;}
+        }
       }
       if(n.group.position.z>6)this._recycle(i);
     }
@@ -2232,9 +2247,9 @@ const Game={
     s.combo=0;s.judged++;s.m++;
     s.hp-=2;
     n.state=2;n.missT=0;
-    /* freeze the note at the hit plane so it fades out in place instead of
-       flying toward the camera and blocking the notes behind it */
-    n.group.position.z=HITZ;
+    /* with pushback off, freeze at the plane so it fades in place; with
+       pushback on, leave z alone so it continues traveling forward */
+    if(!Settings.get('notePushback'))n.group.position.z=HITZ;
     UI.onJudge(3,s);
     if(s.hp<=0){
       s.hp=0;
@@ -2368,6 +2383,7 @@ const SETTINGS_SCHEMA=[
   {tab:'gameplay',key:'sensitivity',label:'Mouse Sensitivity',type:'range',min:.05,max:10,step:.1,fmt:v=>v.toFixed(2)+'×'},
   {tab:'gameplay',key:'parallax',label:'Grid Parallax',sub:'border layer shifts against your cursor, rhythia-style',type:'range',min:-5,max:5,step:.05,fmt:v=>v.toFixed(2)+'×'},
   {tab:'gameplay',key:'uiParallax',label:'Note Parallax',sub:'the note field itself shifts against your cursor (hitbox follows)',type:'range',min:-5,max:5,step:.05,fmt:v=>v.toFixed(2)+'×'},
+  {tab:'gameplay',key:'notePushback',label:'Note Pushback',sub:'when on, passed/missed notes keep flying toward you before vanishing; off (default) culls them right at the hit plane so they never block your view',type:'toggle'},
   {tab:'gameplay',key:'camParallax',label:'Camera Parallax (Half Lock)',sub:'the camera follows your cursor',type:'range',min:-2,max:2,step:.05,fmt:v=>v.toFixed(2)+'×'},
   {tab:'gameplay',key:'fov',label:'Field of View',type:'range',min:40,max:115,step:1,fmt:v=>v+'°'},
   {tab:'gameplay',key:'ghostMode',label:'Ghost Notes',sub:'notes fade as they get close — half dims them, full makes them vanish',type:'select',
