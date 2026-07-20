@@ -1493,6 +1493,7 @@ function parseOBJ(text){
 
 const CELL=1.9;            // world units per grid cell
 const HITZ=-7;             // judgment plane z
+const CAMZ=3.2;            // camera z (notes past this are past the viewer)
 const SPAWNZ=-140;         // notes materialize here
 const APPROACH_DIST=HITZ-SPAWNZ;
 /* Timing windows (seconds). Rhythia's default hit window is tight; perfect/
@@ -2125,16 +2126,21 @@ const Game={
         n.group.position.x=d.x*CELL+this._uiOffX;
         n.group.position.y=d.y*CELL+this._uiOffY;
         if(pushback){
-          /* pushback ON: the note keeps flying forward past the plane before
-             being culled (reference grid_pushback / do_pushback behavior) */
-          n.group.position.z=HITZ-(d.t-t)*speed;
-          n.cube.material.opacity*=.93;n.edges.material.opacity*=.93;
-          n.flat.material.opacity*=.93;n.glow.material.opacity*=.9;
-          if(n.mesh)n.mesh.material.opacity*=.93;
-          if(n.group.position.z>6){this._recycle(i);continue;}
+          /* pushback ON: fly a little way past the camera, then cull — short
+             pop toward you for feedback, without sweeping far across the view */
+          const PB_END=CAMZ+1.4;              // just past the camera, then gone
+          let z=HITZ-(d.t-t)*speed;
+          if(z>PB_END)z=PB_END;
+          n.group.position.z=z;
+          const f=1-Math.min(1,n.missT/.18);
+          n.cube.material.opacity=.42*f;n.edges.material.opacity=.85*f;
+          n.flat.material.opacity=Math.min(1,.5+Settings.get('noteOpacity'))*f;
+          if(n.mesh)n.mesh.material.opacity=(n.baseMain||.9)*f;
+          n.glow.material.opacity=0;
+          if(n.missT>=.18){this._recycle(i);continue;}
         }else{
-          /* pushback OFF: fade out in place at the plane, never covering the
-             notes coming up behind it */
+          /* pushback OFF: never reach the camera on a miss — fade out in place
+             at the hit plane so nothing sweeps toward or past you */
           n.group.position.z=HITZ;
           const f=1-Math.min(1,n.missT/.16);
           n.cube.material.opacity=.42*f;
@@ -2145,7 +2151,7 @@ const Game={
           if(n.missT>=.16){this._recycle(i);continue;}
         }
       }
-      if(n.group.position.z>6)this._recycle(i);
+      if(n.group.position.z>CAMZ+2){this._recycle(i);continue;}
     }
     /* effects */
     for(const r of this.rings)if(r.active){r.t+=dt/.3;
