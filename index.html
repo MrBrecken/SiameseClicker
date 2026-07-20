@@ -515,6 +515,7 @@ select.ed-in{cursor:pointer}
 <input type="file" id="file-audio" accept="audio/*,.mp3,.ogg,.wav,.sspm" style="display:none">
 <input type="file" id="file-img" accept="image/*" style="display:none">
 <input type="file" id="file-hitsound" accept="audio/*,.wav,.ogg,.mp3" style="display:none">
+<input type="file" id="file-mesh" accept=".obj,model/obj,text/plain" style="display:none">
 <input type="file" id="file-sspm" accept=".sspm" style="display:none">
 <input type="file" id="file-colors" accept=".txt,text/plain" style="display:none">
 
@@ -632,7 +633,7 @@ const OFFICIAL_REPO='MrBrecken/jarvia-maps';
 /* Discord login: the game's official application client id.
    >>> PASTE YOUR CLIENT ID BETWEEN THE QUOTES BELOW <<<
    (discord.com/developers -> your app -> OAuth2 -> Client ID) */
-const DISCORD_CLIENT_ID='1528879968862343228';
+const DISCORD_CLIENT_ID='';
 
 /* ============ 2. SETTINGS (auto-saved) ============ */
 const SETTINGS_DEFAULTS={
@@ -644,7 +645,7 @@ const SETTINGS_DEFAULTS={
   noteSpeed:1.0, noteDistance:1.0, noteSize:1.0, noteOpacity:.42, bloom:1.0, bgBrightness:.7,
   hitRings:true, hitParticles:true, hitPop:true, judgeText:true,
   showFps:false, vsync:true, fpsLimit:0,
-  speedMod:1, noFail:false, parallax:.6, fov:70,
+  speedMod:1, noFail:false, parallax:.6, fov:70, hitboxSize:1.14,
   borderStyle:'round', colorMode:'set', ghostMode:'off',
   uiParallax:0, camParallax:0,
   communityRepo:'',
@@ -656,7 +657,7 @@ const SETTING_HARD={
   cursorSize:[.05,20], sensitivity:[.01,100], bloom:[0,20],
   noteOpacity:[0,1], bgBrightness:[0,3],
   parallax:[-30,30], uiParallax:[-30,30], camParallax:[-15,15],
-  fov:[20,170],
+  fov:[20,170], hitboxSize:[.3,1.4],
   audioOffset:[-2000,2000], judgeOffset:[-1000,1000],
   masterVol:[0,1], musicVol:[0,1], hitVol:[0,1],
   fpsLimit:[0,1000], speedMod:[.25,3],
@@ -1441,11 +1442,62 @@ const Sequencer={
 };
 
 /* ============ 6. RENDERER / GAMEPLAY ============ */
+/* Minimal Wavefront .obj -> THREE.BufferGeometry.
+   Handles v / vn / f with v, v/vt, v//vn and v/vt/vn; triangulates polygons
+   by fanning. The mesh is recentered and scaled to fit a unit cube so any
+   note model drops in at the game's note size regardless of its source scale. */
+function parseOBJ(text){
+  const V=[],VN=[],pos=[],nor=[];
+  const lines=text.split(/\r?\n/);
+  for(const line of lines){
+    const s=line.trim();
+    if(!s||s[0]==='#')continue;
+    const p=s.split(/\s+/),k=p[0];
+    if(k==='v')V.push([+p[1],+p[2],+p[3]]);
+    else if(k==='vn')VN.push([+p[1],+p[2],+p[3]]);
+    else if(k==='f'){
+      const idx=p.slice(1).map(tok=>{
+        const a=tok.split('/');
+        const vi=parseInt(a[0],10);
+        const ni=a[2]?parseInt(a[2],10):0;
+        return {v:vi<0?V.length+vi:vi-1, n:ni?(ni<0?VN.length+ni:ni-1):-1};
+      });
+      for(let t=1;t+1<idx.length;t++){          // fan-triangulate
+        for(const c of [idx[0],idx[t],idx[t+1]]){
+          const vv=V[c.v]||[0,0,0];pos.push(vv[0],vv[1],vv[2]);
+          if(c.n>=0&&VN[c.n]){const nn=VN[c.n];nor.push(nn[0],nn[1],nn[2]);}
+          else nor.push(0,0,1);
+        }
+      }
+    }
+  }
+  if(!pos.length)throw new Error('no faces in .obj');
+  /* normalize: center on origin, scale longest axis to 1 */
+  let mnx=1e9,mny=1e9,mnz=1e9,mxx=-1e9,mxy=-1e9,mxz=-1e9;
+  for(let i=0;i<pos.length;i+=3){
+    mnx=Math.min(mnx,pos[i]);mxx=Math.max(mxx,pos[i]);
+    mny=Math.min(mny,pos[i+1]);mxy=Math.max(mxy,pos[i+1]);
+    mnz=Math.min(mnz,pos[i+2]);mxz=Math.max(mxz,pos[i+2]);
+  }
+  const cx=(mnx+mxx)/2,cy=(mny+mxy)/2,cz=(mnz+mxz)/2;
+  const span=Math.max(mxx-mnx,mxy-mny,mxz-mnz)||1,sc=1/span;
+  for(let i=0;i<pos.length;i+=3){
+    pos[i]=(pos[i]-cx)*sc;pos[i+1]=(pos[i+1]-cy)*sc;pos[i+2]=(pos[i+2]-cz)*sc;
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(pos),3));
+  g.setAttribute('normal',new THREE.BufferAttribute(new Float32Array(nor),3));
+  g.computeBoundingSphere();
+  return {geo:g,tris:pos.length/9};
+}
+
 const CELL=1.9;            // world units per grid cell
 const HITZ=-7;             // judgment plane z
 const SPAWNZ=-140;         // notes materialize here
 const APPROACH_DIST=HITZ-SPAWNZ;
-const MISSW=.055, W_PERFECT=.025, W_GREAT=.040;   // ±55 ms judgment window
+/* Timing windows (seconds). Rhythia's default hit window is tight; perfect/
+   great are inner bands. These no longer scale with any visual setting. */
+const MISSW=.05, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
 const NOTE_HALF=.45;       // note hitbox half-width, in cells
 const MAXHP=10;            // miss: -2, hit: +1; death at 0
 const modMult=m=>m===1?1:(m>1?1+(m-1)*.5:1-(1-m)*.6);
@@ -1675,9 +1727,14 @@ const Game={
       const flat=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({
         map:this.sqTex,transparent:true,opacity:.95,color:0xffffff,depthWrite:false}));
       flat.visible=false;
-      const group=new THREE.Group();group.add(glow);group.add(cube);group.add(edges);group.add(flat);
+      const mesh=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshPhongMaterial({
+        color:0x66d9ff,transparent:true,opacity:.9,shininess:100,
+        specular:0xaaddff,emissive:0x113344,depthWrite:false,side:THREE.DoubleSide}));
+      mesh.visible=false;
+      const group=new THREE.Group();
+      group.add(glow);group.add(cube);group.add(edges);group.add(flat);group.add(mesh);
       group.visible=false;this.scene.add(group);
-      this.pool.push({group,cube,edges,glow,flat,state:0,data:null,popT:0,spin:0});
+      this.pool.push({group,cube,edges,glow,flat,mesh,state:0,data:null,popT:0,spin:0});
     }
     for(let i=0;i<20;i++){
       const s=new THREE.Sprite(new THREE.SpriteMaterial({map:this.ringTex,transparent:true,
@@ -1690,6 +1747,27 @@ const Game={
       s.visible=false;this.scene.add(s);this.parts.push({s,t:1,vx:0,vy:0,active:false});
     }
   },
+  /* Parse (once) the user's uploaded .obj and apply it to every pooled mesh.
+     Returns true if a custom mesh is ready. Falls back to a cube on error. */
+  customMeshReady(){
+    const raw=Settings.getImg('notemesh');
+    if(!raw){this._customGeo=null;this._customGeoSrc=null;return false;}
+    if(this._customGeoSrc===raw)return !!this._customGeo;
+    this._customGeoSrc=raw;
+    try{
+      const text=raw.indexOf(',')>=0&&/^data:/.test(raw)
+        ? decodeURIComponent(escape(atob(raw.slice(raw.indexOf(',')+1))))
+        : raw;
+      const {geo}=parseOBJ(text);
+      this._customGeo=geo;
+      for(const n of this.pool){
+        if(n.mesh.geometry&&n.mesh.geometry!==geo)n.mesh.geometry.dispose&&n.mesh.geometry.dispose();
+        n.mesh.geometry=geo;
+      }
+      return true;
+    }catch(e){this._customGeo=null;return false;}
+  },
+  invalidateCustomMesh(){this._customGeoSrc=null;this._customGeo=null;},
   /* ---------- settings application ---------- */
   _makeBgGrid(){
     const pts=[];
@@ -1767,6 +1845,7 @@ const Game={
     this.colA=new THREE.Color().setHSL(hue/360,.9,.66);
     this.colB=new THREE.Color(0xe8eaf2);
     for(const n of this.pool){n.cube.material.color.copy(c);
+      if(n.mesh){n.mesh.material.color.copy(c);n.mesh.material.emissive.copy(em);}
       n.cube.material.emissive.copy(em);n.edges.material.color.copy(e);
       n.glow.material.color.copy(c);}
     this.glowPoint.color.copy(c);
@@ -1983,8 +2062,11 @@ const Game={
       tr.mesh.position.x=tr.x*CELL;tr.mesh.position.y=tr.y*CELL;
       tr.mesh.material.opacity=trailOp*(1-i/this.trail.length);
       const s2=1-.07*i;tr.mesh.scale.set(s2,s2,1);}
-    /* hitbox width in cells: cursor half + note half */
-    const th=NOTE_HALF*Settings.get('cursorSize')+NOTE_HALF;
+    /* Rhythia hitbox: a fixed square of half-width note_hitbox_size/2 centered
+       on the note. It does NOT grow with note size or cursor size — that was
+       the leniency. hbs is in grid cells (note_hitbox_size is in the 1-unit
+       grid where a cell = 1, so we scale by our CELL-based half). */
+    const hbs=Settings.get('hitboxSize')*.5;
     /* notes */
     for(let i=this.active.length-1;i>=0;i--){
       const n=this.active[i],d=n.data;
@@ -1992,18 +2074,22 @@ const Game={
         n.group.position.x=d.x*CELL+this._uiOffX;
         n.group.position.y=d.y*CELL+this._uiOffY;
         n.group.position.z=HITZ-(d.t-t)*speed;
-        if(n.style==='3d'){n.group.rotation.x+=n.spin*dt;n.group.rotation.y+=n.spin*1.4*dt;}
+        if(n.style==='3d'||n.style==='custom'){n.group.rotation.x+=n.spin*dt;n.group.rotation.y+=n.spin*1.4*dt;}
         const am=this.noteAlphaMul((d.t-t)*speed,approach*speed);
-        if(n.style==='3d'){n.cube.material.opacity=n.baseMain*am;
+        if(n.style==='custom'&&n.mesh)n.mesh.material.opacity=n.baseMain*am;
+        else if(n.style==='3d'){n.cube.material.opacity=n.baseMain*am;
           n.edges.material.opacity=.85*am;}
         else n.flat.material.opacity=n.baseMain*am;
         n.glow.material.opacity=n.baseGlow*am;
         const late=t-(d.t+joff);
-        /* off-grid (quantum) notes are hittable at the closest reachable
-           point: clamp the note's hit position to the cursor bounds */
-        const hx=d.x<-1.5?-1.5:(d.x>1.5?1.5:d.x);
-        const hy=d.y<-1.5?-1.5:(d.y>1.5?1.5:d.y);
-        const over=Math.abs(cx-hx)<th&&Math.abs(cy-hy)<th;
+        /* Judge against the note's TRUE grid position vs the cursor's TRUE
+           position — both in raw grid units, so camera/grid/ui parallax and
+           ghost opacity can never shift the hitbox. Off-grid (quantum) notes
+           stay hittable at the nearest reachable point. */
+        const nx=d.x+this._uiOffX/CELL, ny=d.y+this._uiOffY/CELL;
+        const hx=nx<-1.5?-1.5:(nx>1.5?1.5:nx);
+        const hy=ny<-1.5?-1.5:(ny>1.5?1.5:ny);
+        const over=Math.abs(cx-hx)<=hbs&&Math.abs(cy-hy)<=hbs;
         if(late>MISSW){this._miss(n);}
         else if(late>=0&&(over||n.armed)){this._hit(n,n.armed?0:late);}
         else if(late>=-MISSW&&over){n.armed=true;}   // hovering early = on time
@@ -2014,6 +2100,7 @@ const Game={
         n.cube.material.opacity=Math.max(0,Settings.get('noteOpacity')*(1-e));
         n.edges.material.opacity=Math.max(0,.85*(1-e));
         n.flat.material.opacity=Math.max(0,(1-e));
+        if(n.mesh)n.mesh.material.opacity=Math.max(0,n.mesh.material.opacity*(1-e)+ (1-e)*0);
         n.glow.material.opacity=Math.max(0,.7*bloom*(1-e));
         if(n.popT>.15)this._recycle(i);
         continue;
@@ -2023,6 +2110,7 @@ const Game={
         n.group.position.z=HITZ-(d.t-t)*speed;
         n.cube.material.opacity*= .93;n.edges.material.opacity*=.93;
         n.flat.material.opacity*=.93;n.glow.material.opacity*=.9;
+        if(n.mesh)n.mesh.material.opacity*=.93;
       }
       if(n.group.position.z>6)this._recycle(i);
     }
@@ -2061,7 +2149,18 @@ const Game={
       }
     }
     const setCol=useSet?this._setCols[this.spawnIdx%this._setCols.length]:null;
-    if(style==='3d'){
+    if(n.mesh)n.mesh.visible=false;
+    if(style==='custom'&&this.customMeshReady()){
+      n.spin=.35+((hashStr(''+((d.t*997)|0))%100)/100)*.5;
+      n.cube.visible=false;n.edges.visible=false;n.flat.visible=false;n.mesh.visible=true;
+      const col=setCol||((this.spawnIdx&1)?this.colB:this.colA);
+      n.mesh.material.color.copy(col);
+      n.mesh.material.emissive.copy(col).multiplyScalar(.25);
+      n.mesh.scale.set(cubeSize,cubeSize,cubeSize);
+      n.mesh.material.opacity=n.baseMain=Math.min(1,.4+Settings.get('noteOpacity'));
+      n.glow.material.color.copy(col);
+      n.glow.material.opacity=n.baseGlow=.3*bloom;
+    }else if(style==='3d'){
       n.spin=.35+((hashStr(''+((d.t*997)|0))%100)/100)*.5;
       n.cube.visible=true;n.edges.visible=true;n.flat.visible=false;
       if(setCol){n.cube.material.color.copy(setCol);
@@ -2207,7 +2306,10 @@ const SETTINGS_SCHEMA=[
   {tab:'customize',sec:'Notes'},
   {tab:'customize',key:'noteStyle',label:'Note Style',type:'select',
     options:[['2d','Hollow Squares'],['solid','Solid Squares'],['circle','Rings'],
-             ['diamond','Diamonds'],['3d','3D Cubes']]},
+             ['diamond','Diamonds'],['3d','3D Cubes'],['custom','Custom Mesh (.obj)']]},
+  {tab:'customize',key:'noteMeshFile',label:'Custom Note Mesh',
+    sub:'upload a Wavefront .obj (e.g. a Rhythia note model) \u2014 used when Note Style is Custom Mesh',
+    type:'meshfile',imgKind:'notemesh'},
   {tab:'customize',key:'colorMode',label:'Note Colors',type:'select',
     options:[['set','Colorset (cycles)'],['song','Song Theme']]},
   {tab:'customize',key:'noteColorset',label:'Colorset',sub:'one hex color per line, like Rhythia colorsets',type:'colorset'},
@@ -2243,7 +2345,8 @@ const SETTINGS_SCHEMA=[
   {tab:'gameplay',key:'noteDistance',label:'Note Distance',sub:'how far away notes appear',type:'range',min:.2,max:3,step:.03,fmt:v=>Math.round(133*v)+'m'},
   {tab:'gameplay',key:'sensitivity',label:'Mouse Sensitivity',type:'range',min:.05,max:10,step:.1,fmt:v=>v.toFixed(2)+'×'},
   {tab:'gameplay',key:'parallax',label:'Grid Parallax',sub:'border layer shifts against your cursor, rhythia-style',type:'range',min:-5,max:5,step:.05,fmt:v=>v.toFixed(2)+'×'},
-  {tab:'gameplay',key:'uiParallax',label:'Note Parallax',sub:'the note field itself shifts against your cursor (visual only)',type:'range',min:-5,max:5,step:.05,fmt:v=>v.toFixed(2)+'×'},
+  {tab:'gameplay',key:'uiParallax',label:'Note Parallax',sub:'the note field itself shifts against your cursor (hitbox follows)',type:'range',min:-5,max:5,step:.05,fmt:v=>v.toFixed(2)+'×'},
+  {tab:'gameplay',key:'hitboxSize',label:'Hitbox Size',sub:'rhythia note_hitbox_size — 1.14 is default; lower is stricter',type:'range',min:.5,max:1.4,step:.01,fmt:v=>v.toFixed(2)},
   {tab:'gameplay',key:'camParallax',label:'Camera Parallax (Half Lock)',sub:'the camera follows your cursor',type:'range',min:-2,max:2,step:.05,fmt:v=>v.toFixed(2)+'×'},
   {tab:'gameplay',key:'fov',label:'Field of View',type:'range',min:40,max:115,step:1,fmt:v=>v+'°'},
   {tab:'gameplay',key:'ghostMode',label:'Ghost Notes',sub:'notes fade as they get close — half dims them, full makes them vanish',type:'select',
@@ -2295,6 +2398,7 @@ const UI={
       if(b&&b.dataset&&b.dataset.tab)this.setTab(b.dataset.tab);});
     this.$('file-img').addEventListener('change',e=>this._onImgFile(e));
     this.$('file-hitsound').addEventListener('change',e=>this._onSndFile(e));
+    this.$('file-mesh').addEventListener('change',e=>this._onMeshFile(e));
     this.$('file-colors').addEventListener('change',e=>this._onColorsFile(e));
     on('btn-play',()=>{AudioEngine.init();this.show('screen-songs');});
     /* mods */
@@ -2495,6 +2599,15 @@ const UI={
   },
   pickImage(cb){this._imgCb=cb;this.$('file-img').click();},
   pickAudioFile(cb){this._sndCb=cb;this.$('file-hitsound').click();},
+  pickMesh(cb){this._meshCb=cb;this.$('file-mesh').click();},
+  _onMeshFile(e){
+    const f=e.target.files&&e.target.files[0];e.target.value='';
+    const cb=this._meshCb;this._meshCb=null;
+    if(!f||!cb)return;
+    if(f.size>2*1024*1024){alert('keep the .obj under 2 MB');return;}
+    const r=new FileReader();r.onload=()=>cb(String(r.result||''));
+    r.readAsText(f);
+  },
   _onSndFile(e){
     const f=e.target.files&&e.target.files[0];e.target.value='';
     const cb=this._sndCb;this._sndCb=null;
@@ -2615,6 +2728,30 @@ const UI={
         const x=document.createElement('span');x.className='img-clear';x.textContent='\u2715';
         x.title='remove image';
         x.addEventListener('click',()=>{Settings.setImg(item.imgKind,null);paint();Game.applyVisual(true);});
+        wrap.appendChild(b);wrap.appendChild(st);wrap.appendChild(x);
+        ctl.appendChild(wrap);
+      }else if(item.type==='meshfile'){
+        const wrap=document.createElement('div');wrap.className='img-ctl';
+        const st=document.createElement('span');st.className='img-status';
+        const paint=()=>{const has=!!Settings.getImg(item.imgKind);
+          st.textContent=has?'mesh set':'none';st.classList.toggle('set',has);};
+        paint();
+        const b=document.createElement('button');b.className='btn small';b.textContent='Upload\u2026';
+        b.addEventListener('click',()=>this.pickMesh(text=>{
+          /* validate before storing so a bad file can't brick the note pool */
+          let ok=false;
+          try{const r=parseOBJ(text);ok=r.tris>0;}catch(e){ok=false;}
+          if(!ok){alert('couldn\u2019t read that .obj \u2014 make sure it has v and f lines');return;}
+          Settings.setImg(item.imgKind,text);
+          Settings.set('noteStyle','custom');
+          Game.invalidateCustomMesh();Game.customMeshReady();
+          paint();this.buildSettings();
+          if(!Settings.persistOk)st.textContent='mesh set (this session)';
+        }));
+        const x=document.createElement('span');x.className='img-clear';x.textContent='\u2715';
+        x.title='remove mesh';
+        x.addEventListener('click',()=>{Settings.setImg(item.imgKind,null);
+          Game.invalidateCustomMesh();paint();});
         wrap.appendChild(b);wrap.appendChild(st);wrap.appendChild(x);
         ctl.appendChild(wrap);
       }else if(item.type==='audiofile'){
