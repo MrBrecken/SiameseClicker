@@ -1920,7 +1920,11 @@ const Game={
         else n.flat.material.opacity=n.baseMain*am;
         n.glow.material.opacity=n.baseGlow*am;
         const late=t-(d.t+joff);
-        const over=Math.abs(cx-d.x)<th&&Math.abs(cy-d.y)<th;
+        /* off-grid (quantum) notes are hittable at the closest reachable
+           point: clamp the note's hit position to the cursor bounds */
+        const hx=d.x<-1.5?-1.5:(d.x>1.5?1.5:d.x);
+        const hy=d.y<-1.5?-1.5:(d.y>1.5?1.5:d.y);
+        const over=Math.abs(cx-hx)<th&&Math.abs(cy-hy)<th;
         if(late>MISSW){this._miss(n);}
         else if(late>=0&&(over||n.armed)){this._hit(n,n.armed?0:late);}
         else if(late>=-MISSW&&over){n.armed=true;}   // hovering early = on time
@@ -2725,7 +2729,10 @@ function parseSSPM(ab){
   const sig=String.fromCharCode(u8[0],u8[1],u8[2],u8[3]);
   if(sig!=='SS+m')throw new Error('not an .sspm file');
   const ver=dv.getUint16(4,true);
-  const clampC=v=>clamp(v,-1.5,1.5);
+  /* Quantum notes live outside the 3x3 grid: keep their true positions so
+     they render out there, capping only absurd/corrupt values. Hitboxes are
+     clamped to the reachable field at judge time, not here. */
+  const clampC=v=>clamp(v,-5,5);
   if(ver===2){
     let p=6;
     p+=4;                 // reserved u32
@@ -3067,8 +3074,9 @@ const Editor={
       const op=cur?1:Math.max(.12,1-Math.abs(d)/win*(d<0?1.7:1));
       const col=cur?'#ff7ad9':(d>0?'#e8eaf2':'#5d6480');
       const sc=cur?1:(d>0?clamp(1-d*.35,.55,.95):.85);
-      html+=`<div class="ed-note${cur?' now':''}" style="left:${(n.x+1.5)/3*100}%;`+
-        `top:${(1.5-n.y)/3*100}%;border-color:${col};color:${col};opacity:${op};`+
+      const ex=clamp(n.x,-1.45,1.45),ey=clamp(n.y,-1.45,1.45); /* display only: quantum notes hug the edge */
+      html+=`<div class="ed-note${cur?' now':''}" style="left:${(ex+1.5)/3*100}%;`+
+        `top:${(1.5-ey)/3*100}%;border-color:${col};color:${col};opacity:${op};`+
         `transform:translate(-50%,-50%) scale(${sc})"></div>`;
     }
     this.fieldEl.innerHTML=html;
