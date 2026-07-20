@@ -115,6 +115,13 @@ h2.screen-title{font-weight:300;letter-spacing:.3em;text-indent:.3em;text-transf
 .set-row .sub{display:block;font-size:10px;color:var(--text-dim);margin-top:2px;letter-spacing:.06em}
 .set-ctl{display:flex;align-items:center;gap:10px}
 .set-val{font-family:var(--mono);font-size:11px;color:var(--ion-dim);min-width:52px;text-align:right}
+.set-num{width:66px;background:var(--void-2);border:1px solid var(--line);color:var(--ion-dim);
+  border-radius:3px;padding:4px 6px;font-family:var(--mono);font-size:11px;text-align:right;
+  outline:none;-webkit-user-select:text;user-select:text;-moz-appearance:textfield}
+.set-num::-webkit-outer-spin-button,.set-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.set-num:focus{border-color:var(--ion);color:var(--text)}
+.set-num.beyond{color:var(--gold);border-color:rgba(255,211,107,.5)}
+.set-unit{font-family:var(--mono);font-size:10px;color:var(--text-dim);min-width:20px}
 input[type=range]{-webkit-appearance:none;appearance:none;width:150px;height:3px;border-radius:2px;
   background:linear-gradient(90deg,var(--ion) var(--fill,50%),rgba(120,160,255,.18) var(--fill,50%));outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;
@@ -592,6 +599,18 @@ const SETTINGS_DEFAULTS={
   borderStyle:'round', colorMode:'set', ghostMode:'off',
   uiParallax:0, camParallax:0,
   communityRepo:'',
+};
+/* Absolute bounds for typed setting values. Sliders keep their friendly
+   ranges; typing lets you go further, up to these engine-safe limits. */
+const SETTING_HARD={
+  noteSpeed:[.01,50], noteDistance:[.05,20], noteSize:[.05,20],
+  cursorSize:[.05,20], sensitivity:[.01,100], bloom:[0,20],
+  noteOpacity:[0,1], bgBrightness:[0,3],
+  parallax:[-30,30], uiParallax:[-30,30], camParallax:[-15,15],
+  fov:[20,170],
+  audioOffset:[-2000,2000], judgeOffset:[-1000,1000],
+  masterVol:[0,1], musicVol:[0,1], hitVol:[0,1],
+  fpsLimit:[0,1000], speedMod:[.25,3],
 };
 const DEFAULT_COLORSET=['#e95f5f','#ffb2b2','#e88d5f','#ffcdb2','#e8ba5f','#ffe8b2',
 '#e8e85f','#faffb2','#bae85f','#dfffb2','#8de85f','#c4ffb2','#5fe85f','#b2ffbb',
@@ -2464,14 +2483,39 @@ const UI={
       const ctl=document.createElement('div');ctl.className='set-ctl';
       const apply=()=>{AudioEngine.setVolumes();Game.applyVisual(false);Loop.reschedule();};
       if(item.type==='range'){
-        const val=document.createElement('span');val.className='set-val';
+        /* slider + a typed box. The box accepts exact values, including
+           past the slider's ends, bounded only by per-setting hard limits
+           that keep the engine sane (fov, volumes, etc). */
+        const hard=SETTING_HARD[item.key]||[item.min,item.max];
+        const num=document.createElement('input');num.className='set-num';
+        num.type='number';num.step=item.step;
+        num.min=hard[0];num.max=hard[1];
+        const unit=document.createElement('span');unit.className='set-unit';
         const inp=document.createElement('input');inp.type='range';
         inp.min=item.min;inp.max=item.max;inp.step=item.step;
-        const paint=()=>{const v=+inp.value;val.textContent=item.fmt(v);
-          inp.style.setProperty('--fill',(100*(v-item.min)/(item.max-item.min))+'%');};
-        inp.value=Settings.get(item.key);paint();
-        inp.addEventListener('input',()=>{Settings.set(item.key,+inp.value);paint();apply();});
-        ctl.appendChild(inp);ctl.appendChild(val);
+        const dec=Math.max(0,(String(item.step).split('.')[1]||'').length);
+        const paint=(v)=>{
+          num.value=+v.toFixed(Math.min(4,dec+2));
+          const f=item.fmt(v);
+          const m=/^[+\-]?[\d.,]+\s*(.*)$/.exec(f);
+          unit.textContent=(m&&m[1])?m[1]:'';
+          inp.value=clamp(v,item.min,item.max);
+          inp.style.setProperty('--fill',
+            (100*clamp((v-item.min)/(item.max-item.min),0,1))+'%');
+          num.classList.toggle('beyond',v<item.min-1e-9||v>item.max+1e-9);
+        };
+        paint(+Settings.get(item.key));
+        inp.addEventListener('input',()=>{const v=+inp.value;
+          Settings.set(item.key,v);paint(v);apply();});
+        const commit=()=>{
+          let v=parseFloat(num.value);
+          if(isNaN(v))v=+Settings.get(item.key);
+          v=clamp(v,hard[0],hard[1]);
+          Settings.set(item.key,v);paint(v);apply();
+        };
+        num.addEventListener('change',commit);
+        num.addEventListener('keydown',e=>{if(e.key==='Enter'){commit();num.blur();}});
+        ctl.appendChild(inp);ctl.appendChild(num);ctl.appendChild(unit);
       }else if(item.type==='toggle'){
         const t=document.createElement('div');t.className='toggle'+(Settings.get(item.key)?' on':'');
         t.addEventListener('click',()=>{const v=!Settings.get(item.key);
