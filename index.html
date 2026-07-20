@@ -10,17 +10,17 @@
    Palette: void navy base, ion-cyan primary, plasma-violet accent
    ============================================================ */
 :root{
-  --void:#05070d;
-  --void-2:#0a0e1a;
-  --panel:rgba(14,19,34,.72);
-  --panel-brt:rgba(22,28,48,.85);
-  --line:rgba(120,160,255,.14);
-  --line-brt:rgba(140,190,255,.35);
+  --void:#0a0a0b;
+  --void-2:#101013;
+  --panel:#121215;
+  --panel-brt:#1a1a1f;
+  --line:#26262c;
+  --line-brt:#3c3c46;
   --ion:#6df2ff;
   --ion-dim:#3aa8c4;
   --violet:#a06bff;
-  --text:#dbe6ff;
-  --text-dim:#7f8db0;
+  --text:#eaeaee;
+  --text-dim:#8b8b96;
   --gold:#ffd36b;
   --green:#49d18d;
   --blue:#4aa8ff;
@@ -41,39 +41,47 @@ body.menus #gl{cursor:default}
   z-index:20;padding:24px}
 .screen.active{opacity:1;visibility:visible;pointer-events:auto;transition-delay:0s,0s}
 .screen::before{content:"";position:fixed;inset:0;z-index:-1;
-  background:radial-gradient(ellipse at 50% 40%, rgba(10,16,32,.55), rgba(4,6,11,.86));
-  backdrop-filter:blur(2px)}
+  background:rgba(8,8,10,.9)}
 #screen-pause::before{background:radial-gradient(ellipse at 50% 45%, rgba(8,12,24,.7), rgba(3,4,8,.92))}
 
 /* ---------- typography ---------- */
-.logo{font-size:clamp(52px,9vw,104px);font-weight:200;letter-spacing:.42em;
-  text-indent:.42em;color:#fff;line-height:1;
-  text-shadow:0 0 22px rgba(109,242,255,.55),0 0 70px rgba(109,242,255,.28),0 0 140px rgba(160,107,255,.25);
-  animation:logoPulse 4s ease-in-out infinite}
-@keyframes logoPulse{0%,100%{text-shadow:0 0 22px rgba(109,242,255,.5),0 0 70px rgba(109,242,255,.25),0 0 140px rgba(160,107,255,.22)}
-  50%{text-shadow:0 0 30px rgba(109,242,255,.8),0 0 90px rgba(109,242,255,.4),0 0 160px rgba(160,107,255,.35)}}
+.logo{font-size:22px;font-weight:600;letter-spacing:.28em;text-indent:.28em;color:#fff;line-height:1}
 .tagline{margin-top:14px;color:var(--text-dim);letter-spacing:.34em;text-indent:.34em;
   font-size:12px;text-transform:uppercase}
-h2.screen-title{font-weight:300;letter-spacing:.3em;text-indent:.3em;text-transform:uppercase;
-  font-size:clamp(20px,3vw,30px);color:#fff;margin-bottom:6px;
-  text-shadow:0 0 18px rgba(109,242,255,.4)}
+h2.screen-title{font-weight:600;letter-spacing:.05em;
+  font-size:clamp(18px,2.4vw,24px);color:#fff;margin-bottom:6px}
 .screen-sub{color:var(--text-dim);font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:26px}
 
 /* ---------- buttons ---------- */
-.btn{position:relative;display:inline-block;min-width:230px;text-align:center;
-  padding:13px 34px;margin:7px 0;border:1px solid var(--line-brt);border-radius:3px;
-  background:linear-gradient(180deg,rgba(109,242,255,.05),rgba(109,242,255,.01));
-  color:var(--text);font-size:14px;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;
-  cursor:pointer;transition:all .18s ease;font-family:var(--font)}
-.btn:hover{border-color:var(--ion);color:#fff;background:rgba(109,242,255,.1);
-  box-shadow:0 0 22px rgba(109,242,255,.28),inset 0 0 18px rgba(109,242,255,.06);
-  transform:translateY(-1px)}
-.btn:active{transform:translateY(0)}
+.btn{position:relative;display:inline-block;min-width:210px;text-align:center;
+  padding:12px 30px;margin:6px 0;border:1px solid var(--line-brt);border-radius:3px;
+  background:#131316;
+  color:var(--text);font-size:14px;letter-spacing:.03em;
+  cursor:pointer;transition:background .12s,border-color .12s;font-family:var(--font)}
+.btn:hover{border-color:#55555f;color:#fff;background:#1c1c21}
+.btn:active{background:#222228}
 .btn.primary{border-color:var(--ion);color:var(--ion)}
 .btn.small{min-width:0;padding:9px 20px;font-size:12px;margin:4px}
 .btn.ghost{border-color:var(--line);color:var(--text-dim)}
 .btn.ghost:hover{color:var(--text);border-color:var(--line-brt);box-shadow:none}
 .menu-col{display:flex;flex-direction:column;align-items:center;margin-top:44px}
+/* ---------- sidebar main menu ---------- */
+#screen-main{align-items:stretch;justify-content:flex-start;padding:0}
+#menu-side{width:252px;height:100%;background:#0c0c0e;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;padding:26px 0 18px}
+#menu-side .logo{padding:0 24px 18px}
+#menu-side #menu-rank{margin:0 16px 20px;padding:10px 10px;background:#111114;
+  border:1px solid var(--line);border-radius:4px}
+.side-item{display:flex;align-items:center;gap:15px;width:100%;padding:15px 24px;
+  background:none;border:none;border-left:2px solid transparent;
+  color:var(--text);font-size:14.5px;font-family:var(--font);cursor:pointer;
+  text-align:left;transition:background .1s}
+.side-item svg{width:21px;height:21px;flex:none;opacity:.92}
+.side-item:hover{background:#161619;border-left-color:#fff;color:#fff}
+.side-item.primary{background:#141418}
+.side-item.primary:hover{background:#1b1b20}
+#side-hint{margin-top:auto;padding:16px 24px 0;font-size:10.5px;line-height:1.8;
+  color:var(--text-dim)}
 .hint-footer{position:absolute;bottom:26px;color:var(--text-dim);font-size:11px;
   letter-spacing:.2em;text-transform:uppercase;text-align:center;line-height:2}
 .hint-footer b{color:var(--ion-dim);font-weight:600}
@@ -152,20 +160,38 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 #res-lvltext{font-size:10.5px;color:var(--text-dim);margin-top:5px;letter-spacing:.08em}
 #res-lvlup{color:var(--gold)}
 /* ---------- song rows ---------- */
-#screen-songs{justify-content:flex-start;padding-top:34px;padding-bottom:56px;overflow-y:auto}
+#screen-songs{justify-content:flex-start;align-items:flex-end;
+  padding:26px 46px 56px 24px;overflow-y:auto}
 #screen-songs::-webkit-scrollbar{width:8px}
-#screen-songs::-webkit-scrollbar-thumb{background:rgba(109,242,255,.18);border-radius:4px}
-#screen-songs::-webkit-scrollbar-thumb:hover{background:rgba(109,242,255,.32)}
-.lib-sec{width:min(880px,94vw);margin:22px 0 8px;display:flex;align-items:baseline;gap:14px}
-.lib-sec .t{font-size:11px;letter-spacing:.34em;text-indent:.34em;text-transform:uppercase;color:var(--ion)}
+#screen-songs::-webkit-scrollbar-thumb{background:#2c2c33;border-radius:4px}
+#screen-songs::-webkit-scrollbar-thumb:hover{background:#3d3d46}
+#songs-top{width:min(880px,94vw);display:flex;align-items:center;
+  justify-content:space-between;gap:18px;margin-bottom:14px;flex-wrap:wrap}
+#songs-top .screen-title{margin:0}
+#song-search-bar{display:flex;gap:8px}
+#song-search-bar input{width:170px;background:#141417;border:1px solid var(--line-brt);
+  border-radius:3px;color:var(--text);padding:8px 11px;font-size:12.5px;
+  font-family:var(--font);outline:none}
+#song-search-bar input:focus{border-color:#55555f}
+#song-author{width:110px!important}
+#btn-random{background:#1a1a1f;border:1px solid var(--line-brt);border-radius:3px;
+  color:var(--text);font-size:12px;padding:8px 13px;cursor:pointer;font-family:var(--font)}
+#btn-random:hover{background:#232329;color:#fff}
+.lib-sec{width:min(880px,94vw);margin:22px 0 8px;display:flex;align-items:baseline;
+  justify-content:flex-end;gap:14px}
+.lib-sec .t{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#c9c9d2}
 .lib-sec .n{font-family:var(--mono);font-size:10px;color:var(--text-dim)}
 .lib-sec.feat .t{color:var(--violet)}
 .lib-sec.cust .t{color:#ff5fd6}
 .song-row{width:min(880px,94vw);display:flex;align-items:center;gap:16px;
-  padding:11px 16px;border:1px solid var(--line);border-left:3px solid transparent;
-  background:rgba(12,14,24,.5);margin-bottom:6px;cursor:pointer;transition:all .13s}
-.song-row:hover{border-color:var(--line-brt);border-left-color:var(--row-c,var(--ion));
-  background:rgba(18,22,38,.72);transform:translateX(3px)}
+  padding:15px 18px;border:1px solid color-mix(in srgb,var(--row-c,#888) 34%,#141416);
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--row-c,#666) 26%,#0d0d0f),
+    color-mix(in srgb,var(--row-c,#666) 9%,#0d0d0f) 55%,
+    color-mix(in srgb,var(--row-c,#666) 20%,#0d0d0f));
+  margin-bottom:7px;cursor:pointer;transition:transform .12s,border-color .12s,filter .12s}
+.song-row:hover{border-color:var(--row-c,#fff);transform:translateX(-22px);
+  filter:brightness(1.22)}
 .song-row .who{flex:1;min-width:0}
 .song-row .ti{font-size:14px;font-weight:600;color:#fff;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis}
@@ -424,22 +450,35 @@ select.ed-in{cursor:pointer}
 
 <!-- ================= MAIN MENU ================= -->
 <div class="screen active" id="screen-main">
-  <div class="logo">JARVIA</div>
-  <div class="tagline">rhythm in the void</div>
-  <div class="menu-col">
+  <div id="menu-side">
+    <div class="logo">JARVIA</div>
     <div id="menu-rank"><img id="mr-ava" alt="" style="display:none"><span id="mr-user">Guest</span><span id="mr-lv"></span><span id="mr-name"></span></div>
-    <button class="btn primary" id="btn-play">Play</button>
-    <button class="btn" id="btn-editor">Map Editor</button>
-    <button class="btn" id="btn-stats">Stats</button>
-    <button class="btn" id="btn-settings">Settings</button>
+    <button class="side-item primary" id="btn-play">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9.5 7.5v9l8-4.5z"/></svg>
+      <span>Play Song</span></button>
+    <button class="side-item" id="btn-editor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 013 3L8 19l-4 1z"/></svg>
+      <span>Map Editor</span></button>
+    <button class="side-item" id="btn-stats">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="12" width="3.4" height="8" rx=".6"/><rect x="10.3" y="7" width="3.4" height="13" rx=".6"/><rect x="16.6" y="3" width="3.4" height="17" rx=".6"/></svg>
+      <span>Stats</span></button>
+    <button class="side-item" id="btn-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></svg>
+      <span>Settings</span></button>
+    <div id="side-hint">hover to hit — never click<br>esc pauses · settings autosave</div>
   </div>
-  <div class="hint-footer">glide your cursor over the incoming notes · <b>hover to hit — never click</b><br>esc pauses · settings save automatically</div>
 </div>
 
 <!-- ================= SONG SELECT ================= -->
 <div class="screen" id="screen-songs">
-  <h2 class="screen-title">Song Select</h2>
-  <div class="screen-sub">choose your track</div>
+  <div id="songs-top">
+    <h2 class="screen-title">Song Select</h2>
+    <div id="song-search-bar">
+      <input id="song-search" type="text" placeholder="Search" autocomplete="off">
+      <input id="song-author" type="text" placeholder="Author" autocomplete="off">
+      <button id="btn-random">Select random from search</button>
+    </div>
+  </div>
   <div id="mods-bar">
     <span class="mods-lbl">Mods</span>
     <div class="mod-group" id="mod-speed">
@@ -2467,6 +2506,14 @@ const UI={
     on('btn-res-retry',()=>Game.retry());
     on('btn-res-practice',()=>Game.startPractice());
     on('btn-stats',()=>this.show('screen-stats'));
+    on('btn-random',()=>this.randomFromSearch());
+    for(const[id,k]of[['song-search','q'],['song-author','a']]){
+      const el=this.$(id);
+      if(el&&el.addEventListener)el.addEventListener('input',()=>{
+        this._flt[k]=String(el.value||'').trim().toLowerCase();
+        this.buildSongList();this.buildCustomList();
+      });
+    }
     on('btn-stats-back',()=>this.show('screen-main'));
     on('btn-discord',()=>{
       if(Account.profile)Account.logout();else Account.login();
@@ -2518,17 +2565,33 @@ const UI={
     if(this._ss[s.id]==null)this._ss[s.id]=starRating(buildChart(s,'master').notes);
     return this._ss[s.id];
   },
+  _flt:{q:'',a:''},_randPool:[],
+  _match(title,by){
+    const q=this._flt.q,a=this._flt.a;
+    if(q&&String(title).toLowerCase().indexOf(q)<0)return false;
+    if(a&&String(by).toLowerCase().indexOf(a)<0)return false;
+    return true;
+  },
   buildSongList(){
     const wrap=this.$('song-list');wrap.innerHTML='';
-    this.setText('lib-n-orig',SONGS.length+' songs \u00b7 5 charts each \u00b7 earns xp');
+    this._randPool=[];
+    let shown=0;
     for(const s of SONGS){
+      if(!this._match(s.title,s.artist))continue;
+      shown++;
       const m=Math.floor(s.duration/60),sec=String(Math.round(s.duration%60)).padStart(2,'0');
       const row=this._row(`hsl(${s.hue},85%,60%)`,esc(s.title),esc(s.artist),
         `${s.bpm} bpm \u00b7 ${m}:${sec}`,this._songStars(s),this._bestTxt(s.id,'master'));
       row.addEventListener('click',()=>this.openDiff(s));
       wrap.appendChild(row);
+      this._randPool.push(()=>this.openDiff(s));
     }
+    this.setText('lib-n-orig',shown+' of '+SONGS.length+' songs \u00b7 5 charts each \u00b7 earns xp');
     this.buildFeaturedList();
+  },
+  randomFromSearch(){
+    if(!this._randPool.length)return;
+    this._randPool[(Math.random()*this._randPool.length)|0]();
   },
   buildFeaturedList(){this.buildCommunityList();},
   async buildCommunityList(){
@@ -2546,7 +2609,7 @@ const UI={
       this.setText('lib-n-feat','couldn\u2019t reach the repo \u00b7 '+res.err);
       return;
     }
-    const list=res.list;
+    const list=res.list.filter(e=>this._match(e.name.replace(/\.sspm$/i,''),''));
     this.setText('lib-n-feat',list.length+' maps \u00b7 downloads on first play \u00b7 '+
       (Community.isOfficial()?'official repo \u00b7 earns xp':'custom repo \u00b7 no xp'));
     if(!list.length){
@@ -2587,6 +2650,7 @@ const UI={
     sec.style.display=maps.length?'flex':'none';
     this.setText('lib-n-cust',maps.length+' saved \u00b7 no xp');
     for(const m of maps){
+      if(!this._match(m.title||'Untitled',m.artist||'Custom Map'))continue;
       const dur=m.duration||0,mm=Math.floor(dur/60),ss=String(Math.round(dur%60)).padStart(2,'0');
       const hasAudio=!!Editor.buffers[m.id];
       const st=starRating(m.notes.map(n=>({t:n.t,x:n.x,y:n.y})).sort((a,b)=>a.t-b.t));
@@ -2594,6 +2658,7 @@ const UI={
         `${m.notes.length} notes \u00b7 ${mm}:${ss}`,st,'',hasAudio?'':'attach audio');
       row.addEventListener('click',()=>Editor.playCustom(m.id,'songs'));
       wrap.appendChild(row);
+      if(hasAudio)this._randPool.push(()=>Editor.playCustom(m.id,'songs'));
     }
   },
   openDiff(song){
