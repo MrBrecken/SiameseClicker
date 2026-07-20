@@ -642,7 +642,7 @@ const SETTINGS_DEFAULTS={
   sensitivity:1.0, cursorSize:1.0, cursorColor:'#7df9ff',
   cursorStyle:'dot', cursorTrail:true,
   noteStyle:'2d', bgStyle:'space',
-  noteSpeed:1.0, noteDistance:1.0, noteSize:1.0, noteOpacity:.42, bloom:1.0, bgBrightness:.7,
+  noteSpeed:1.0, noteDistance:1.0, noteSize:1.0, noteOpacity:.42, bloom:1.0, bgBrightness:.7, minimalFx:false,
   hitRings:true, hitParticles:true, hitPop:true, judgeText:true,
   showFps:false, vsync:true, fpsLimit:0,
   speedMod:1, noFail:false, parallax:.6, fov:70, hitboxSize:1.14,
@@ -1697,6 +1697,7 @@ const Game={
     const glowM=new THREE.SpriteMaterial({map:this.glowTex,color:col,transparent:true,
       opacity:.55,depthTest:false,depthWrite:false,blending:THREE.AdditiveBlending});
     const glow=new THREE.Sprite(glowM);glow.scale.set(csize*3.4,csize*3.4,1);glow.renderOrder=998;
+    this.cursorGlow=glow;glow.visible=!Settings.get('minimalFx');
     this.cursorGroup.add(glow);this.cursorGroup.add(this.cursorMesh);
     this.cursorGroup.position.z=HITZ+.25;
     this.scene.add(this.cursorGroup);
@@ -1819,12 +1820,19 @@ const Game={
     const fov=clamp(Settings.get('fov')||70,30,130);
     if(this.camera.fov!==fov){this.camera.fov=fov;this.camera.updateProjectionMatrix();}
     this._applyBackground();
-    const op=Settings.get('noteOpacity'),bloom=Settings.get('bloom');
+    const minimal=!!Settings.get('minimalFx');
+    if(minimal){this.starMat.opacity=Math.min(this.starMat.opacity,.28);}
+    const op=Settings.get('noteOpacity'),bloom=minimal?0:Settings.get('bloom');
     for(const n of this.pool){
       if(n.state===0){n.cube.material.opacity=op;
         n.flat.material.opacity=Math.min(1,.5+op);
-        n.glow.material.opacity=(n.style==='3d'?.38:.22)*bloom;n.edges.material.opacity=.85;}
+        n.glow.material.opacity=minimal?0:(n.style==='3d'?.38:.22)*bloom;n.edges.material.opacity=.85;}
     }
+    /* minimal mode strips every non-essential glow: cursor halo, glow light,
+       and the drifting background dust/star bloom — notes/cursor stay crisp */
+    this.glowPoint.intensity=minimal?0:.7;
+    if(minimal){this.dustMat.opacity=0;}
+    if(this.cursorGlow)this.cursorGlow.visible=!minimal;
     const key=Settings.get('cursorColor')+'|'+Settings.get('cursorSize')+'|'+
       Settings.get('cursorStyle')+'|'+(Settings.getImg('cursor')?1:0);
     if(force||key!==this._lastCursorKey){this._lastCursorKey=key;this._makeCursor();
@@ -2028,7 +2036,7 @@ const Game={
     const speed=60*Settings.get('noteSpeed');
     const approach=Math.min(12,APPROACH_DIST*Settings.get('noteDistance')/speed);
     const joff=Settings.get('judgeOffset')/1000;
-    const nsz=Settings.get('noteSize'),bloom=Settings.get('bloom');
+    const nsz=Settings.get('noteSize'),bloom=Settings.get('minimalFx')?0:Settings.get('bloom');
     const cubeSize=CELL*.84*nsz;
     UI.updateCountdownFromT(t);
     /* spawn notes due to appear */
@@ -2316,7 +2324,8 @@ const SETTINGS_SCHEMA=[
   {tab:'customize',key:'noteSize',label:'Note Size',sub:'visual only',type:'range',min:.2,max:3,step:.03,fmt:v=>v.toFixed(2)+'×'},
   {tab:'customize',key:'noteOpacity',label:'Note Transparency',type:'range',min:.01,max:1,step:.01,fmt:v=>Math.round(v*100)+'%'},
   {tab:'customize',sec:'Note Effects'},
-  {tab:'customize',key:'bloom',label:'Note Glow',sub:'0 for plain, clean notes',type:'range',min:0,max:4,step:.04,fmt:v=>v.toFixed(2)+'×'},
+  {tab:'customize',key:'minimalFx',label:'Minimal Graphics',sub:'strip all glow, bloom & background haze for a clean, flat look (best for readability / low-end devices)',type:'toggle'},
+  {tab:'customize',key:'bloom',label:'Note Glow',sub:'0 for plain, clean notes — ignored when Minimal Graphics is on',type:'range',min:0,max:4,step:.04,fmt:v=>v.toFixed(2)+'×'},
   {tab:'customize',key:'hitPop',label:'Hit Pop Animation',sub:'off makes notes vanish instantly, no grow effect',type:'toggle'},
   {tab:'customize',key:'hitRings',label:'Hit Rings',type:'toggle'},
   {tab:'customize',key:'hitParticles',label:'Hit Particles',type:'toggle'},
