@@ -2115,13 +2115,20 @@ const Game={
         n.glow.material.opacity=Math.max(0,.7*bloom*(1-e));
         if(n.popT>.15)this._recycle(i);
         continue;
-      }else{ /* missed — dim and fly past the camera */
+      }else{ /* missed — fade out in place (reference culls missed notes) */
+        n.missT=(n.missT||0)+dt;
+        /* stay exactly where it was judged: same x/y, pinned at the hit plane
+           so it never travels forward and covers upcoming notes */
         n.group.position.x=d.x*CELL+this._uiOffX;
         n.group.position.y=d.y*CELL+this._uiOffY;
-        n.group.position.z=HITZ-(d.t-t)*speed;
-        n.cube.material.opacity*= .93;n.edges.material.opacity*=.93;
-        n.flat.material.opacity*=.93;n.glow.material.opacity*=.9;
-        if(n.mesh)n.mesh.material.opacity*=.93;
+        n.group.position.z=HITZ;
+        const f=1-Math.min(1,n.missT/.16);      // quick ~160ms fade
+        n.cube.material.opacity=n.cube.material.opacity*0+ .42*f;
+        n.edges.material.opacity=.85*f;
+        n.flat.material.opacity=Math.min(1,.5+Settings.get('noteOpacity'))*f;
+        if(n.mesh)n.mesh.material.opacity=(n.baseMain||.9)*f;
+        n.glow.material.opacity=0;               // no glow bleed on a miss
+        if(n.missT>=.16){this._recycle(i);continue;}
       }
       if(n.group.position.z>6)this._recycle(i);
     }
@@ -2224,7 +2231,10 @@ const Game={
     const s=this.stats;
     s.combo=0;s.judged++;s.m++;
     s.hp-=2;
-    n.state=2;
+    n.state=2;n.missT=0;
+    /* freeze the note at the hit plane so it fades out in place instead of
+       flying toward the camera and blocking the notes behind it */
+    n.group.position.z=HITZ;
     UI.onJudge(3,s);
     if(s.hp<=0){
       s.hp=0;
