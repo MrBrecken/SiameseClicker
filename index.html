@@ -1494,6 +1494,7 @@ function parseOBJ(text){
 const CELL=1.9;            // world units per grid cell
 const HITZ=-7;             // judgment plane z
 const CAMZ=3.2;            // camera z (notes past this are past the viewer)
+const PUSHBACK_DIST=3.5;   // pushback-on: culled this far past the hit plane
 const SPAWNZ=-140;         // notes materialize here
 const APPROACH_DIST=HITZ-SPAWNZ;
 /* Timing windows (seconds). Rhythia's default hit window is tight; perfect/
@@ -2122,34 +2123,19 @@ const Game={
         if(n.popT>.15)this._recycle(i);
         continue;
       }else{ /* missed */
+        if(!n.group.visible){this._recycle(i);continue;}   // pushback off: gone instantly
         n.missT=(n.missT||0)+dt;
+        /* pushback ON: keep flying a short fixed distance past the plane
+           (reference grid_pushback — note grows a little, dims dark, culls) */
         n.group.position.x=d.x*CELL+this._uiOffX;
         n.group.position.y=d.y*CELL+this._uiOffY;
-        if(pushback){
-          /* pushback ON: fly a little way past the camera, then cull — short
-             pop toward you for feedback, without sweeping far across the view */
-          const PB_END=CAMZ+1.4;              // just past the camera, then gone
-          let z=HITZ-(d.t-t)*speed;
-          if(z>PB_END)z=PB_END;
-          n.group.position.z=z;
-          const f=1-Math.min(1,n.missT/.18);
-          n.cube.material.opacity=.42*f;n.edges.material.opacity=.85*f;
-          n.flat.material.opacity=Math.min(1,.5+Settings.get('noteOpacity'))*f;
-          if(n.mesh)n.mesh.material.opacity=(n.baseMain||.9)*f;
-          n.glow.material.opacity=0;
-          if(n.missT>=.18){this._recycle(i);continue;}
-        }else{
-          /* pushback OFF: never reach the camera on a miss — fade out in place
-             at the hit plane so nothing sweeps toward or past you */
-          n.group.position.z=HITZ;
-          const f=1-Math.min(1,n.missT/.16);
-          n.cube.material.opacity=.42*f;
-          n.edges.material.opacity=.85*f;
-          n.flat.material.opacity=Math.min(1,.5+Settings.get('noteOpacity'))*f;
-          if(n.mesh)n.mesh.material.opacity=(n.baseMain||.9)*f;
-          n.glow.material.opacity=0;
-          if(n.missT>=.16){this._recycle(i);continue;}
-        }
+        let z=HITZ-(d.t-t)*speed;
+        if(z>=HITZ+PUSHBACK_DIST){this._recycle(i);continue;}
+        n.group.position.z=z;
+        n.cube.material.opacity*=.94;n.edges.material.opacity*=.94;
+        n.flat.material.opacity*=.94;
+        if(n.mesh)n.mesh.material.opacity*=.94;
+        n.glow.material.opacity=0;
       }
       if(n.group.position.z>CAMZ+2){this._recycle(i);continue;}
     }
@@ -2253,9 +2239,8 @@ const Game={
     s.combo=0;s.judged++;s.m++;
     s.hp-=2;
     n.state=2;n.missT=0;
-    /* with pushback off, freeze at the plane so it fades in place; with
-       pushback on, leave z alone so it continues traveling forward */
-    if(!Settings.get('notePushback'))n.group.position.z=HITZ;
+    /* pushback off: the note disappears the instant it's missed */
+    if(!Settings.get('notePushback'))n.group.visible=false;
     UI.onJudge(3,s);
     if(s.hp<=0){
       s.hp=0;
