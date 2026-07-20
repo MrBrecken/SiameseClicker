@@ -629,6 +629,10 @@ const fmtNum=n=>n.toLocaleString('en-US');
 /* The official community maps repo: the default source, and the only one
    whose maps pay out xp. */
 const OFFICIAL_REPO='MrBrecken/jarvia-maps';
+/* Discord login: the game's official application client id.
+   >>> PASTE YOUR CLIENT ID BETWEEN THE QUOTES BELOW <<<
+   (discord.com/developers -> your app -> OAuth2 -> Client ID) */
+const DISCORD_CLIENT_ID='1528879968862343228';
 
 /* ============ 2. SETTINGS (auto-saved) ============ */
 const SETTINGS_DEFAULTS={
@@ -643,7 +647,7 @@ const SETTINGS_DEFAULTS={
   speedMod:1, noFail:false, parallax:.6, fov:70,
   borderStyle:'round', colorMode:'set', ghostMode:'off',
   uiParallax:0, camParallax:0,
-  communityRepo:'', discordClientId:'',
+  communityRepo:'',
 };
 /* Absolute bounds for typed setting values. Sliders keep their friendly
    ranges; typing lets you go further, up to these engine-safe limits. */
@@ -2258,13 +2262,6 @@ const SETTINGS_SCHEMA=[
   {tab:'other',key:'hitsoundFile',label:'Custom Hit Sound',
     sub:'import a short audio file (wav/ogg/mp3, keep it under ~1s)',
     type:'audiofile',imgKind:'hitsound'},
-  {tab:'other',sec:'Account'},
-  {tab:'other',key:'discordClientId',label:'Discord Client ID',
-    sub:'for the stats-screen login \u2014 create a free app at discord.com/developers, add the redirect url below under oauth2, paste the client id here'+
-      ((typeof location!=='undefined'&&/^https?:$/.test(location.protocol))
-        ?' \u00b7 register this exact redirect: '+location.origin+location.pathname
-        :' \u00b7 host the game on a real url first (github pages works great)'),
-    type:'text',placeholder:'application client id'},
   {tab:'other',sec:'Community'},
   {tab:'other',key:'communityRepo',label:'Community Maps Repo',
     sub:'default is the official '+OFFICIAL_REPO+' \u2014 point it elsewhere to play other repos, but only official maps earn xp',
@@ -2282,7 +2279,7 @@ const JUDGE_CLASSES=['j-perfect','j-great','j-good','j-miss'];
 const GRADES=[[99,'SS','#ffd36b'],[96,'S','#ffe9a8'],[90,'A','#49d18d'],[80,'B','#4aa8ff'],[70,'C','#c07bff'],[-1,'D','#ff5f7a']];
 
 const UI={
-  screens:['screen-main','screen-songs','screen-diff','screen-settings','screen-pause','screen-results','screen-editor'],
+  screens:['screen-main','screen-songs','screen-diff','screen-settings','screen-pause','screen-results','screen-editor','screen-stats'],
   settingsReturn:'screen-main',_resumeCd:false,_selectedSong:null,
   $(id){return document.getElementById(id);},
   setText(id,v){this.$(id).textContent=v;},
@@ -2358,7 +2355,7 @@ const UI={
   hideScreens(){for(const s of this.screens)this.$(s).classList.remove('active');},
   onEscape(){
     const active=this.screens.find(s=>this.$(s).classList.contains('active'));
-    if(active==='screen-songs')this.show('screen-main');
+    if(active==='screen-songs'||active==='screen-stats')this.show('screen-main');
     else if(active==='screen-diff')this.show('screen-songs');
     else if(active==='screen-settings')this.$('btn-settings-back').click();
     else if(active==='screen-pause')Game.resume();
@@ -3015,15 +3012,15 @@ const Account={
     catch(e){return false;}
   },
   login(){
-    const cid=(Settings.get('discordClientId')||'').trim();
+    const cid=(DISCORD_CLIENT_ID||'').trim();
     const say=m=>{try{if(typeof alert==='function')alert(m);}catch(e){}};
     if(!cid){
       let where='';
-      try{if(this.canOAuth())where='\n\nRegister this exact Redirect URL:\n'+
+      try{if(this.canOAuth())where='\n\nRegister this exact Redirect URL in the app:\n'+
         location.origin+location.pathname;}catch(e){}
-      say('First set your Discord Client ID in Settings \u2192 Other.\n\n'+
-        'Free setup: discord.com/developers \u2192 New Application \u2192 OAuth2 \u2192 '+
-        'add a Redirect, then copy the Client ID into settings.'+where);return;}
+      say('Discord login isn\u2019t configured in this build yet \u2014 the game\u2019s '+
+        'owner needs to paste their application Client ID into the marked line '+
+        'near the top of the file.'+where);return;}
     if(!this.canOAuth()){say('Discord login needs the game hosted on a real URL '+
       '(like GitHub Pages) \u2014 Discord can\u2019t redirect back to a local file.');return;}
     const state=Math.random().toString(36).slice(2)+Date.now().toString(36);
