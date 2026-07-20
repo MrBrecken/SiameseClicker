@@ -574,6 +574,9 @@ function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt
 const midiToFreq=m=>440*Math.pow(2,(m-69)/12);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtNum=n=>n.toLocaleString('en-US');
+/* The official community maps repo: the default source, and the only one
+   whose maps pay out xp. */
+const OFFICIAL_REPO='MrBrecken/jarvia-maps';
 
 /* ============ 2. SETTINGS (auto-saved) ============ */
 const SETTINGS_DEFAULTS={
@@ -1749,7 +1752,8 @@ const Game={
   startFeatured(f,buffer,keepPractice){
     if(!keepPractice){this.practice=false;this.practiceFrom=0;}
     this.customMap=null;this.customOrigin=null;
-    this.xpEligible=!this.practice;this.featured=f;this._lastFeatBuf=buffer;
+    this.xpEligible=!this.practice&&!!(f&&f.official);
+    this.featured=f;this._lastFeatBuf=buffer;
     const notes=featNotes(f);
     this.song={id:'f_'+f.id,title:f.title,artist:'mapped by '+f.by,
       hue:265,bpm:0,duration:f.dur};
@@ -2185,8 +2189,8 @@ const SETTINGS_SCHEMA=[
     type:'audiofile',imgKind:'hitsound'},
   {tab:'other',sec:'Community'},
   {tab:'other',key:'communityRepo',label:'Community Maps Repo',
-    sub:'public github repo (or repo/folder) holding .sspm files \u2014 new uploads appear automatically',
-    type:'text',placeholder:'yourname/jarvia-maps'},
+    sub:'default is the official '+OFFICIAL_REPO+' \u2014 point it elsewhere to play other repos, but only official maps earn xp',
+    type:'text',placeholder:OFFICIAL_REPO+' (official)'},
   {tab:'other',sec:'Display'},
   {tab:'other',key:'showFps',label:'FPS Counter',type:'toggle'},
   {tab:'other',key:'vsync',label:'VSync',sub:'off runs on a timer loop (browser-dependent)',type:'toggle'},
@@ -2314,12 +2318,8 @@ const UI={
     const wrap=this.$('featured-list');
     const seq=(this._commSeq=(this._commSeq||0)+1);
     if(!Community.repoInfo()){
-      this.setText('lib-n-feat','set a github repo in settings \u2192 other \u00b7 earns xp');
-      wrap.innerHTML='';
-      const d=document.createElement('div');d.className='ed-empty';
-      d.textContent='connect a public github repo of .sspm files and every map you upload there shows up here.';
-      wrap.appendChild(d);
-      return;
+      this.setText('lib-n-feat','repo address looks wrong \u2014 fix it in settings \u2192 other');
+      wrap.innerHTML='';return;
     }
     this.setText('lib-n-feat','checking repo\u2026');
     const res=await Community.fetchList();
@@ -2330,7 +2330,8 @@ const UI={
       return;
     }
     const list=res.list;
-    this.setText('lib-n-feat',list.length+' maps in repo \u00b7 downloads on first play \u00b7 earns xp');
+    this.setText('lib-n-feat',list.length+' maps \u00b7 downloads on first play \u00b7 '+
+      (Community.isOfficial()?'official repo \u00b7 earns xp':'custom repo \u00b7 no xp'));
     if(!list.length){
       const d=document.createElement('div');d.className='ed-empty';
       d.textContent='no .sspm files in that repo yet \u2014 upload some!';
@@ -2709,7 +2710,8 @@ const UI={
       this.$('res-lvlwrap').style.display='block';
     }else{
       xpEl.textContent=Game.practice?'\u2014 (practice earns no xp)'
-        :'\u2014 (custom maps earn no xp)';
+        :(Game.featured?'\u2014 (only official-repo maps earn xp)'
+        :'\u2014 (custom maps earn no xp)');
       xpEl.style.color='var(--text-dim)';
       this.$('res-lvlwrap').style.display='none';
     }
@@ -2825,12 +2827,17 @@ function parseSSPM(ab){
 const Community={
   list:null,listAt:0,cache:{},pending:{},
   repoInfo(){
-    const raw=(Settings.get('communityRepo')||'').trim();
-    if(!raw)return null;
+    /* empty setting = the official repo, so community maps work out of the box */
+    const raw=(Settings.get('communityRepo')||'').trim()||OFFICIAL_REPO;
     const m=raw.replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'')
       .match(/^([\w.-]+)\/([\w.-]+)(?:\/(.*))?$/);
     if(!m)return null;
     return {owner:m[1],repo:m[2],path:(m[3]||'').replace(/\/+$/,'')};
+  },
+  /* only maps from the official repo pay xp; any custom repo is play-only */
+  isOfficial(){
+    const i=this.repoInfo();
+    return !!i&&(i.owner+'/'+i.repo).toLowerCase()===OFFICIAL_REPO.toLowerCase();
   },
   async fetchList(force){
     const info=this.repoInfo();
@@ -2868,7 +2875,7 @@ const Community={
         if(pr&&pr.then)pr.then(res,rej);
       });
       const f={id:entry.id,title:map.title,by:map.artist,dur:map.duration,
-        stars:starRating(map.notes),notes:map.notes};
+        stars:starRating(map.notes),notes:map.notes,official:this.isOfficial()};
       const rec={f,buffer};
       this.cache[entry.id]=rec;
       delete this.pending[entry.id];
