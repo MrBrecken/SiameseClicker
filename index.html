@@ -255,6 +255,8 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 .sd-fav,.sd-play{flex:1;padding:9px;background:#141417;border:1px solid var(--line-brt);
   border-radius:6px;color:var(--text);font-size:12.5px;cursor:pointer;font-family:var(--font)}
 .sd-fav:hover,.sd-play:hover{background:#1c1c22;color:#fff}
+.sd-play.disabled{opacity:.45;cursor:default}
+.sd-play.disabled:hover{background:#141417;color:var(--text)}
 .sd-fav.on{color:var(--gold);border-color:rgba(255,211,107,.4)}
 .sd-hitinfo{text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:18px}
 .sd-hr{border:none;border-top:1px solid var(--line);margin:16px 0 20px}
@@ -3018,14 +3020,22 @@ const UI={
       this._rebuildLists();}});
     on('sd-playmusic',()=>{
       const ref=this._detail;if(!ref)return;
+      const pm=this.$('sd-playmusic');
+      /* stop if already previewing */
+      if(this._musicPlaying){this._stopPreview();
+        pm.textContent='\u25b6 Play Music';return;}
       let buf=null;
       if(ref.type==='custom')buf=Editor.buffers[ref.map.id];
       else if(ref.type==='featured')buf=this._featBufs&&this._featBufs[ref.f.id];
-      if(buf){AudioEngine.init();
-        if(AudioEngine.ctx.state==='suspended')AudioEngine.ctx.resume();
-        try{if(this._previewSrc){this._previewSrc.stop();this._previewSrc.disconnect();}}catch(e){}
-        const s=AudioEngine.ctx.createBufferSource();s.buffer=buf;
-        s.connect(AudioEngine.music);s.start();this._previewSrc=s;}
+      if(!buf)return;   // nothing decoded to preview
+      AudioEngine.init();
+      if(AudioEngine.ctx.state==='suspended')AudioEngine.ctx.resume();
+      this._stopPreview();
+      const s=AudioEngine.ctx.createBufferSource();s.buffer=buf;
+      s.connect(AudioEngine.music);s.start();this._previewSrc=s;this._musicPlaying=true;
+      s.onended=()=>{if(this._previewSrc===s){this._musicPlaying=false;
+        const b=this.$('sd-playmusic');if(b)b.textContent='\u25b6 Play Music';}};
+      pm.textContent='\u23f9 Stop Music';
     });
     on('sd-nofail',()=>{Settings.set('noFail',!Settings.get('noFail'));
       this.$('sd-nofail').classList.toggle('on',!!Settings.get('noFail'));});
@@ -3135,7 +3145,8 @@ const UI={
       shown++;
       const m=Math.floor(s.duration/60),sec=String(Math.round(s.duration%60)).padStart(2,'0');
       const row=this._row(`hsl(${s.hue},85%,60%)`,esc(s.title),esc(s.artist),
-        `${s.bpm} bpm \u00b7 ${m}:${sec}`,this._songStars(s),this._bestTxt(s.id,'master'),null,'song:'+s.id);
+        `${s.bpm} bpm \u00b7 ${m}:${sec}`,this._songStars(s),this._bestTxt(s.id,'master'),null,'song:'+s.id,
+        this._genCover(s.hue,s.title));
       row.addEventListener('click',()=>this.openDiff(s));
       wrap.appendChild(row);
       this._randPool.push(()=>this.openDiff(s));
@@ -3144,6 +3155,20 @@ const UI={
     this.buildFeaturedList();
   },
   _rebuildLists(){this.buildSongList();this.buildCustomList();this.buildCommunityList();},
+  /* build a small gradient cover from a hue + initials, as an SVG data URI */
+  _genCover(hue,label){
+    const h=((hue||265)%360+360)%360;
+    const init=String(label||'?').replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase()||'♪';
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120">'+
+      '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'+
+      '<stop offset="0" stop-color="hsl('+h+',55%,42%)"/>'+
+      '<stop offset="1" stop-color="hsl('+((h+40)%360)+',60%,18%)"/></linearGradient></defs>'+
+      '<rect width="120" height="120" fill="url(#g)"/>'+
+      '<text x="60" y="60" font-family="sans-serif" font-size="42" font-weight="700" '+
+      'fill="rgba(255,255,255,.88)" text-anchor="middle" dominant-baseline="central">'+init+'</text></svg>';
+    return 'data:image/svg+xml;base64,'+(typeof btoa!=='undefined'
+      ? btoa(svg) : Buffer.from(svg,'utf8').toString('base64'));
+  },
   randomFromSearch(){
     if(!this._randPool.length)return;
     this._randPool[(Math.random()*this._randPool.length)|0]();
@@ -3279,7 +3304,8 @@ const UI={
       const hasAudio=!!Editor.buffers[m.id];
       const st=starRating(m.notes.map(n=>({t:n.t,x:n.x,y:n.y})).sort((a,b)=>a.t-b.t));
       const row=this._row('#ff5fd6',esc(m.title||'Untitled'),esc(m.artist||'Custom Map'),
-        `${m.notes.length} notes \u00b7 ${mm}:${ss}`,st,'',hasAudio?'':'attach audio','cust:'+m.id,m.cover||null);
+        `${m.notes.length} notes \u00b7 ${mm}:${ss}`,st,'',hasAudio?'':'attach audio','cust:'+m.id,
+        m.cover||this._genCover(318,m.title||'?'));
       row.addEventListener('click',()=>this.openDetail({type:'custom',map:m}));
       wrap.appendChild(row);
       if(hasAudio)this._randPool.push(()=>Editor.playCustom(m.id,'songs'));
@@ -3440,8 +3466,9 @@ const UI={
     this.$('sd-by').innerHTML=by;
     this.setText('sd-id',idTxt?('Song ID: '+idTxt):'');
     let coverUrl=null;
-    if(ref.type==='custom')coverUrl=ref.map.cover||null;
-    else if(ref.type==='featured')coverUrl=ref.f.cover||null;
+    if(ref.type==='song')coverUrl=this._genCover(ref.song.hue,ref.song.title);
+    else if(ref.type==='custom')coverUrl=ref.map.cover||this._genCover(318,ref.map.title||'?');
+    else if(ref.type==='featured')coverUrl=ref.f.cover||this._genCover(265,ref.f.title||'?');
     const cimg=this.$('sd-cover-img'),cch=this.$('sd-cover-c');
     if(coverUrl){cimg.src=coverUrl;cimg.style.display='';if(cch)cch.style.display='none';}
     else{cimg.style.display='none';if(cch){cch.style.display='';cch.textContent='\u266a';}}
@@ -3470,13 +3497,16 @@ const UI={
     const nf=Settings.get('noFail')?'No Fail':'Default health';
     this.setText('sd-hitinfo',nf+' \u00b7 fixed hitbox \u00b7 tightened hit window');
     /* play-music availability */
-    /* Play Music only when we actually have decoded audio: custom maps with a
-       session buffer, or community maps already downloaded. Originals synth their
-       audio at play time, so there's nothing to preview. */
+    /* Play Music is always shown (like Rhythia); it previews decoded audio for
+       custom/community maps. Originals synth audio at play time, so their button
+       is shown but inert. */
     let hasMusic=false;
     if(ref.type==='custom')hasMusic=!!Editor.buffers[ref.map.id];
     else if(ref.type==='featured')hasMusic=!!(this._featBufs&&this._featBufs[ref.f.id]);
-    this.$('sd-playmusic').style.display=hasMusic?'':'none';
+    const pm=this.$('sd-playmusic');
+    pm.style.display='';
+    pm.classList.toggle('disabled',!hasMusic);
+    pm.textContent=this._musicPlaying?'\u23f9 Stop Music':'\u25b6 Play Music';
     P.classList.add('show');P.setAttribute('aria-hidden','false');
   },
   _renderDetailSpeed(){
@@ -3514,13 +3544,19 @@ const UI={
     const buf=(this._featBufs&&this._featBufs[f.id])||null;
     Game.startFeatured(f,buf);
   },
+  _stopPreview(){
+    try{if(this._previewSrc){this._previewSrc.onended=null;
+      this._previewSrc.stop();this._previewSrc.disconnect();}}catch(e){}
+    this._previewSrc=null;this._musicPlaying=false;
+  },
   closeDetail(){const P=this.$('song-detail');if(P){P.classList.remove('show');
     P.setAttribute('aria-hidden','true');}
-    try{if(this._previewSrc){this._previewSrc.stop();this._previewSrc.disconnect();this._previewSrc=null;}}catch(e){}},
+    this._stopPreview();
+    const pm=this.$('sd-playmusic');if(pm)pm.textContent='\u25b6 Play Music';},
   startDetail(){
     const ref=this._detail;if(!ref)return;
+    this._stopPreview();
     this.closeDetail();
-    try{if(this._previewSrc){this._previewSrc.stop();this._previewSrc.disconnect();this._previewSrc=null;}}catch(e){}
     if(ref.type==='song')Game.startSong(ref.song,this._detDiff);
     else if(ref.type==='custom')Editor.playCustom(ref.map.id,'songs');
     else this.playFeatured(ref.f);
