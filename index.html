@@ -33,13 +33,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--void);color:va
   font-family:var(--font);font-size:15px}
 #gl{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:none}
 body.menus #gl{cursor:default}
+#fluid-bg{position:fixed;inset:0;width:100%;height:100%;display:none;z-index:0;pointer-events:none}
+body.menus #fluid-bg{display:block}
 
 /* ---------- screens ---------- */
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
   justify-content:center;opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .28s ease,visibility 0s linear .28s;
+  transform:translateY(6px);
+  transition:opacity .34s cubic-bezier(.22,.61,.36,1),transform .34s cubic-bezier(.22,.61,.36,1),visibility 0s linear .34s;
   z-index:20;padding:24px}
-.screen.active{opacity:1;visibility:visible;pointer-events:auto;transition-delay:0s,0s}
+.screen.active{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);transition-delay:0s,0s,0s}
 .screen::before{content:"";position:fixed;inset:0;z-index:-1;
   background:rgba(8,8,10,.9)}
 #screen-pause::before{background:radial-gradient(ellipse at 50% 45%, rgba(8,12,24,.7), rgba(3,4,8,.92))}
@@ -66,12 +69,10 @@ h2.screen-title{font-weight:600;letter-spacing:.05em;
 .btn.ghost:hover{color:var(--text);border-color:var(--line-brt);box-shadow:none}
 .menu-col{display:flex;flex-direction:column;align-items:center;margin-top:44px}
 /* ---------- sidebar main menu ---------- */
-#screen-main{align-items:stretch;justify-content:flex-start;padding:0}
-#menu-side{width:252px;height:100%;background:#0c0c0e;border-right:1px solid var(--line);
-  display:flex;flex-direction:column;padding:26px 0 18px}
+#screen-main{align-items:center;justify-content:center;padding:0}
+#menu-side{position:absolute;left:0;top:0;width:252px;height:100%;background:#0c0c0e;
+  border-right:1px solid var(--line);display:flex;flex-direction:column;padding:26px 0 18px;z-index:2}
 #menu-side .logo{padding:0 24px 18px}
-#menu-side #menu-rank{margin:0 16px 20px;padding:10px 10px;background:#111114;
-  border:1px solid var(--line);border-radius:4px}
 .side-item{display:flex;align-items:center;gap:15px;width:100%;padding:15px 24px;
   background:none;border:none;border-left:2px solid transparent;
   color:var(--text);font-size:14.5px;font-family:var(--font);cursor:pointer;
@@ -111,16 +112,21 @@ h2.screen-title{font-weight:600;letter-spacing:.05em;
 .diff-card .d-best{margin-top:10px;font-family:var(--mono);font-size:10.5px;color:var(--gold);min-height:14px}
 
 /* ---------- settings ---------- */
-.settings-panel{width:min(880px,94vw);max-height:72vh;overflow-y:auto;background:var(--panel);
-  border:1px solid var(--line);border-radius:8px;padding:8px 30px 22px;
-  display:grid;grid-template-columns:1fr 1fr;gap:0 44px}
-.settings-panel::-webkit-scrollbar{width:8px}
-.settings-panel::-webkit-scrollbar-thumb{background:rgba(109,242,255,.2);border-radius:4px}
-.set-sec{grid-column:1/-1;margin:20px 0 6px;color:var(--ion);font-size:11px;letter-spacing:.32em;
-  text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:7px}
-.set-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:8px 0;min-height:40px}
-.set-row label{font-size:13px;color:var(--text);letter-spacing:.04em;flex:1}
-.set-row .sub{display:block;font-size:10px;color:var(--text-dim);margin-top:2px;letter-spacing:.06em}
+.settings-panel{width:min(720px,94vw);max-height:74vh;overflow-y:auto;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:6px 34px 26px;
+  display:flex;flex-direction:column}
+.settings-panel::-webkit-scrollbar{width:9px}
+.settings-panel::-webkit-scrollbar-thumb{background:#2c2c33;border-radius:5px}
+.settings-panel::-webkit-scrollbar-thumb:hover{background:#3d3d46}
+.set-sec{margin:26px 0 4px;color:#c9c9d2;font-size:11px;letter-spacing:.24em;
+  text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:9px}
+.set-sec:first-child{margin-top:14px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:26px;
+  padding:15px 4px;min-height:54px;border-bottom:1px solid rgba(255,255,255,.04)}
+.set-row label{font-size:14px;color:var(--text);letter-spacing:.01em;flex:1;line-height:1.4}
+.set-row .sub{display:block;font-size:11.5px;color:var(--text-dim);margin-top:5px;
+  letter-spacing:.01em;line-height:1.5;max-width:520px}
+.set-row .set-ctl{flex:none;display:flex;align-items:center;gap:9px}
 .set-ctl{display:flex;align-items:center;gap:10px}
 .set-val{font-family:var(--mono);font-size:11px;color:var(--ion-dim);min-width:52px;text-align:right}
 .set-num{width:66px;background:var(--void-2);border:1px solid var(--line);color:var(--ion-dim);
@@ -148,10 +154,22 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 .storage-note{grid-column:1/-1;margin-top:14px;font-size:10.5px;color:var(--text-dim);letter-spacing:.05em}
 
 /* ---------- rank / xp ---------- */
-#menu-rank{display:flex;align-items:center;gap:10px;margin:-6px 0 18px;
-  font-family:var(--mono);font-size:12px;letter-spacing:.14em}
-#mr-lv{color:var(--text);border:1px solid var(--line-brt);padding:4px 10px}
-#mr-name{text-transform:uppercase;letter-spacing:.3em;font-size:11px}
+/* main-menu rank hero (centered in the open area) */
+#menu-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:24px;margin-left:252px}
+#menu-rank{display:flex;align-items:center;gap:16px;
+  font-family:var(--mono);font-size:19px;letter-spacing:.14em}
+#menu-hero>#mr-ava{width:132px;height:132px;border-radius:50%;object-fit:cover;
+  border:3px solid var(--line-brt);background:#c8c8cc;margin-bottom:6px}
+#mr-user{color:var(--text);letter-spacing:.16em}
+#mr-lv{color:#fff;border:1.5px solid var(--gold);border-radius:5px;padding:7px 15px;
+  font-weight:600;letter-spacing:.12em}
+#mr-name{text-transform:uppercase;letter-spacing:.32em;font-size:16px}
+#mr-xpwrap{width:min(340px,60vw);height:9px;background:#1a1a1f;border:1px solid var(--line);
+  border-radius:5px;overflow:hidden}
+#mr-xpfill{height:100%;width:0%;border-radius:5px;
+  background:linear-gradient(90deg,#e0495a,var(--gold));transition:width .7s cubic-bezier(.2,.8,.2,1)}
+#mr-xptext{font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.08em}
 #res-lvlwrap{margin-top:14px;font-family:var(--mono)}
 #res-rank{font-size:11px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:6px}
 #res-lvlbar{height:6px;background:rgba(120,160,255,.13);border-radius:3px;overflow:hidden}
@@ -161,7 +179,8 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 #res-lvlup{color:var(--gold)}
 /* ---------- song rows ---------- */
 #screen-songs{justify-content:flex-start;align-items:flex-end;
-  padding:26px 46px 56px 24px;overflow-y:auto}
+  padding:26px 46px 56px 24px;overflow-y:auto;background:#0a0a0b}
+#screen-songs::before{background:#0a0a0b}
 #screen-songs::-webkit-scrollbar{width:8px}
 #screen-songs::-webkit-scrollbar-thumb{background:#2c2c33;border-radius:4px}
 #screen-songs::-webkit-scrollbar-thumb:hover{background:#3d3d46}
@@ -270,36 +289,45 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 /* ---------- HUD (side panels + top title / bottom progress) ---------- */
 #hud{position:fixed;inset:0;pointer-events:none;z-index:10;opacity:0;transition:opacity .3s}
 #hud.active{opacity:1}
-#hud-top{position:absolute;top:20px;left:50%;transform:translateX(-50%);text-align:center}
-#hud-song .t{font-size:16px;font-weight:600;letter-spacing:.08em;color:#fff}
-#hud-song .d{font-family:var(--mono);font-size:10px;letter-spacing:.3em;margin-top:3px}
-#hud-time{font-family:var(--mono);font-size:13px;color:var(--text-dim);margin-top:7px;letter-spacing:.1em}
+#hud-top{position:absolute;top:18px;left:50%;transform:translateX(-50%);text-align:center;width:min(560px,60vw)}
+#hud-song .t{font-size:17px;font-weight:500;letter-spacing:.02em;color:#fff}
+#hud-song .d{font-family:var(--mono);font-size:10px;letter-spacing:.2em;margin-top:3px}
+#hud-time{font-family:var(--mono);font-size:20px;color:#fff;margin-top:4px;letter-spacing:.04em}
+#hud-topbar{margin-top:10px;height:7px;width:100%;background:#3a3a3f;border-radius:4px;overflow:hidden}
+#hud-topfill{height:100%;width:0%;background:#b9b9c0;border-radius:4px}
 #hud-bottom{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
   width:min(560px,60vw);height:5px;border-radius:3px;background:rgba(120,160,255,.14);overflow:hidden}
 #hud-progress{height:100%;width:0%;border-radius:3px;
   background:linear-gradient(90deg,var(--violet),var(--ion));box-shadow:0 0 10px rgba(160,107,255,.8)}
-.hud-panel{position:absolute;top:50%;transform:translateY(-50%);width:176px;
-  background:rgba(11,10,19,.74);border:1px solid rgba(150,130,255,.14);border-radius:22px;
-  padding:28px 16px;display:flex;flex-direction:column;gap:27px;text-align:center}
-#hud-left{left:26px}
-#hud-right{right:26px}
-.hp-label{font-size:10px;letter-spacing:.32em;text-indent:.32em;text-transform:uppercase;
-  color:var(--text-dim);margin-bottom:6px}
-.hp-val{font-size:23px;font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
-#hud-score{font-size:21px}
-#hud-points{color:var(--ion)}
-#hud-miss{color:var(--red)}
-#hud-grade{font-size:33px}
-#hud-combo{margin-bottom:6px}
-#hud-combo-num{font-size:40px;font-weight:200;color:#fff;display:inline-block;
-  text-shadow:0 0 20px rgba(109,242,255,.45);transition:transform .08s;font-variant-numeric:tabular-nums}
-#hud-combo .x{font-size:20px;color:var(--ion-dim)}
-#hud-combo.bump #hud-combo-num{transform:scale(1.16)}
-#hud-hp{display:flex;gap:5px;justify-content:center;margin-top:4px}
-.hp-pip{width:10px;height:8px;border-radius:2px;background:rgba(120,160,255,.15);
-  border:1px solid rgba(120,160,255,.2);transition:all .12s}
-.hp-pip.f{background:var(--green);border-color:var(--green);box-shadow:0 0 8px rgba(73,209,141,.6)}
-.hp-pip.f.low{background:var(--red);border-color:var(--red);box-shadow:0 0 8px rgba(255,95,122,.7)}
+/* tall flush side panels, flat black, no border/rounding — like the reference */
+.hud-panel{position:absolute;top:50%;transform:translateY(-50%);width:190px;height:78vh;
+  background:#0b0b0d;padding:34px 18px;display:flex;flex-direction:column;
+  align-items:center;text-align:center}
+#hud-left{left:0}
+#hud-right{right:0}
+.hud-cell{margin:0}
+.hud-grow{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hp-label{font-size:15px;letter-spacing:.08em;text-transform:uppercase;
+  color:#e6e6ea;margin-bottom:8px}
+.hp-val{font-size:30px;font-weight:600;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+.hp-val.big{font-size:46px;font-weight:700}
+.hp-sub{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-top:7px;letter-spacing:.05em}
+#hud-score{font-size:36px}
+#hud-miss{font-size:34px}
+/* circled speed multiplier at the top of the left panel */
+.hud-mult{margin-bottom:auto}
+.hud-mult-ring{width:118px;height:118px;border-radius:50%;border:2px solid #6a6a72;
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;font-weight:300;color:#fff;font-variant-numeric:tabular-nums}
+/* health as a thin bar at the bottom of the left panel */
+#hud-hpwrap{width:78%;height:9px;background:#2f2f34;border-radius:5px;overflow:hidden;margin-top:22px}
+#hud-hpfill{height:100%;width:100%;border-radius:5px;background:#8de04b;transition:width .18s,background .18s}
+#hud-hpfill.low{background:#e0495a}
+#hud-combo-wrap{margin-top:14px;min-height:26px}
+#hud-combo-num{font-size:26px;font-weight:400;color:#fff;display:inline-block;
+  transition:transform .08s;font-variant-numeric:tabular-nums}
+#hud-combo .x{font-size:15px;color:var(--text-dim)}
+#hud-combo-wrap.bump #hud-combo-num{transform:scale(1.18)}
 #hud-fps{position:absolute;top:22px;right:28px;font-family:var(--mono);font-size:12px;color:var(--text-dim)}
 #hud-judge{position:absolute;bottom:19%;left:50%;transform:translateX(-50%);
   font-size:22px;font-weight:600;letter-spacing:.34em;text-indent:.34em;text-transform:uppercase;opacity:0}
@@ -402,20 +430,27 @@ select.ed-in{cursor:pointer}
   letter-spacing:.32em;text-indent:.32em;text-transform:uppercase}
 
 @media (max-width:760px){
-  .settings-panel{grid-template-columns:1fr}
+  .settings-panel{width:94vw}
   #res-grade{font-size:96px}
   .logo{letter-spacing:.28em;text-indent:.28em}
-  .hud-panel{width:118px;padding:16px 8px;gap:15px;border-radius:16px}
-  #hud-left{left:8px}#hud-right{right:8px}
-  .hp-val{font-size:16px}#hud-score{font-size:15px}
-  #hud-combo-num{font-size:26px}#hud-grade{font-size:22px}
+  .hud-panel{width:104px;padding:18px 6px;height:82vh}
+  #hud-left{left:0}#hud-right{right:0}
+  .hp-val{font-size:18px}#hud-score{font-size:22px}
+  .hp-label{font-size:11px;letter-spacing:.04em}
+  .hp-val.big{font-size:30px}#hud-miss{font-size:24px}
+  .hud-mult-ring{width:74px;height:74px;font-size:24px}
+  #hud-combo-num{font-size:20px}
   #ed-main{grid-template-columns:1fr}
+  #screen-main{flex-direction:column}
+  #menu-side{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+  #menu-hero{padding:30px 16px;margin-left:0}
   #ed-left,#ed-right{border:0;border-bottom:1px solid #1c2330}
   #ed-topbar{height:66px}
 }
 </style>
 </head>
 <body class="menus">
+<canvas id="fluid-bg"></canvas>
 <canvas id="gl"></canvas>
 
 <!-- ================= HUD ================= -->
@@ -423,24 +458,20 @@ select.ed-in{cursor:pointer}
   <div id="hud-top">
     <div id="hud-song"><div class="t" id="hud-song-t"></div><div class="d" id="hud-song-d"></div></div>
     <div id="hud-time">0:00 / 0:00</div>
+    <div id="hud-topbar"><div id="hud-topfill"></div></div>
   </div>
   <div id="hud-left" class="hud-panel">
-    <div><div id="hud-combo"><span id="hud-combo-num">0</span><span class="x">×</span></div>
-      <div class="hp-label">combo</div></div>
-    <div><div class="hp-label">pauses</div><div class="hp-val" id="hud-pauses">0</div></div>
-    <div><div class="hp-label">grade</div><div class="hp-val" id="hud-grade">SS</div></div>
-    <div><div class="hp-label">accuracy</div><div class="hp-val" id="hud-acc">100.00%</div></div>
-    <div><div class="hp-label">health</div><div id="hud-hp">
-      <span class="hp-pip"></span><span class="hp-pip"></span><span class="hp-pip"></span>
-      <span class="hp-pip"></span><span class="hp-pip"></span><span class="hp-pip"></span>
-      <span class="hp-pip"></span><span class="hp-pip"></span><span class="hp-pip"></span>
-      <span class="hp-pip"></span></div></div>
+    <div class="hud-mult"><div class="hud-mult-ring" id="hud-mult">1×</div></div>
+    <div class="hud-cell"><div class="hp-label">pauses</div><div class="hp-val" id="hud-pauses">0</div></div>
+    <div class="hud-cell hud-grow"><div class="hp-val big" id="hud-grade">SS</div></div>
+    <div class="hud-cell"><div class="hp-label">accuracy</div><div class="hp-val" id="hud-acc">100.00%</div></div>
+    <div id="hud-hpwrap"><div id="hud-hpfill"></div></div>
+    <div id="hud-combo-wrap"><span id="hud-combo"><span id="hud-combo-num">0</span><span class="x">×</span></span></div>
   </div>
   <div id="hud-right" class="hud-panel">
-    <div><div class="hp-label">score</div><div class="hp-val" id="hud-score">0</div></div>
-    <div><div class="hp-label">points</div><div class="hp-val" id="hud-points">0</div></div>
-    <div><div class="hp-label">misses</div><div class="hp-val" id="hud-miss">0</div></div>
-    <div><div class="hp-label">notes</div><div class="hp-val" id="hud-notes">0/0</div></div>
+    <div class="hud-cell"><div class="hp-val" id="hud-score">0</div><div class="hp-sub" id="hud-points">0 pts</div></div>
+    <div class="hud-cell hud-grow"><div class="hp-label">misses</div><div class="hp-val" id="hud-miss">0</div></div>
+    <div class="hud-cell"><div class="hp-label">notes</div><div class="hp-val" id="hud-notes">0/0</div></div>
   </div>
   <div id="hud-judge"></div>
   <div id="hud-fps"></div>
@@ -452,7 +483,6 @@ select.ed-in{cursor:pointer}
 <div class="screen active" id="screen-main">
   <div id="menu-side">
     <div class="logo">JARVIA</div>
-    <div id="menu-rank"><img id="mr-ava" alt="" style="display:none"><span id="mr-user">Guest</span><span id="mr-lv"></span><span id="mr-name"></span></div>
     <button class="side-item primary" id="btn-play">
       <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9.5 7.5v9l8-4.5z"/></svg>
       <span>Play Song</span></button>
@@ -466,6 +496,16 @@ select.ed-in{cursor:pointer}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></svg>
       <span>Settings</span></button>
     <div id="side-hint">hover to hit — never click<br>esc pauses · settings autosave</div>
+  </div>
+  <div id="menu-hero">
+    <img id="mr-ava" alt="profile">
+    <div id="menu-rank">
+      <span id="mr-user">Guest</span>
+      <span id="mr-lv">LV 1</span>
+      <span id="mr-name">Bronze</span>
+    </div>
+    <div id="mr-xpwrap"><div id="mr-xpfill"></div></div>
+    <div id="mr-xptext"></div>
   </div>
 </div>
 
@@ -669,6 +709,7 @@ const fmtNum=n=>n.toLocaleString('en-US');
 /* The official community maps repo: the default source, and the only one
    whose maps pay out xp. */
 const OFFICIAL_REPO='MrBrecken/jarvia-maps';
+const GUEST_AVATAR='data:image/png;base64,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';
 /* Discord login: the game's official application client id.
    >>> PASTE YOUR CLIENT ID BETWEEN THE QUOTES BELOW <<<
    (discord.com/developers -> your app -> OAuth2 -> Client ID) */
@@ -1533,12 +1574,12 @@ function parseOBJ(text){
 const CELL=1.9;            // world units per grid cell
 const HITZ=-7;             // judgment plane z
 const CAMZ=3.2;            // camera z (notes past this are past the viewer)
-const PUSHBACK_DIST=3.8;   // pushback-on: culled this far past the hit plane
+const PUSHBACK_DIST=3.5;   // pushback-on: culled this far past the hit plane
 const SPAWNZ=-140;         // notes materialize here
 const APPROACH_DIST=HITZ-SPAWNZ;
 /* Timing windows (seconds). Rhythia's default hit window is tight; perfect/
    great are inner bands. These no longer scale with any visual setting. */
-const MISSW=.055, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
+const MISSW=.05, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
 const NOTE_HALF=.45;       // visual note half-size, in cells
 const NOTE_HITBOX=1.14;    // Rhythia note_hitbox_size (fixed); hbs = /2
 const MAXHP=10;            // miss: -2, hit: +1; death at 0
@@ -2918,10 +2959,14 @@ const UI={
     this.$('mr-lv').style.borderColor=r.color;
     const av=this.$('mr-ava'),us=this.$('mr-user');
     if(av&&us){
-      if(Account.profile){av.src=Account.profile.avatarUrl;av.style.display='';
-        us.textContent=Account.profile.name;}
-      else{av.style.display='none';us.textContent='Guest';}
+      if(Account.profile){av.src=Account.profile.avatarUrl;us.textContent=Account.profile.name;}
+      else{av.src=GUEST_AVATAR;us.textContent='Guest';}
+      av.style.display='';
     }
+    const fill=this.$('mr-xpfill'),txt=this.$('mr-xptext');
+    if(fill){fill.style.background='linear-gradient(90deg,'+r.color+'99,'+r.color+')';
+      fill.style.width=Math.min(100,100*p.into/Math.max(1,p.need))+'%';}
+    if(txt)txt.textContent=fmtNum(p.into)+' / '+fmtNum(p.need)+' XP to LV '+(p.level+1);
   },
   /* ---------- stats screen ---------- */
   fmtDur(sec){
@@ -2934,9 +2979,9 @@ const UI={
     const p=XP.progress(Settings.getBP()),r=XP.rankFor(p.level);
     /* profile card */
     const av=this.$('sp-ava');
-    if(Account.profile){av.src=Account.profile.avatarUrl;av.style.display='';
-      this.setText('sp-name',Account.profile.name);}
-    else{av.style.display='none';this.setText('sp-name','Guest');}
+    if(Account.profile){av.src=Account.profile.avatarUrl;this.setText('sp-name',Account.profile.name);}
+    else{av.src=GUEST_AVATAR;this.setText('sp-name','Guest');}
+    av.style.display='';
     const rk=this.$('sp-rank');
     rk.innerHTML='<span style="color:'+r.color+'">'+r.name+'</span> \u00b7 LV '+p.level;
     this.$('sp-lvlfill').style.width=Math.min(100,100*p.into/Math.max(1,p.need))+'%';
@@ -2963,12 +3008,9 @@ const UI={
       '<div class="stat-tile"><div class="v">'+t[0]+'</div><div class="k">'+t[1]+'</div></div>').join('');
   },
   setHp(hp){
-    const wrap=this.$('hud-hp');if(!wrap.children)return;
-    const low=hp<=4;
-    for(let i=0;i<wrap.children.length;i++){const p=wrap.children[i];
-      if(!p.classList)continue;
-      p.classList.toggle('f',hp>=i+.5);
-      p.classList.toggle('low',low);}
+    const fill=this.$('hud-hpfill');if(!fill)return;
+    fill.style.width=clamp(100*hp/MAXHP,0,100)+'%';
+    fill.classList.toggle('low',hp<=4);
   },
   enterGameplay(song,diff){
     this.hideScreens();document.body.classList.remove('menus');
@@ -2983,12 +3025,15 @@ const UI={
     d.style.color=DIFF_META[diff].color;
     this.setHp(MAXHP);
     this.setText('hud-score','0');this.setText('hud-acc','100.00%');
-    this.setText('hud-combo-num','0');this.setText('hud-points','0');
-    this.setText('hud-miss','0');this.setText('hud-pauses','0');
+    this.setText('hud-combo-num','0');this.setText('hud-points','0 pts');
+    this.setText('hud-miss','0');this.setText('hud-pauses',Game.stats?Game.stats.pauses:0);
     this.setText('hud-notes','0/'+(Game.chart.length-(Game._practiceSkipped||0)));
-    const g=this.$('hud-grade');g.textContent='SS';g.style.color='#ffd36b';
+    const mult=this.$('hud-mult');
+    if(mult)mult.textContent=(Game.mod===1?'1':Game.mod.toFixed(2).replace(/0+$/,'').replace(/\.$/,''))+'×';
+    const g=this.$('hud-grade');g.textContent='SS';g.style.color='#fff';
     this.setText('hud-time','0:00 / '+this.fmtTime(song.duration));
     this.$('hud-progress').style.width='0%';
+    const tf=this.$('hud-topfill');if(tf)tf.style.width='0%';
     this._resumeCd=false;
   },
   exitGameplay(screen){
@@ -3023,13 +3068,13 @@ const UI={
     this.setText('hud-score',fmtNum(s.score));
     this.setText('hud-acc',acc.toFixed(2)+'%');
     this.setText('hud-combo-num',s.combo);
-    this.setText('hud-points',tier===3?'0':fmtNum(s.lastPts));
+    this.setText('hud-points',(tier===3?'0':fmtNum(s.lastPts))+' pts');
     this.setText('hud-miss',s.m);
     this.setText('hud-notes',s.judged+'/'+(Game.chart.length-(Game._practiceSkipped||0)));
     const g=GRADES.find(x=>acc>=x[0]);
     const ge=this.$('hud-grade');ge.textContent=g[1];ge.style.color=g[2];
     this.setHp(s.hp);
-    const cw=this.$('hud-combo');cw.classList.remove('bump');void cw.offsetWidth;cw.classList.add('bump');
+    const cw=this.$('hud-combo-wrap');if(cw){cw.classList.remove('bump');void cw.offsetWidth;cw.classList.add('bump');}
     if(Settings.get('judgeText')){
       const j=this.$('hud-judge');
       j.textContent=JUDGE_NAMES[tier];j.className=JUDGE_CLASSES[tier];
@@ -3040,7 +3085,9 @@ const UI={
     const now=performance.now();
     if(now-Game._lastProg<120)return;
     Game._lastProg=now;
-    this.$('hud-progress').style.width=clamp(100*t/endT,0,100)+'%';
+    const pct=clamp(100*t/endT,0,100);
+    this.$('hud-progress').style.width=pct+'%';
+    const tf=this.$('hud-topfill');if(tf)tf.style.width=pct+'%';
     this.setText('hud-time',
       this.fmtTime(clamp(t,0,Game.song.duration))+' / '+this.fmtTime(Game.song.duration));
   },
@@ -4009,12 +4056,80 @@ const Loop={
 };
 
 /* ---------- boot ---------- */
+
+/* ============ FLUID MENU BACKGROUND ============
+   A soft, slow-drifting metaball flow rendered on a 2D canvas. Neutral
+   near-black palette to match the UI; only runs while menus are visible
+   (paused during gameplay to save frames). */
+const FluidBG={
+  cv:null,ctx:null,blobs:[],w:0,h:0,raf:0,last:0,running:false,
+  init(){
+    this.cv=document.getElementById('fluid-bg');
+    if(!this.cv||typeof this.cv.getContext!=='function')return;
+    this.ctx=this.cv.getContext('2d');
+    if(!this.ctx)return;
+    this.resize();
+    const R=(a,b)=>a+Math.random()*(b-a);
+    this.blobs=[];
+    for(let i=0;i<7;i++){
+      this.blobs.push({x:Math.random(),y:Math.random(),
+        vx:R(-.03,.03),vy:R(-.03,.03),r:R(.22,.42),
+        ph:R(0,Math.PI*2),ps:R(.15,.4)});
+    }
+    window.addEventListener('resize',()=>this.resize());
+    this.start();
+  },
+  resize(){
+    if(!this.cv)return;
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    this.w=this.cv.width=Math.floor(innerWidth*dpr*.5);   // half-res: cheap + soft
+    this.h=this.cv.height=Math.floor(innerHeight*dpr*.5);
+    this.cv.style.width=innerWidth+'px';this.cv.style.height=innerHeight+'px';
+  },
+  start(){if(this.running)return;this.running=true;this.last=performance.now();
+    const tick=(now)=>{if(!this.running)return;
+      const dt=Math.min(.05,(now-this.last)/1000);this.last=now;
+      this.step(dt);this.draw(now/1000);this.raf=requestAnimationFrame(tick);};
+    this.raf=requestAnimationFrame(tick);},
+  stop(){this.running=false;if(this.raf)cancelAnimationFrame(this.raf);},
+  step(dt){
+    for(const b of this.blobs){
+      b.x+=b.vx*dt;b.y+=b.vy*dt;b.ph+=b.ps*dt;
+      if(b.x<-.2)b.x=1.2;if(b.x>1.2)b.x=-.2;
+      if(b.y<-.2)b.y=1.2;if(b.y>1.2)b.y=-.2;
+    }
+  },
+  draw(t){
+    const g=this.ctx,w=this.w,h=this.h;if(!g)return;
+    g.globalCompositeOperation='source-over';
+    g.fillStyle='#08080a';g.fillRect(0,0,w,h);
+    g.globalCompositeOperation='lighter';
+    for(const b of this.blobs){
+      const cx=b.x*w,cy=b.y*h;
+      const rr=(b.r+Math.sin(b.ph)*.05)*Math.min(w,h);
+      const grd=g.createRadialGradient(cx,cy,0,cx,cy,rr);
+      /* cool neutral slate that reads as "same color as the UI" */
+      grd.addColorStop(0,'rgba(40,44,58,0.55)');
+      grd.addColorStop(.5,'rgba(24,26,34,0.28)');
+      grd.addColorStop(1,'rgba(10,10,12,0)');
+      g.fillStyle=grd;
+      g.beginPath();g.arc(cx,cy,rr,0,Math.PI*2);g.fill();
+    }
+    /* faint vignette to keep edges grounded */
+    g.globalCompositeOperation='source-over';
+    const vg=g.createRadialGradient(w/2,h/2,Math.min(w,h)*.3,w/2,h/2,Math.max(w,h)*.75);
+    vg.addColorStop(0,'rgba(8,8,10,0)');vg.addColorStop(1,'rgba(6,6,8,0.55)');
+    g.fillStyle=vg;g.fillRect(0,0,w,h);
+  }
+};
+
 (function boot(){
   const canvas=document.getElementById('gl');
   Game.init(canvas);
   Input.init(canvas);
   UI.init();
   Editor.init();
+  if(typeof document!=='undefined'&&document.getElementById('fluid-bg'))FluidBG.init();
   Loop.start();
   window.addEventListener('resize',()=>Game.resize());
 })();
