@@ -1000,7 +1000,7 @@ const GUEST_AVATAR='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAA
 /* Discord login: the game's official application client id.
    >>> PASTE YOUR CLIENT ID BETWEEN THE QUOTES BELOW <<<
    (discord.com/developers -> your app -> OAuth2 -> Client ID) */
-const DISCORD_CLIENT_ID='';
+const DISCORD_CLIENT_ID='1528879968862343228';
 
 /* ============ 2. SETTINGS (auto-saved) ============ */
 const SETTINGS_DEFAULTS={
@@ -1915,12 +1915,12 @@ function parseOBJ(text){
 const CELL=1.9;            // world units per grid cell
 const HITZ=-7;             // judgment plane z
 const CAMZ=3.2;            // camera z (notes past this are past the viewer)
-const PUSHBACK_DIST=3.5;   // pushback-on: culled this far past the hit plane
+const PUSHBACK_DIST=3.8;   // pushback-on: culled this far past the hit plane
 const SPAWNZ=-140;         // notes materialize here
 const APPROACH_DIST=HITZ-SPAWNZ;
 /* Timing windows (seconds). Rhythia's default hit window is tight; perfect/
    great are inner bands. These no longer scale with any visual setting. */
-const MISSW=.05, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
+const MISSW=.052, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
 const NOTE_HALF=.45;       // visual note half-size, in cells
 const NOTE_HITBOX=1.14;    // Rhythia note_hitbox_size (fixed); hbs = /2
 const _linstep=(a,b,v)=>a===b?(v>=a?1:0):clamp((v-a)/(b-a),0,1);
