@@ -112,7 +112,10 @@ h2.screen-title{font-weight:600;letter-spacing:.05em;
 .diff-card .d-best{margin-top:10px;font-family:var(--mono);font-size:10.5px;color:var(--gold);min-height:14px}
 
 /* ---------- settings ---------- */
-#set-toolbar{width:min(720px,94vw);display:flex;gap:9px;margin-bottom:12px;align-items:center}
+#set-toolbar{width:min(720px,94vw);display:flex;gap:9px;margin-bottom:10px;align-items:center}
+#set-toolbar2{width:min(720px,94vw);display:flex;gap:9px;margin-bottom:12px;align-items:center}
+#set-io-note{font-size:11px;color:var(--text-dim);letter-spacing:.02em}
+#set-io-note.ok{color:#8de04b}#set-io-note.bad{color:#e0495a}
 #set-search{flex:1;background:#141417;border:1px solid var(--line-brt);border-radius:5px;
   color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--font);outline:none}
 #set-search:focus{border-color:#55555f}
@@ -210,6 +213,133 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 #song-drop.show{display:flex}
 #song-drop .sd-inner,#ed-drop .sd-inner{border:2px dashed var(--line-brt);border-radius:14px;
   padding:52px 64px;color:#fff;font-size:18px;letter-spacing:.04em;background:#111114}
+/* ---------- song detail slide-in panel ---------- */
+#song-detail{position:fixed;top:0;left:0;height:100%;width:min(560px,94vw);z-index:45;
+  background:#0d0d10;border-right:1px solid var(--line-brt);
+  transform:translateX(-102%);transition:transform .28s cubic-bezier(.22,.61,.36,1);
+  box-shadow:8px 0 40px rgba(0,0,0,.5)}
+#song-detail.show{transform:translateX(0)}
+.sd-scroll{height:100%;overflow-y:auto;padding:26px 30px 40px}
+.sd-scroll::-webkit-scrollbar{width:8px}
+.sd-scroll::-webkit-scrollbar-thumb{background:#2c2c33;border-radius:4px}
+.sd-head{display:flex;gap:18px;margin-bottom:22px}
+.sd-cover{width:120px;height:120px;flex:none;border-radius:8px;border:1px solid var(--line-brt);
+  display:flex;align-items:center;justify-content:center;font-size:40px;color:#555;
+  background:linear-gradient(135deg,#1a1a20,#101014)}
+.sd-headinfo{flex:1;min-width:0;padding-top:4px}
+.sd-len{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:8px}
+.sd-title{font-size:20px;font-weight:600;color:#fff;line-height:1.2;margin-bottom:8px;
+  word-break:break-word}
+.sd-by{font-size:12.5px;color:var(--text-dim);line-height:1.5}
+.sd-by b{color:var(--text)}
+.sd-id{font-family:var(--mono);font-size:10.5px;color:#55555f;margin-top:6px;word-break:break-all}
+.sd-lbl{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--text-dim);
+  margin-bottom:10px}
+#sd-diffwrap{margin-bottom:18px}
+#sd-diffs{display:flex;flex-wrap:wrap;gap:8px}
+.sd-diff{background:#141417;border:1px solid var(--line);border-left:3px solid var(--dc,#888);
+  border-radius:5px;padding:9px 13px;cursor:pointer;transition:background .12s,border-color .12s;min-width:104px}
+.sd-diff:hover{background:#1c1c22}
+.sd-diff.on{border-color:var(--dc,#fff);background:#20202a}
+.sd-diff .n{font-size:13px;color:#fff;font-weight:600}
+.sd-diff .s{font-family:var(--mono);font-size:10.5px;margin-top:3px}
+.sd-start{width:100%;padding:16px;background:#20203a;border:1px solid #3a3a58;border-radius:8px;
+  color:#fff;font-size:17px;font-weight:600;cursor:pointer;margin-bottom:12px;
+  transition:background .12s,border-color .12s}
+.sd-start:hover{background:#2a2a4c;border-color:#5a5a80}
+.sd-actions{display:flex;gap:10px;margin-bottom:12px}
+.sd-fav,.sd-play{flex:1;padding:9px;background:#141417;border:1px solid var(--line-brt);
+  border-radius:6px;color:var(--text);font-size:12.5px;cursor:pointer;font-family:var(--font)}
+.sd-fav:hover,.sd-play:hover{background:#1c1c22;color:#fff}
+.sd-fav.on{color:var(--gold);border-color:rgba(255,211,107,.4)}
+.sd-hitinfo{text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:18px}
+.sd-hr{border:none;border-top:1px solid var(--line);margin:16px 0 20px}
+.sd-cols{display:flex;gap:24px;flex-wrap:wrap}
+.sd-best{flex:1;min-width:180px}
+.sd-best-t{text-align:center;font-size:14px;color:#c98a9a;font-weight:600;margin-bottom:14px}
+.sd-best-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px;text-align:center}
+.sd-bk{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim)}
+.sd-bv{font-family:var(--mono);font-size:16px;color:#fff;margin-top:3px}
+.sd-mods{flex:1;min-width:240px}
+/* speed: label + custom box on one line, then a single horizontal strip of pills */
+.sd-speed-block{margin-bottom:18px}
+.sd-speed-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.sd-speed-head span{font-size:12.5px;color:var(--text)}
+#sd-speed{display:flex;gap:0;width:100%}
+.sd-spd{flex:1;height:36px;border:1px solid var(--line);border-right-width:0;background:#111114;
+  color:var(--text-dim);font-family:var(--mono);font-size:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .1s,color .1s}
+.sd-spd:first-child{border-top-left-radius:6px;border-bottom-left-radius:6px}
+.sd-spd:last-child{border-right-width:1px;border-top-right-radius:6px;border-bottom-right-radius:6px}
+.sd-spd:hover{color:var(--text);background:#1a1a1f}
+.sd-spd.on{color:#fff;background:#2a2a34;border-color:#4a4a58;position:relative;z-index:1}
+#sd-speed-num{width:60px;background:#141417;border:1px solid var(--line-brt);border-radius:5px;
+  color:var(--text);font-family:var(--mono);font-size:11px;padding:6px;outline:none;text-align:center}
+#sd-speed-num:focus{border-color:#55555f}
+.sd-nofail-row{display:flex;align-items:center;justify-content:space-between;
+  padding:11px 0;border-top:1px solid var(--line);margin-top:4px}
+.sd-nofail-row span{font-size:12.5px;color:var(--text)}
+.sd-modnote{font-size:10.5px;color:var(--gold);margin-top:8px;min-height:14px}
+/* ---------- map detail panel ---------- */
+#map-panel{position:fixed;inset:0 auto 0 0;width:min(560px,92vw);z-index:45;
+  background:#0d0d10;border-right:1px solid var(--line-brt);
+  transform:translateX(-102%);transition:transform .3s cubic-bezier(.22,.61,.36,1);
+  display:flex;overflow:hidden}
+#map-panel.show{transform:translateX(0)}
+#mp-inner{flex:1;overflow-y:auto;padding:26px 30px 40px}
+#mp-inner::-webkit-scrollbar{width:8px}
+#mp-inner::-webkit-scrollbar-thumb{background:#2c2c33;border-radius:4px}
+#mp-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:6px;
+  background:#17171c;border:1px solid var(--line-brt);color:var(--text-dim);cursor:pointer;
+  font-size:13px;z-index:2}
+#mp-close:hover{color:#fff;background:#20202722}
+#mp-head{display:flex;gap:18px;margin-bottom:18px}
+#mp-cover{width:118px;height:118px;flex:none;border-radius:8px;border:1px solid var(--line);
+  background:linear-gradient(135deg,#1a1a20,#101014);display:flex;align-items:center;justify-content:center;
+  font-size:34px;color:#3a3a44;font-weight:700}
+#mp-headtext{flex:1;min-width:0;padding-top:2px}
+#mp-len{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:6px}
+#mp-title{font-size:19px;font-weight:600;color:#fff;line-height:1.25;margin-bottom:8px}
+#mp-by{font-size:12.5px;color:var(--text-dim);line-height:1.5}
+#mp-by b{color:var(--text)}
+#mp-id{font-family:var(--mono);font-size:10.5px;color:#55555f;margin-top:5px;
+  word-break:break-all;line-height:1.4}
+#mp-diffs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.mp-diff{flex:1;min-width:88px;background:#141418;border:1px solid var(--line);border-radius:6px;
+  padding:9px 10px;cursor:pointer;text-align:center;transition:border-color .12s,background .12s}
+.mp-diff:hover{background:#1b1b21}
+.mp-diff.on{border-color:var(--dc,#fff);background:#1c1c24}
+.mp-diff .dn{font-size:12px;color:#fff;font-weight:600}
+.mp-diff .ds{font-family:var(--mono);font-size:10.5px;margin-top:3px}
+#mp-start{width:100%;padding:16px;border:none;border-radius:8px;font-size:16px;font-weight:600;
+  color:#fff;background:#242433;cursor:pointer;transition:background .12s;font-family:var(--font)}
+#mp-start:hover{background:#2e2e42}
+#mp-note{text-align:center;margin:10px 0 0;min-height:14px}
+.mp-hr{border:none;border-top:1px solid var(--line);margin:22px 0}
+#mp-cols{display:flex;gap:22px}
+#mp-best{flex:1}
+.mp-best-title{text-align:center;color:#c98b9b;font-size:13px;letter-spacing:.06em;margin-bottom:12px}
+.mp-best-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.mp-best-grid>div{display:flex;flex-direction:column;align-items:center;text-align:center}
+.mp-best-grid .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px}
+.mp-best-grid .v{font-family:var(--mono);font-size:16px;color:#fff}
+.mp-b-wide{grid-column:1/-1}
+#mp-mods{flex:1}
+.mp-mods-title{text-align:center;font-size:14px;color:#fff;margin-bottom:14px}
+.mp-startfrom{margin-bottom:14px}
+.mp-startfrom label{display:block;font-size:11px;color:var(--text-dim);letter-spacing:.06em;margin-bottom:5px}
+.mp-startfrom input{width:78%;vertical-align:middle}
+.mp-startfrom span{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-left:6px}
+.mp-speed-lbl{font-size:11px;color:var(--text-dim);letter-spacing:.06em;margin-bottom:7px}
+#mp-speed{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.mp-sp{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-brt);background:#161619;
+  color:var(--text-dim);cursor:pointer;font-family:var(--mono);font-size:10px;
+  display:flex;align-items:center;justify-content:center;transition:all .12s}
+.mp-sp:hover{color:#fff;border-color:#55555f}
+.mp-sp.on{background:#e8e8ee;color:#111;border-color:#fff}
+.mp-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer}
+.mp-check input{width:15px;height:15px;cursor:pointer}
+@media (max-width:600px){#mp-cols{flex-direction:column;gap:26px}}
 #ed-drop{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
   background:rgba(6,6,9,.82);pointer-events:none}
 #ed-drop.show{display:flex}
@@ -559,6 +689,47 @@ select.ed-in{cursor:pointer}
     </div>
   </div>
   <div id="song-drop"><div class="sd-inner">drop .sspm files here to add them to Custom Maps</div></div>
+  <div id="map-panel">
+    <div id="mp-inner">
+      <div id="mp-head">
+        <div id="mp-cover"></div>
+        <div id="mp-headtext">
+          <div id="mp-len"></div>
+          <div id="mp-title"></div>
+          <div id="mp-by"></div>
+          <div id="mp-id"></div>
+        </div>
+      </div>
+      <div id="mp-diffs"></div>
+      <button id="mp-start">Start!</button>
+      <div id="mp-note" class="mods-note"></div>
+      <hr class="mp-hr">
+      <div id="mp-cols">
+        <div id="mp-best">
+          <div class="mp-best-title">Best Attempt</div>
+          <div class="mp-best-grid">
+            <div><span class="k">misses</span><span class="v" id="mp-b-miss">—</span></div>
+            <div><span class="k">pauses</span><span class="v" id="mp-b-pauses">—</span></div>
+            <div><span class="k">progress</span><span class="v" id="mp-b-prog">—</span></div>
+            <div><span class="k">accuracy</span><span class="v" id="mp-b-acc">—</span></div>
+            <div class="mp-b-wide"><span class="k">max combo</span><span class="v" id="mp-b-combo">—</span></div>
+          </div>
+        </div>
+        <div id="mp-mods">
+          <div class="mp-mods-title">Modifiers</div>
+          <div class="mp-startfrom">
+            <label>Start From</label>
+            <input type="range" id="mp-startfrom" min="0" max="100" step="0.5" value="0">
+            <span id="mp-startfrom-val">0:00</span>
+          </div>
+          <div class="mp-speed-lbl">Speed</div>
+          <div id="mp-speed"></div>
+          <label class="mp-check"><input type="checkbox" id="mp-nofail"> No Fail</label>
+        </div>
+      </div>
+    </div>
+    <button id="mp-close" title="close">✕</button>
+  </div>
   <div id="mods-bar">
     <span class="mods-lbl">Mods</span>
     <div class="mod-group" id="mod-speed">
@@ -576,6 +747,52 @@ select.ed-in{cursor:pointer}
   <div class="lib-sec cust" id="custom-sec" style="display:none"><span class="t">Custom Maps</span><span class="n" id="lib-n-cust"></span></div>
   <div id="custom-list"></div>
   <div class="menu-col"><button class="btn ghost small" id="btn-songs-back">Back</button></div>
+
+  <!-- slide-in map detail panel -->
+  <div id="song-detail" aria-hidden="true">
+    <div class="sd-scroll">
+      <div class="sd-head">
+        <div class="sd-cover" id="sd-cover"><span id="sd-cover-c">♪</span></div>
+        <div class="sd-headinfo">
+          <div class="sd-len" id="sd-len"></div>
+          <div class="sd-title" id="sd-title"></div>
+          <div class="sd-by" id="sd-by"></div>
+          <div class="sd-id" id="sd-id"></div>
+        </div>
+      </div>
+      <div id="sd-diffwrap" style="display:none">
+        <div class="sd-lbl">Difficulty</div>
+        <div id="sd-diffs"></div>
+      </div>
+      <button class="sd-start" id="sd-start">Start!</button>
+      <div class="sd-actions">
+        <button class="sd-fav" id="sd-fav" title="pin to top">☆ Pin</button>
+        <button class="sd-play" id="sd-playmusic">▶ Play Music</button>
+      </div>
+      <div class="sd-hitinfo" id="sd-hitinfo">Default hitbox, tightened hit window</div>
+      <hr class="sd-hr">
+      <div class="sd-cols">
+        <div class="sd-best">
+          <div class="sd-best-t">Best Attempt</div>
+          <div class="sd-best-grid" id="sd-best-grid"></div>
+        </div>
+        <div class="sd-mods">
+          <div class="sd-lbl">Modifiers</div>
+          <div class="sd-speed-block">
+            <div class="sd-speed-head"><span>Speed</span>
+              <input type="number" id="sd-speed-num" min="0.25" max="3" step="0.01" value="1.00"></div>
+            <div id="sd-speed"></div>
+          </div>
+          <div class="sd-nofail-row">
+            <span>No Fail</span>
+            <div class="etog" id="sd-nofail"></div>
+          </div>
+          <div class="sd-modnote" id="sd-modnote"></div>
+        </div>
+      </div>
+      <button class="btn ghost small" id="sd-close">Close</button>
+    </div>
+  </div>
 </div>
 
 <!-- ================= MAP EDITOR ================= -->
@@ -689,6 +906,12 @@ select.ed-in{cursor:pointer}
     <button class="btn small" id="set-profile-save">Save As…</button>
     <button class="btn small" id="set-profile-del" title="delete this profile">✕</button>
   </div>
+  <div id="set-toolbar2">
+    <button class="btn small" id="set-export">Export Settings</button>
+    <button class="btn small" id="set-import">Import Settings</button>
+    <input type="file" id="set-import-file" accept="application/json,.json" style="display:none">
+    <span id="set-io-note"></span>
+  </div>
   <div class="settings-panel" id="settings-panel"></div>
   <div class="menu-col"><button class="btn ghost small" id="btn-settings-back">Back</button></div>
 </div>
@@ -769,7 +992,7 @@ const GUEST_AVATAR='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAA
 /* Discord login: the game's official application client id.
    >>> PASTE YOUR CLIENT ID BETWEEN THE QUOTES BELOW <<<
    (discord.com/developers -> your app -> OAuth2 -> Client ID) */
-const DISCORD_CLIENT_ID='1528879968862343228';
+const DISCORD_CLIENT_ID='';
 
 /* ============ 2. SETTINGS (auto-saved) ============ */
 const SETTINGS_DEFAULTS={
@@ -869,6 +1092,24 @@ const Settings={
   applyProfile(name){
     const o=this.listProfiles();const snap=o[name];if(!snap)return false;
     for(const k in snap)if(k in this.data)this.data[k]=snap[k];
+    this.save();return true;
+  },
+  /* export every setting (plus custom images) as a portable JSON string */
+  exportJSON(){
+    const imgs={};
+    try{for(const k of ['bg','cursor','hitsound','notemesh']){
+      const v=this.getImg&&this.getImg(k);if(v)imgs[k]=v;}}catch(e){}
+    return JSON.stringify({jarvia:'settings',v:1,
+      data:{...this.data},profiles:this.listProfiles(),images:imgs},null,2);
+  },
+  /* import a settings JSON string; returns true on success */
+  importJSON(txt){
+    let o;try{o=JSON.parse(txt);}catch(e){return false;}
+    if(!o||o.jarvia!=='settings'||!o.data)return false;
+    for(const k in o.data)if(k in this.data)this.data[k]=o.data[k];
+    if(o.profiles&&typeof o.profiles==='object')this._saveProfiles(o.profiles);
+    if(o.images&&this.setImg)for(const k in o.images){
+      try{this.setImg(k,o.images[k]);}catch(e){}}
     this.save();return true;
   },
   deleteProfile(name){
@@ -1666,12 +1907,12 @@ function parseOBJ(text){
 const CELL=1.9;            // world units per grid cell
 const HITZ=-7;             // judgment plane z
 const CAMZ=3.2;            // camera z (notes past this are past the viewer)
-const PUSHBACK_DIST=3.8;   // pushback-on: culled this far past the hit plane
+const PUSHBACK_DIST=3.5;   // pushback-on: culled this far past the hit plane
 const SPAWNZ=-140;         // notes materialize here
 const APPROACH_DIST=HITZ-SPAWNZ;
 /* Timing windows (seconds). Rhythia's default hit window is tight; perfect/
    great are inner bands. These no longer scale with any visual setting. */
-const MISSW=.053, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
+const MISSW=.05, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
 const NOTE_HALF=.45;       // visual note half-size, in cells
 const NOTE_HITBOX=1.14;    // Rhythia note_hitbox_size (fixed); hbs = /2
 const _linstep=(a,b,v)=>a===b?(v>=a?1:0):clamp((v-a)/(b-a),0,1);
@@ -2655,7 +2896,7 @@ const GRADES=[[99,'SS','#ffd36b'],[96,'S','#ffe9a8'],[90,'A','#49d18d'],[80,'B',
 
 const UI={
   screens:['screen-main','screen-songs','screen-diff','screen-settings','screen-pause','screen-results','screen-editor','screen-stats'],
-  settingsReturn:'screen-main',_resumeCd:false,_selectedSong:null,
+  settingsReturn:'screen-main',_resumeCd:false,_selectedSong:null,_detDiff:'master',
   $(id){return document.getElementById(id);},
   setText(id,v){this.$(id).textContent=v;},
   init(){
@@ -2733,7 +2974,59 @@ const UI={
     on('set-profile-del',()=>{
       const p=this.$('set-profile'),n=p&&p.value;
       if(n&&n!=='__none'&&Settings.deleteProfile(n))this.refreshProfiles();});
+    on('set-export',()=>{
+      const note=this.$('set-io-note');
+      try{
+        const blob=new Blob([Settings.exportJSON()],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');a.href=url;
+        a.download='jarvia-settings.json';
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),1000);
+        if(note){note.textContent='exported jarvia-settings.json';note.className='ok';}
+      }catch(e){if(note){note.textContent='export failed';note.className='bad';}}
+    });
+    on('set-import',()=>this.$('set-import-file').click());
+    const impFile=this.$('set-import-file');
+    if(impFile&&impFile.addEventListener)impFile.addEventListener('change',e=>{
+      const note=this.$('set-io-note');
+      const f=e.target.files&&e.target.files[0];e.target.value='';
+      if(!f)return;
+      const r=new FileReader();
+      r.onload=()=>{
+        if(Settings.importJSON(String(r.result))){
+          AudioEngine.setVolumes();Game.applyVisual(false);Loop.reschedule();
+          this.refreshProfiles();this.buildSettings();this.updateRank();
+          if(note){note.textContent='settings imported';note.className='ok';}
+        }else if(note){note.textContent='not a valid jarvia settings file';note.className='bad';}
+      };
+      r.readAsText(f);
+    });
     on('btn-random-play',()=>this.randomAnyMap());
+    on('sd-start',()=>this.startDetail());
+    on('sd-close',()=>this.closeDetail());
+    on('sd-fav',()=>{if(this._detPinId){Settings.togglePin(this._detPinId);
+      const p=Settings.isPinned(this._detPinId);
+      const f=this.$('sd-fav');f.classList.toggle('on',p);
+      f.textContent=(p?'\u2605 Pinned':'\u2606 Pin');
+      this.buildSongList();this.buildCustomList();}});
+    on('sd-playmusic',()=>{
+      const ref=this._detail;if(!ref)return;
+      let buf=null;
+      if(ref.type==='custom')buf=Editor.buffers[ref.map.id];
+      else if(ref.type==='featured')buf=this._featBufs&&this._featBufs[ref.f.id];
+      if(buf){AudioEngine.init();
+        if(AudioEngine.ctx.state==='suspended')AudioEngine.ctx.resume();
+        try{if(this._previewSrc){this._previewSrc.stop();this._previewSrc.disconnect();}}catch(e){}
+        const s=AudioEngine.ctx.createBufferSource();s.buffer=buf;
+        s.connect(AudioEngine.music);s.start();this._previewSrc=s;}
+    });
+    on('sd-nofail',()=>{Settings.set('noFail',!Settings.get('noFail'));
+      this.$('sd-nofail').classList.toggle('on',!!Settings.get('noFail'));});
+    const sdNum=this.$('sd-speed-num');
+    if(sdNum&&sdNum.addEventListener)sdNum.addEventListener('change',()=>{
+      const v=clamp(+sdNum.value||1,.25,3);
+      Settings.set('speedMod',Math.round(v*100)/100);this._renderDetailSpeed();});
     /* drag & drop .sspm onto the song screen -> add to Custom Maps */
     const songScreen=this.$('screen-songs');
     if(songScreen&&songScreen.addEventListener){
@@ -2758,6 +3051,7 @@ const UI={
       if(document.hidden&&Game.state==='play')Game.pause();});
   },
   show(id){
+    if(id!=='screen-songs')this.closeDetail&&this.closeDetail();
     document.body.classList.add('menus');
     /* pause keeps the frozen 3D scene visible behind the overlay; all other
        menus are opaque, so we can skip the WebGL render there */
@@ -2771,6 +3065,8 @@ const UI={
   },
   hideScreens(){for(const s of this.screens)this.$(s).classList.remove('active');},
   onEscape(){
+    const P=this.$('song-detail');
+    if(P&&P.classList.contains('show')){this.closeDetail();return;}
     const active=this.screens.find(s=>this.$(s).classList.contains('active'));
     if(active==='screen-songs'||active==='screen-stats')this.show('screen-main');
     else if(active==='screen-diff')this.show('screen-songs');
@@ -2893,11 +3189,13 @@ const UI={
         try{
           st.textContent=cachedNow(entry)?'':'downloading\u2026';
           const rec=await Community.load(entry);
-          Game.startFeatured(rec.f,rec.buffer);
+          st.textContent='';
+          this._featBufs=this._featBufs||{};this._featBufs[rec.f.id]=rec.buffer;
+          this.openDetail({type:'featured',f:rec.f});
         }catch(err){
           st.textContent=String((err&&err.message)||err);
-          row._busy=false;
         }
+        row._busy=false;
       });
       wrap.appendChild(row);
     }
@@ -2957,30 +3255,239 @@ const UI={
       const st=starRating(m.notes.map(n=>({t:n.t,x:n.x,y:n.y})).sort((a,b)=>a.t-b.t));
       const row=this._row('#ff5fd6',esc(m.title||'Untitled'),esc(m.artist||'Custom Map'),
         `${m.notes.length} notes \u00b7 ${mm}:${ss}`,st,'',hasAudio?'':'attach audio','cust:'+m.id);
-      row.addEventListener('click',()=>Editor.playCustom(m.id,'songs'));
+      row.addEventListener('click',()=>this.openDetail({type:'custom',map:m}));
       wrap.appendChild(row);
       if(hasAudio)this._randPool.push(()=>Editor.playCustom(m.id,'songs'));
     }
   },
-  openDiff(song){
-    this._selectedSong=song;
-    this.$('diff-title').textContent=song.title;
-    this.$('diff-sub').textContent=song.artist+' \u00b7 '+song.bpm+' bpm';
-    const wrap=this.$('diff-list');wrap.innerHTML='';
-    for(const d of DIFF_ORDER){
-      const meta=DIFF_META[d],c=buildChart(song,d);
-      const st=starRating(c.notes);
-      const card=document.createElement('div');card.className='diff-card';
-      card.style.setProperty('--dc',meta.color);
-      const best=Settings.best(song.id,d);
-      card.innerHTML=`<div class="d-name">${meta.name}</div>
-        <div class="d-stars" style="color:${starColor(st)}">\u2605 ${st.toFixed(1)}</div>
-        <div class="d-meta">${c.count} notes<br>${c.nps.toFixed(1)} nps avg</div>
-        <div class="d-best">${best?best.grade+' \u00b7 '+best.acc.toFixed(2)+'%':''}</div>`;
-      card.addEventListener('click',()=>Game.startSong(song,d));
-      wrap.appendChild(card);
+  /* Speed presets shown as circular icons, in the requested order. */
+  SPEED_PRESETS:[0.75,0.87,1,1.15,1.25,1.35,1.45],
+  /* Open the side detail panel for any map. `spec` describes how to launch:
+     {kind:'song',song}  |  {kind:'custom',id}  |  {kind:'community',entry} */
+  openMapPanel(spec){
+    this._mapSpec=spec;
+    const p=this.$('map-panel');if(!p)return;
+    /* difficulties only apply to originals */
+    const diffWrap=this.$('mp-diffs');diffWrap.innerHTML='';
+    this._mpDiff='master';
+    let title='',by='',idText='',lenNotes='',coverGlyph='♪',dur=0,bestKey=null;
+    if(spec.kind==='song'){
+      const s=spec.song;title=s.title;by='mapped by Jarvia';
+      idText=s.id;dur=s.duration;coverGlyph=s.title.charAt(0).toUpperCase();
+      this._mpDiff='master';
+      for(const d of DIFF_ORDER){
+        const meta=DIFF_META[d],c=buildChart(s,d),st=starRating(c.notes);
+        const card=document.createElement('div');card.className='mp-diff'+(d==='master'?' on':'');
+        card.style.setProperty('--dc',meta.color);
+        card.innerHTML='<div class="dn">'+meta.name+'</div>'+
+          '<div class="ds" style="color:'+starColor(st)+'">\u2605 '+st.toFixed(1)+'</div>';
+        card.addEventListener('click',()=>{this._mpDiff=d;
+          for(const cc of diffWrap.children)cc.classList&&cc.classList.remove('on');
+          card.classList.add('on');this._refreshMapBest();});
+        diffWrap.appendChild(card);
+      }
+      const hardest=buildChart(s,'master');
+      lenNotes=this.fmtTime(dur)+' - '+fmtNum(hardest.count)+' notes';
+    }else if(spec.kind==='custom'){
+      const m=Settings.loadCustom().find(x=>x.id===spec.id)||{};
+      title=m.title||'Untitled';by='mapped by '+(m.artist||'you');idText=m.id;
+      dur=m.duration||0;coverGlyph=(title.charAt(0)||'♪').toUpperCase();
+      lenNotes=this.fmtTime(dur)+' - '+fmtNum((m.notes||[]).length)+' notes';
+      bestKey=[m.id,'custom'];
+    }else if(spec.kind==='community'){
+      const e=spec.entry,f=Community.cache[e.id]&&Community.cache[e.id].f;
+      title=f?f.title:e.title;by=f?('mapped by '+f.by):'community map';idText=e.id;
+      dur=f?f.dur:0;coverGlyph=(title.charAt(0)||'♪').toUpperCase();
+      lenNotes=f?(this.fmtTime(f.dur)+' - '+fmtNum(f.notes.length)+' notes')
+        :((e.size/1048576).toFixed(1)+' MB \u00b7 downloads on start');
+      bestKey=[e.id,'featured'];
     }
-    this.show('screen-diff');
+    diffWrap.style.display=spec.kind==='song'?'flex':'none';
+    this.setText('mp-len',lenNotes);
+    this.setText('mp-title',title);
+    this.$('mp-by').innerHTML='Map By: <b>'+esc(by.replace(/^mapped by /,''))+'</b>';
+    this.$('mp-id').textContent='Song ID: '+idText;
+    this.$('mp-cover').textContent=coverGlyph;
+    this._mpDur=dur;this._mpBestKey=bestKey;
+    /* start-from slider */
+    const sf=this.$('mp-startfrom');if(sf){sf.value=0;sf.max=Math.max(1,Math.floor(dur));
+      this.setText('mp-startfrom-val','0:00');}
+    this._mpStartFrom=0;
+    /* speed icons */
+    this._buildSpeedIcons();
+    this.$('mp-nofail').checked=!!Settings.get('noFail');
+    this._refreshMapBest();
+    this._syncPanelNote();
+    p.classList.add('show');
+  },
+  _buildSpeedIcons(){
+    const wrap=this.$('mp-speed');if(!wrap)return;wrap.innerHTML='';
+    const cur=Settings.get('speedMod')||1;
+    for(const v of this.SPEED_PRESETS){
+      const b=document.createElement('div');
+      b.className='mp-sp'+(Math.abs(v-cur)<1e-6?' on':'');
+      b.textContent=v.toFixed(2).replace(/0$/,'')+'\u00d7';
+      b.addEventListener('click',()=>{Settings.set('speedMod',v);
+        for(const c of wrap.children)c.classList&&c.classList.remove('on');
+        b.classList.add('on');this._syncPanelNote();
+        if(this._syncMods)this._syncMods();});
+      wrap.appendChild(b);
+    }
+  },
+  _syncPanelNote(){
+    const sm=Settings.get('speedMod')||1;const bits=[];
+    if(sm>1)bits.push('score \u00d7'+(1+(sm-1)*.5).toFixed(2));
+    else if(sm<1)bits.push('score \u00d7'+(1-(1-sm)*.6).toFixed(2));
+    if(sm!==1)bits.push('best scores not saved');
+    else bits.push('Default hitboxes, default hitwindow');
+    this.setText('mp-note',bits.join(' \u00b7 '));
+  },
+  _refreshMapBest(){
+    const key=this._mapSpec&&this._mapSpec.kind==='song'
+      ?[this._mapSpec.song.id,this._mpDiff]:this._mpBestKey;
+    const b=key?Settings.best(key[0],key[1]):null;
+    const set=(id,v)=>this.setText(id,v);
+    if(b){
+      set('mp-b-miss',b.misses!=null?b.misses:'\u2014');
+      set('mp-b-pauses',b.pauses!=null?(b.pauses||'No Pauses'):'\u2014');
+      set('mp-b-prog',b.progress!=null?b.progress:(b.acc!=null?'\u2014':'\u2014'));
+      set('mp-b-acc',b.acc!=null?b.acc.toFixed(3)+'%':'\u2014');
+      set('mp-b-combo',b.combo!=null?b.combo:(b.maxCombo!=null?b.maxCombo:'\u2014'));
+    }else{
+      for(const id of['mp-b-miss','mp-b-pauses','mp-b-prog','mp-b-acc','mp-b-combo'])
+        set(id,'\u2014');
+      set('mp-b-pauses','No Pauses');
+    }
+  },
+  closeMapPanel(){const p=this.$('map-panel');if(p)p.classList.remove('show');},
+  startFromPanel(){
+    const spec=this._mapSpec;if(!spec)return;
+    Settings.set('noFail',!!this.$('mp-nofail').checked);
+    /* start-from = practice-style anchor (no xp when >0) */
+    const from=this._mpStartFrom||0;
+    this.closeMapPanel();
+    if(spec.kind==='song'){
+      if(from>0){Game.practice=true;Game.practiceFrom=from;Game.startSong(spec.song,this._mpDiff,true);}
+      else{Game.practice=false;Game.startSong(spec.song,this._mpDiff);}
+    }else if(spec.kind==='custom'){
+      Game.practice=(from>0);Game.practiceFrom=from;
+      Editor.playCustom(spec.id,'songs',from>0);
+    }else if(spec.kind==='community'){
+      this._launchCommunity(spec.entry,from);
+    }
+  },
+  async _launchCommunity(entry,from){
+    try{
+      const rec=await Community.load(entry);
+      Game.practice=(from>0);Game.practiceFrom=from;
+      Game.startFeatured(rec.f,rec.buffer,from>0);
+    }catch(err){/* surfaced in the list row already */}
+  },
+  /* the ordered speed icons requested for the detail panel */
+  SPEED_STEPS:[0.75,0.87,1,1.15,1.25,1.35,1.45],
+  openDiff(song){ this.openDetail({type:'song',song}); },
+  /* Open the slide-in detail panel for any map.
+     ref = {type:'song',song} | {type:'custom',map} | {type:'featured',f} */
+  openDetail(ref){
+    this._detail=ref;
+    const P=this.$('song-detail');if(!P)return;
+    let title,by,idTxt,lenSec,coverChar='\u266a',pinId,diffs=[];
+    if(ref.type==='song'){
+      const s=ref.song;title=s.title;by='<b>Jarvia Originals</b> \u00b7 '+esc(s.artist);
+      idTxt=s.id;lenSec=s.duration;pinId='song:'+s.id;
+      this._detDiff=this._detDiff&&DIFF_ORDER.indexOf(this._detDiff)>=0?this._detDiff:'master';
+      diffs=DIFF_ORDER.map(d=>{const c=buildChart(s,d);
+        return {d,name:DIFF_META[d].name,color:DIFF_META[d].color,
+          stars:starRating(c.notes),count:c.count};});
+    }else if(ref.type==='custom'){
+      const m=ref.map;title=m.title||'Untitled';by='<b>Custom Map</b> \u00b7 '+esc(m.artist||'');
+      idTxt=m.id;lenSec=m.duration||0;pinId='cust:'+m.id;
+    }else{
+      const f=ref.f;title=f.title;by='Map By: <b>'+esc(f.by)+'</b>';
+      idTxt=f.id;lenSec=f.dur;pinId='feat:'+f.id;
+    }
+    const notesN=ref.type==='song'
+      ? (diffs.find(x=>x.d===this._detDiff)||diffs[diffs.length-1]).count
+      : (ref.type==='custom'?ref.map.notes.length:(ref.f.notes?ref.f.notes.length:0));
+    const mm=Math.floor(lenSec/60),ss=String(Math.round(lenSec%60)).padStart(2,'0');
+    this.setText('sd-len',mm+':'+ss+' \u00b7 '+fmtNum(notesN)+' notes');
+    this.$('sd-title').innerHTML=esc(title);
+    this.$('sd-by').innerHTML=by;
+    this.setText('sd-id',idTxt?('Song ID: '+idTxt):'');
+    this.setText('sd-cover-c','\u266a');
+    /* difficulty cards (originals only) */
+    const dw=this.$('sd-diffwrap'),dl=this.$('sd-diffs');
+    if(diffs.length){dw.style.display='';dl.innerHTML='';
+      for(const dc of diffs){
+        const el=document.createElement('div');el.className='sd-diff'+(dc.d===this._detDiff?' on':'');
+        el.style.setProperty('--dc',dc.color);
+        el.innerHTML=`<div class="n">${dc.name}</div><div class="s" style="color:${starColor(dc.stars)}">\u2605 ${dc.stars.toFixed(1)} \u00b7 ${dc.count}</div>`;
+        el.addEventListener('click',()=>{this._detDiff=dc.d;this.openDetail(ref);});
+        dl.appendChild(el);
+      }
+    }else dw.style.display='none';
+    /* best attempt */
+    this._renderDetailBest(ref);
+    /* pin button */
+    const fav=this.$('sd-fav');
+    const pinned=Settings.isPinned(pinId);
+    fav.classList.toggle('on',pinned);fav.textContent=(pinned?'\u2605 Pinned':'\u2606 Pin');
+    this._detPinId=pinId;
+    /* speed icons + mods */
+    this._renderDetailSpeed();
+    this.$('sd-nofail').classList.toggle('on',!!Settings.get('noFail'));
+    /* hit info line */
+    const nf=Settings.get('noFail')?'No Fail':'Default health';
+    this.setText('sd-hitinfo',nf+' \u00b7 fixed hitbox \u00b7 tightened hit window');
+    /* play-music availability */
+    this.$('sd-playmusic').style.display=(ref.type==='custom'&&!Editor.buffers[ref.map.id])?'none':'';
+    P.classList.add('show');P.setAttribute('aria-hidden','false');
+  },
+  _renderDetailSpeed(){
+    const wrap=this.$('sd-speed');if(!wrap)return;wrap.innerHTML='';
+    const sm=Settings.get('speedMod')||1;
+    for(const v of this.SPEED_STEPS){
+      const b=document.createElement('div');
+      b.className='sd-spd'+(Math.abs(v-sm)<1e-6?' on':'');
+      b.textContent=(v===1?'1':v.toFixed(2).replace(/0$/,''))+'\u00d7';
+      b.addEventListener('click',()=>{Settings.set('speedMod',v);
+        this._renderDetailSpeed();this._syncDetailModNote();
+        const n=this.$('sd-speed-num');if(n)n.value=v.toFixed(2);});
+      wrap.appendChild(b);
+    }
+    const n=this.$('sd-speed-num');if(n&&document.activeElement!==n)n.value=sm.toFixed(2);
+    this._syncDetailModNote();
+  },
+  _syncDetailModNote(){
+    const sm=Settings.get('speedMod')||1,bits=[];
+    if(sm>1)bits.push('score \u00d7'+(1+(sm-1)*.5).toFixed(2));
+    else if(sm<1)bits.push('score \u00d7'+(1-(1-sm)*.6).toFixed(2));
+    if(sm!==1)bits.push('best scores not saved');
+    this.setText('sd-modnote',bits.join(' \u00b7 '));
+  },
+  _renderDetailBest(ref){
+    const grid=this.$('sd-best-grid');if(!grid)return;
+    let best=null;
+    if(ref.type==='song')best=Settings.best(ref.song.id,this._detDiff);
+    const cells=[['misses',best?best.misses:'\u2014'],['pauses',best?(best.pauses||0):'\u2014'],
+      ['accuracy',best?best.acc.toFixed(2)+'%':'\u2014'],['score',best?fmtNum(best.score):'\u2014'],
+      ['grade',best?best.grade:'\u2014'],['max combo',best?fmtNum(best.combo||0):'\u2014']];
+    grid.innerHTML=cells.map(c=>`<div><div class="sd-bk">${c[0]}</div><div class="sd-bv">${c[1]}</div></div>`).join('');
+  },
+  playFeatured(f){
+    const buf=(this._featBufs&&this._featBufs[f.id])||null;
+    Game.startFeatured(f,buf);
+  },
+  closeDetail(){const P=this.$('song-detail');if(P){P.classList.remove('show');
+    P.setAttribute('aria-hidden','true');}
+    try{if(this._previewSrc){this._previewSrc.stop();this._previewSrc.disconnect();this._previewSrc=null;}}catch(e){}},
+  startDetail(){
+    const ref=this._detail;if(!ref)return;
+    this.closeDetail();
+    try{if(this._previewSrc){this._previewSrc.stop();this._previewSrc.disconnect();this._previewSrc=null;}}catch(e){}
+    if(ref.type==='song')Game.startSong(ref.song,this._detDiff);
+    else if(ref.type==='custom')Editor.playCustom(ref.map.id,'songs');
+    else this.playFeatured(ref.f);
   },
   /* ---------- settings menu (tabbed, auto-generated & auto-saved) ---------- */
   activeTab:'customize',
