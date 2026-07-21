@@ -359,6 +359,13 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 #hud-combo .x{font-size:15px;color:var(--text-dim)}
 #hud-combo-wrap.bump #hud-combo-num{transform:scale(1.18)}
 #hud-fps{position:absolute;top:22px;right:28px;font-family:var(--mono);font-size:12px;color:var(--text-dim)}
+#hud-skip{position:absolute;bottom:14%;left:50%;transform:translateX(-50%);
+  font-size:14px;color:#fff;background:rgba(18,18,22,.82);border:1px solid var(--line-brt);
+  border-radius:20px;padding:8px 18px;letter-spacing:.02em;opacity:0;transition:opacity .25s;
+  pointer-events:none}
+#hud-skip.show{opacity:1}
+#hud-skip b{color:var(--gold)}
+#hud.skipflash #hud-judge::after{content:"skipped"}
 #hud-judge{position:absolute;bottom:19%;left:50%;transform:translateX(-50%);
   font-size:22px;font-weight:600;letter-spacing:.34em;text-indent:.34em;text-transform:uppercase;opacity:0}
 #hud-judge.show{animation:judgePop .5s ease-out forwards}
@@ -504,6 +511,7 @@ select.ed-in{cursor:pointer}
     <div class="hud-cell"><div class="hp-label">notes</div><div class="hp-val" id="hud-notes">0/0</div></div>
   </div>
   <div id="hud-judge"></div>
+  <div id="hud-skip">no notes ahead — press <b>space</b> to skip</div>
   <div id="hud-fps"></div>
   <div id="hud-bottom"><div id="hud-progress"></div></div>
 </div>
@@ -1671,6 +1679,7 @@ const MAXHP=10;            // miss: -2, hit: +1; death at 0
 const modMult=m=>m===1?1:(m>1?1+(m-1)*.5:1-(1-m)*.6);
 
 const Game={
+  _inMenus:true,
   state:'menu', song:null, diff:null, chart:null,
   active:[], pool:[], rings:[], parts:[], trail:[],
   spawnIdx:0, zeroCtx:0, stats:null, cursor:{x:0,y:0},
@@ -2028,6 +2037,72 @@ const Game={
   },
   /* ---------- run control ---------- */
   time(){return AudioEngine.ctx?AudioEngine.ctx.currentTime-this.zeroCtx:-99;},
+  /* Returns the time of the next un-judged note ahead of `t`, or Infinity. */
+  _nextNoteT(t){
+    for(let i=this.spawnIdx;i<this.chart.length;i++)
+      if(this.chart[i].t>t)return this.chart[i].t;
+    /* also check any already-spawned-but-future note */
+    let best=Infinity;
+    for(const n of this.active)if(n.state===0&&n.data.t>t&&n.data.t<best)best=n.data.t;
+    return best;
+  },
+  /* True when there's a >=5s silence starting now (nothing to hit for 5s). */
+  canSkip(){
+    if(this.state!=='play')return false;
+    const t=this.time();
+    if(t<0)return false;
+    return this._nextNoteT(t)-t>=5;
+  },
+  /* Skip ahead to 3s before the next note (only when canSkip). Re-anchors the
+     game clock and restarts the audio at the new position so both stay synced. */
+  skipGap(){
+    if(!this.canSkip())return false;
+    const t=this.time();
+    const next=this._nextNoteT(t);
+    if(!isFinite(next))return false;
+    const target=Math.max(t,next-3);
+    const jump=target-t;
+    if(jump<=0.05)return false;
+    /* shift the clock so time() jumps forward by `jump` */
+    this.zeroCtx-=jump;
+    /* restart whatever audio is playing at the new position */
+    const m=this.mod,ctx=AudioEngine.ctx;
+    const off=Settings.get('audioOffset')/1000;
+    if(this.bufSrc){
+      /* buffered track (custom / featured): stop and re-start at target */
+      try{this.bufSrc.stop();}catch(e){}
+      try{this.bufSrc.disconnect();}catch(e){}
+      const buf=this._activeBuffer();
+      if(buf){
+        const src=ctx.createBufferSource();
+        src.buffer=buf;src.connect(AudioEngine.music);
+        if(src.playbackRate)src.playbackRate.value=m;
+        /* audio position for time T is T*m into the buffer */
+        src.start(ctx.currentTime,Math.max(0,target*m));
+        this.bufSrc=src;
+      }
+    }else{
+      /* synth sequencer (originals): re-anchor it to the new zero */
+      Sequencer.stop();
+      Sequencer.start(this.song,this.zeroCtx+off,m,target);
+    }
+    /* advance spawn index past everything now behind us */
+    while(this.spawnIdx<this.chart.length&&this.chart[this.spawnIdx].t<target-1e-9)
+      this.spawnIdx++;
+    /* recycle any notes now behind the target (there shouldn't be hittable
+       ones, since a skip requires a clear 5s gap) */
+    for(let i=this.active.length-1;i>=0;i--){
+      const n=this.active[i];
+      if(n.data.t<target-0.001){n.group.visible=false;this.active.splice(i,1);}
+    }
+    if(UI.flashSkip)UI.flashSkip();
+    return true;
+  },
+  _activeBuffer(){
+    if(this.customMap&&this.customMap.buffer)return this.customMap.buffer;
+    if(this.featured&&this._lastFeatBuf)return this._lastFeatBuf;
+    return null;
+  },
   _uiOffX:0,_uiOffY:0,
   _stopMusic(){
     Sequencer.stop();
@@ -2137,7 +2212,7 @@ const Game={
   },
   resume(){
     if(this.state!=='pause')return;
-    UI.hideScreens();document.body.classList.remove('menus');
+    UI.hideScreens();document.body.classList.remove('menus');Game._inMenus=false;
     if(typeof FluidBG!=='undefined')FluidBG.stop();
     Input.lock();
     UI.countdown(3,()=>{
@@ -2481,6 +2556,9 @@ const Input={
         if(Game.state==='play')Game.pause();
         else UI.onEscape();
       }
+      if(e.key===' '&&Game.state==='play'&&!edActive){
+        e.preventDefault();Game.skipGap();
+      }
     });
   },
   lock(){
@@ -2681,7 +2759,10 @@ const UI={
   },
   show(id){
     document.body.classList.add('menus');
-    if(typeof FluidBG!=='undefined')FluidBG.start();
+    /* pause keeps the frozen 3D scene visible behind the overlay; all other
+       menus are opaque, so we can skip the WebGL render there */
+    Game._inMenus=(id!=='screen-pause');
+    if(typeof FluidBG!=='undefined'){if(id==='screen-pause')FluidBG.stop();else FluidBG.start();}
     if(id==='screen-songs'){this.buildSongList();this.buildCustomList();}
     if(id==='screen-main')this.updateRank();
     if(id==='screen-stats')this.buildStats();
@@ -3213,7 +3294,7 @@ const UI={
     fill.classList.toggle('low',hp<=4);
   },
   enterGameplay(song,diff){
-    this.hideScreens();document.body.classList.remove('menus');
+    this.hideScreens();document.body.classList.remove('menus');Game._inMenus=false;
     if(typeof FluidBG!=='undefined')FluidBG.stop();
     this.hud.classList.add('active');
     this.$('hud-song-t').textContent=(song.artist?song.artist+' — ':'')+song.title;
@@ -3291,6 +3372,18 @@ const UI={
     const tf=this.$('hud-topfill');if(tf)tf.style.width=pct+'%';
     this.setText('hud-time',
       this.fmtTime(clamp(t,0,Game.song.duration))+' / '+this.fmtTime(Game.song.duration));
+    /* offer the skip prompt during a long silence */
+    const sk=this.$('hud-skip');
+    if(sk){const can=Game.canSkip();
+      if(can!==this._skipShown){sk.classList.toggle('show',can);this._skipShown=can;}}
+  },
+  _skipShown:false,
+  flashSkip(){
+    const sk=this.$('hud-skip');
+    if(sk){sk.classList.remove('show');this._skipShown=false;}
+    const j=this.$('hud-judge');
+    if(j&&Settings.get('judgeText')){j.textContent='SKIPPED';j.className='j-skip';
+      void j.offsetWidth;j.classList.add('show');}
   },
   showResults(stats,song,diff,failed){
     const acc=Game.accuracy();
@@ -4330,7 +4423,10 @@ const Loop={
     const dt=Math.min(.05,(now-this.last)/1000)||.016;
     this.last=now;
     if(Game.state==='play')Game.update(dt);
-    Game.renderer.render(Game.scene,Game.camera);
+    /* Skip the heavy 3D render while a menu is up: the fluid-bg canvas covers
+       the screen there, so the WebGL scene is invisible anyway. This frees the
+       GPU for the menu and avoids two full renders per frame. */
+    if(!Game._inMenus)Game.renderer.render(Game.scene,Game.camera);
     /* fps counter: measures actual rendered frames */
     this.fpsFrames++;
     const el=this._fpsShown?(this._fpsEl||(this._fpsEl=document.getElementById('hud-fps'))):null;
