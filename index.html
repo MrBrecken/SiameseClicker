@@ -173,6 +173,14 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 #mr-user{color:var(--text);letter-spacing:.16em}
 #mr-lv{color:#fff;border:1.5px solid var(--gold);border-radius:5px;padding:7px 15px;
   font-weight:600;letter-spacing:.12em}
+.prestige{color:var(--gold);font-size:.82em;letter-spacing:.02em;margin-left:4px}
+@keyframes rainbowborder{0%{border-color:#ff5f5f}17%{border-color:#ffdb5f}
+  33%{border-color:#5fff7a}50%{border-color:#5fffe0}67%{border-color:#5f8bff}
+  83%{border-color:#c15fff}100%{border-color:#ff5f5f}}
+#mr-lv.rainbow{animation:rainbowborder 3s linear infinite}
+@keyframes rainbowbar{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.rainbow{background:linear-gradient(90deg,#ff5f5f,#ffdb5f,#5fff7a,#5fffe0,#5f8bff,#c15fff,#ff5f5f)!important;
+  background-size:200% 100%!important;animation:rainbowbar 2.4s linear infinite}
 #mr-name{text-transform:uppercase;letter-spacing:.32em;font-size:16px}
 #mr-xpwrap{width:min(340px,60vw);height:9px;background:#1a1a1f;border:1px solid var(--line);
   border-radius:5px;overflow:hidden}
@@ -965,7 +973,7 @@ select.ed-in{cursor:pointer}
   <div class="menu-col" style="flex-direction:row;gap:10px">
     <button class="btn primary small" id="btn-res-retry">Retry</button>
     <button class="btn small" id="btn-res-practice" style="display:none;border-color:#ff5fd6;color:#ff5fd6">Practice from death (−5s)</button>
-    <button class="btn small" id="btn-res-songs">Song Select</button>
+    <button class="btn small" id="btn-res-songs">Back to Map</button>
     <button class="btn ghost small" id="btn-res-menu">Main Menu</button>
   </div>
 </div>
@@ -1000,9 +1008,14 @@ const GUEST_AVATAR='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAA
 /* Discord login: the game's official application client id.
    >>> PASTE YOUR CLIENT ID BETWEEN THE QUOTES BELOW <<<
    (discord.com/developers -> your app -> OAuth2 -> Client ID) */
-const DISCORD_CLIENT_ID='1528879968862343228';
+const DISCORD_CLIENT_ID='';
 
 /* ============ 2. SETTINGS (auto-saved) ============ */
+/* Factory defaults baked from the shipped settings profile. Applied on a
+   first run (no saved settings yet); users can still change everything. */
+const FACTORY_DEFAULTS={"masterVol":0.98,"musicVol":0.24,"hitVol":0.04,"hitSoundStyle":"custom","audioOffset":0,"judgeOffset":0,"sensitivity":2.15,"cursorSize":0.5,"cursorColor":"#ffffff","cursorStyle":"custom","cursorTrail":false,"noteStyle":"custom","bgStyle":"custom","notePushback":true,"noteSpeed":1.25,"noteDistance":0.35,"noteSize":1.07,"noteOpacity":0.15,"bloom":0,"bgBrightness":0.5,"minimalFx":true,"hitRings":false,"hitParticles":false,"hitPop":false,"judgeText":false,"showFps":true,"vsync":true,"fpsLimit":0,"speedMod":1,"noFail":true,"parallax":0,"fov":59,"borderStyle":"grid_outer","colorMode":"set","ghostMode":"half","uiParallax":0,"camParallax":0.45,"communityRepo":"","hitboxSize":1.14};
+const FACTORY_IMAGES={"bg":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAf4AAAFLCAYAAAA3aO7jAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAVLSURBVHhe7dUxAcAgEMDAUhPvXynsSCB3Ywxkzcz+AICE/w4AwLuMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQowfAEKMHwBCjB8AQg7WbwPaWl5X0QAAAABJRU5ErkJggg==","cursor":"data:image/png;base64,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","hitsound":"data:audio/ogg;base64,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","notemesh":"# Rhythia Note Builder\r\nmtllib Custom Note (11).mtl\r\no Note\r\nv 1 -1 0.01\r\nv 1 1 0.01\r\nv -1 1 0.01\r\nv -1 -1 0.01\r\nv 0.905 -0.905 0.01\r\nv 0.905 0.905 0.01\r\nv -0.905 0.905 0.01\r\nv -0.905 -0.905 0.01\r\nv 0.81 -0.81 0.01\r\nv 0.81 0.81 0.01\r\nv -0.81 0.81 0.01\r\nv -0.81 -0.81 0.01\r\nv 1 -1 -0.01\r\nv 1 1 -0.01\r\nv -1 1 -0.01\r\nv -1 -1 -0.01\r\nv 0.905 -0.905 -0.01\r\nv 0.905 0.905 -0.01\r\nv -0.905 0.905 -0.01\r\nv -0.905 -0.905 -0.01\r\nv 0.81 -0.81 -0.01\r\nv 0.81 0.81 -0.01\r\nv -0.81 0.81 -0.01\r\nv -0.81 -0.81 -0.01\r\nvt 1 1\r\nvt 1 0\r\nvt 0 0\r\nvt 0 1\r\nvt 0.9525 0.9525\r\nvt 0.9525 0.0475\r\nvt 0.0475 0.0475\r\nvt 0.0475 0.9525\r\nvt 0.905 0.905\r\nvt 0.905 0.095\r\nvt 0.095 0.095\r\nvt 0.095 0.905\r\nvt 1 1\r\nvt 1 0\r\nvt 0 0\r\nvt 0 1\r\nvt 0.9525 0.9525\r\nvt 0.9525 0.0475\r\nvt 0.0475 0.0475\r\nvt 0.0475 0.9525\r\nvt 0.905 0.905\r\nvt 0.905 0.095\r\nvt 0.095 0.095\r\nvt 0.095 0.905\r\nvn 0 0 -1\r\nvn 0 0 -1\r\nvn 0 0 -1\r\nvn 0 0 -1\r\nvn -0 0 1\r\nvn 0 0 1\r\nvn -0 0 1\r\nvn 0 0 1\r\nvn -1 0 0\r\nvn -1 0 0\r\nvn 1 0 0\r\nvn 1 0 0\r\nvn 0 0 -1\r\nvn 0 0 -1\r\nvn 0 0 -1\r\nvn 0 0 -1\r\nvn 0 -0 1\r\nvn 0 0 1\r\nvn 0 -0 1\r\nvn 0 0 1\r\nvn -0 -1 0\r\nvn 0 -1 -0\r\nvn -0 1 0\r\nvn 0 1 0\r\nvn 0 0 -1\r\nvn -0 0 -1\r\nvn 0 0 -1\r\nvn -0 0 -1\r\nvn 0 0 1\r\nvn 0 0 1\r\nvn 0 0 1\r\nvn 0 0 1\r\nvn 1 -0 0\r\nvn 1 -0 0\r\nvn -1 0 0\r\nvn -1 0 0\r\nvn 0 0 -1\r\nvn 0 -0 -1\r\nvn 0 0 -1\r\nvn 0 -0 -1\r\nvn 0 0 1\r\nvn -0 0 1\r\nvn 0 0 1\r\nvn 0 0 1\r\nvn 0 1 0\r\nvn 0 1 0\r\nvn -0 -1 0\r\nvn 0 -1 -0\r\ns 0\r\nusemtl Material\r\nf 9/9/1 10/10/1 6/6/1\r\nf 9/9/2 6/6/2 5/5/2\r\nf 5/5/3 6/6/3 2/2/3\r\nf 5/5/4 2/2/4 1/1/4\r\nf 21/21/5 17/17/5 18/18/5\r\nf 21/21/6 18/18/6 22/22/6\r\nf 17/17/7 13/13/7 14/14/7\r\nf 17/17/8 14/14/8 18/18/8\r\nf 1/1/9 2/2/9 14/14/9\r\nf 1/1/10 14/14/10 13/13/10\r\nf 10/10/11 9/9/11 21/21/11\r\nf 10/10/12 21/21/12 22/22/12\r\nf 10/10/13 11/11/13 7/7/13\r\nf 10/10/14 7/7/14 6/6/14\r\nf 6/6/15 7/7/15 3/3/15\r\nf 6/6/16 3/3/16 2/2/16\r\nf 22/22/17 18/18/17 19/19/17\r\nf 22/22/18 19/19/18 23/23/18\r\nf 18/18/19 14/14/19 15/15/19\r\nf 18/18/20 15/15/20 19/19/20\r\nf 2/2/21 3/3/21 15/15/21\r\nf 2/2/22 15/15/22 14/14/22\r\nf 11/11/23 10/10/23 22/22/23\r\nf 11/11/24 22/22/24 23/23/24\r\nf 11/11/25 12/12/25 8/8/25\r\nf 11/11/26 8/8/26 7/7/26\r\nf 7/7/27 8/8/27 4/4/27\r\nf 7/7/28 4/4/28 3/3/28\r\nf 23/23/29 19/19/29 20/20/29\r\nf 23/23/30 20/20/30 24/24/30\r\nf 19/19/31 15/15/31 16/16/31\r\nf 19/19/32 16/16/32 20/20/32\r\nf 3/3/33 4/4/33 16/16/33\r\nf 3/3/34 16/16/34 15/15/34\r\nf 12/12/35 11/11/35 23/23/35\r\nf 12/12/36 23/23/36 24/24/36\r\nf 12/12/37 9/9/37 5/5/37\r\nf 12/12/38 5/5/38 8/8/38\r\nf 8/8/39 5/5/39 1/1/39\r\nf 8/8/40 1/1/40 4/4/40\r\nf 24/24/41 20/20/41 17/17/41\r\nf 24/24/42 17/17/42 21/21/42\r\nf 20/20/43 16/16/43 13/13/43\r\nf 20/20/44 13/13/44 17/17/44\r\nf 4/4/45 1/1/45 13/13/45\r\nf 4/4/46 13/13/46 16/16/46\r\nf 9/9/47 12/12/47 24/24/47\r\nf 9/9/48 24/24/48 21/21/48\r\n"};
+
 const SETTINGS_DEFAULTS={
   masterVol:.8, musicVol:.8, hitVol:.7, hitSoundStyle:'classic',
   audioOffset:0, judgeOffset:0,
@@ -1034,18 +1047,32 @@ const DEFAULT_COLORSET=['#e95f5f','#ffb2b2','#e88d5f','#ffcdb2','#e8ba5f','#ffe8
 '#5fe88d','#b2ffd6','#5fe8ba','#b2fff1','#5fe8e8','#b2f1ff','#5fbae8','#b2d6ff',
 '#5f8de8','#b2bbff','#5f5fe8','#c4b2ff','#8d5fe8','#dfb2ff','#ba5fe8','#fab2ff',
 '#e85fe8','#ffb2e8','#e85fa4','#ffb2cd','#e85f8d','#ffb2b2'];
+/* the shipped defaults = base defaults overlaid with the factory profile */
+const SHIPPED_DEFAULTS={...SETTINGS_DEFAULTS,...FACTORY_DEFAULTS};
 const Settings={
-  data:{...SETTINGS_DEFAULTS},
+  data:{...SHIPPED_DEFAULTS},
   persistOk:false,
   KEY:'jarvia_settings_v1',
   load(){
+    let hadSaved=false;
     try{
       if(typeof localStorage!=='undefined'){
         this.persistOk=true;
         const raw=localStorage.getItem(this.KEY);
-        if(raw)Object.assign(this.data,{...SETTINGS_DEFAULTS,...JSON.parse(raw)});
+        if(raw){hadSaved=true;
+          Object.assign(this.data,{...SHIPPED_DEFAULTS,...JSON.parse(raw)});}
       }
     }catch(e){this.persistOk=false;/* storage blocked -> in-memory fallback */}
+    /* first run (or storage-less session): seed the shipped custom assets so
+       the note mesh, cursor, background and hit sound match the profile */
+    if(!hadSaved)this._seedFactoryImages();
+  },
+  _seedFactoryImages(){
+    try{
+      for(const k in FACTORY_IMAGES){
+        if(!this.getImg(k))this.setImg(k,FACTORY_IMAGES[k]);
+      }
+    }catch(e){}
   },
   save(){try{if(this.persistOk)localStorage.setItem(this.KEY,JSON.stringify(this.data));}catch(e){}},
   get(k){return this.data[k];},
@@ -1601,31 +1628,64 @@ function starColor(s){
     :s<11?'#ff5f7a':s<14?'#c07bff':'#ff5fd6';
 }
 /* XP: exact curve & reward from the reference module. */
+/* ---- Prestige rank ladder ----
+   Each rank levels 1..maxLevel. Reaching maxLevel lets you prestige; after
+   PRESTIGE_MAX prestiges within a rank you promote to the next rank (prestige
+   resets to 0). Interstellar is the final rank and levels infinitely. The whole
+   progression is derived from a single cumulative XP total, so nothing can ever
+   desync. */
 const XP={
+  PRESTIGE_MAX:6,   // prestiges available per rank before promotion
   RANKS:[
     ['Bronze',30,'#d68e7c'],['Silver',35,'#b1b1b1'],['Gold',40,'#ffcd53'],
     ['Diamond',45,'#53f7ff'],['Master',50,'#ff53a1'],['Grandmaster',55,'#4ae351'],
     ['Astral',60,'#8b46d9'],['Cosmic',65,'#4857df'],['Celestial',70,'#e0495a'],
     ['Interstellar',75,'#ffffff']],
+  /* xp to go from (l-1) -> l within any rank */
   bpNeeded(l){ if(l<=1)return 0; return Math.floor(Math.pow(1.07,l-2)*500+.5); },
-  totalBpNeeded(l){ let s=0; for(let i=2;i<=l;i++)s+=this.bpNeeded(i); return s; },
-  levelFor(bp){
-    let lvl=1,acc=0;
-    for(;;){ acc+=this.bpNeeded(lvl+1); if(bp<acc)break; lvl++; if(lvl>999)break; }
-    return lvl;
-  },
-  progress(bp){
-    const lvl=this.levelFor(bp);
-    return {level:lvl,into:bp-this.totalBpNeeded(lvl),need:this.bpNeeded(lvl+1)};
-  },
-  rankFor(level){
-    let acc=0;
-    for(const [name,len,col] of this.RANKS){
-      acc+=len;
-      if(level<=acc)return {name,color:col};
+  /* xp to complete a full rank tier: levels 1..maxLevel */
+  _tierBp(maxLevel){ let s=0; for(let i=2;i<=maxLevel;i++)s+=this.bpNeeded(i); return s; },
+  /* how many complete tiers a rank contains before promotion.
+     Interstellar (last) never promotes. */
+  _tiersInRank(idx){ return idx>=this.RANKS.length-1?Infinity:this.PRESTIGE_MAX+1; },
+  /* Resolve a cumulative BP total into {rankIdx,name,color,maxLevel,prestige,
+     level,into,need,infinite}. */
+  resolve(bp){
+    bp=Math.max(0,bp||0);
+    let rankIdx=0;
+    for(;;){
+      const [name,maxLevel,color]=this.RANKS[rankIdx];
+      const tierBp=this._tierBp(maxLevel);
+      const tiers=this._tiersInRank(rankIdx);
+      const rankBp=tierBp*(isFinite(tiers)?tiers:1);
+      if(rankIdx<this.RANKS.length-1 && bp>=rankBp){ bp-=rankBp; rankIdx++; continue; }
+      /* within this rank: split remaining bp into prestige tiers (finite ranks
+         only; the final rank just keeps leveling forever) */
+      let prestige=0;
+      if(isFinite(tiers)){
+        while(bp>=tierBp && prestige<tiers-1){ bp-=tierBp; prestige++; }
+      }
+      /* now bp is progress within the current tier */
+      const cap=isFinite(tiers)?maxLevel:Infinity;
+      let level=1,acc=0;
+      for(;;){ if(level>=cap) break;
+        const nd=this.bpNeeded(level+1);
+        if(bp<acc+nd) break; acc+=nd; level++;
+        if(level>99999)break; }
+      const atCap=(isFinite(cap)&&level>=cap);
+      const need=atCap?0:this.bpNeeded(level+1);
+      return {rankIdx,name,color,maxLevel,prestige,level,
+        into:bp-acc,need,infinite:!isFinite(tiers),atCap};
     }
-    return {name:'Interstellar',color:'#ffffff'};
   },
+  /* legacy helpers kept so existing callers still work */
+  levelFor(bp){ return this.resolve(bp).level; },
+  progress(bp){ const r=this.resolve(bp);
+    return {level:r.level,into:r.into,need:r.need||1,
+      prestige:r.prestige,rank:r.name,color:r.color,maxLevel:r.maxLevel,
+      infinite:r.infinite,atCap:r.atCap}; },
+  rankFor(){ /* kept for signature compat; prefer resolve() */
+    return {name:'Bronze',color:'#d68e7c'}; },
   /** reward = (acc/100)^3 * 100 * (stars+1)^1.3, stars capped for sanity */
   reward(stars,acc){
     const a=acc/100;
@@ -1915,12 +1975,12 @@ function parseOBJ(text){
 const CELL=1.9;            // world units per grid cell
 const HITZ=-7;             // judgment plane z
 const CAMZ=3.2;            // camera z (notes past this are past the viewer)
-const PUSHBACK_DIST=3.8;   // pushback-on: culled this far past the hit plane
+const PUSHBACK_DIST=3.5;   // pushback-on: culled this far past the hit plane
 const SPAWNZ=-140;         // notes materialize here
 const APPROACH_DIST=HITZ-SPAWNZ;
 /* Timing windows (seconds). Rhythia's default hit window is tight; perfect/
    great are inner bands. These no longer scale with any visual setting. */
-const MISSW=.052, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
+const MISSW=.05, W_PERFECT=.019, W_GREAT=.035;   // ±55 ms judgment window
 const NOTE_HALF=.45;       // visual note half-size, in cells
 const NOTE_HITBOX=1.14;    // Rhythia note_hitbox_size (fixed); hbs = /2
 const _linstep=(a,b,v)=>a===b?(v>=a?1:0):clamp((v-a)/(b-a),0,1);
@@ -2026,6 +2086,11 @@ const Game={
   _frameTex(style){
     const stroke=g=>{g.lineWidth=4;g.strokeStyle='rgba(180,225,255,.9)';
       g.shadowColor='rgba(109,242,255,1)';g.shadowBlur=16;};
+    if(style==='grid_outer')return this._canvasTex((g,s)=>{const p=8;
+      /* Sound Space 'grid_outer': crisp thin white square, no glow */
+      g.lineWidth=3;g.strokeStyle='rgba(255,255,255,.92)';g.shadowBlur=0;
+      g.beginPath();g.moveTo(p,p);g.lineTo(s-p,p);g.lineTo(s-p,s-p);
+      g.lineTo(p,s-p);g.closePath();g.stroke();},256);
     if(style==='square')return this._canvasTex((g,s)=>{const p=10;stroke(g);
       g.beginPath();g.moveTo(p,p);g.lineTo(s-p,p);g.lineTo(s-p,s-p);
       g.lineTo(p,s-p);g.closePath();g.stroke();},256);
@@ -2472,6 +2537,10 @@ const Game={
   quit(toScreen){
     this._stopMusic();
     this.state='menu';
+    /* remember what was just played so the results screen can return to it */
+    this._lastPlayed=this.featured?{type:'featured',f:this.featured}
+      :this.customMap?{type:'custom',map:this.customMap}
+      :this.song?{type:'song',song:this.song,diff:this.diff}:null;
     Input.unlock(true);
     for(const n of this.active)n.group.visible=false;
     this.active.length=0;
@@ -2856,9 +2925,9 @@ const SETTINGS_SCHEMA=[
   {tab:'customize',key:'bgImg',label:'Custom Background Image',sub:'used when background is Custom Image',type:'image',imgKind:'bg'},
   {tab:'customize',sec:'Playfield Border'},
   {tab:'customize',key:'borderStyle',label:'Border Style',type:'select',
-    options:[['round','Rounded Square'],['square','Full Square'],['corners','Corner Brackets'],
-             ['double','Double Square'],['dashed','Dashed Square'],['none','No Border'],
-             ['custom','Custom Image']]},
+    options:[['grid_outer','Grid Outer (Sound Space)'],['round','Rounded Square'],['square','Full Square'],
+             ['corners','Corner Brackets'],['double','Double Square'],['dashed','Dashed Square'],
+             ['none','No Border'],['custom','Custom Image']]},
   {tab:'customize',key:'borderImg',label:'Custom Border Image',sub:'used when border is Custom Image',type:'image',imgKind:'border'},
   /* -------- GAMEPLAY -------- */
   {tab:'gameplay',sec:'Gameplay'},
@@ -3061,7 +3130,7 @@ const UI={
       if(Account.profile)Account.logout();else Account.login();
       this.buildStats();
     });
-    on('btn-res-songs',()=>Game.quit('screen-songs'));
+    on('btn-res-songs',()=>this.returnToLastMap());
     on('btn-res-menu',()=>Game.quit('screen-main'));
     document.addEventListener('visibilitychange',()=>{
       if(document.hidden&&Game.state==='play')Game.pause();});
@@ -3088,7 +3157,7 @@ const UI={
     else if(active==='screen-diff')this.show('screen-songs');
     else if(active==='screen-settings')this.$('btn-settings-back').click();
     else if(active==='screen-pause')Game.resume();
-    else if(active==='screen-results')Game.quit('screen-songs');
+    else if(active==='screen-results')this.returnToLastMap();
     else if(active==='screen-editor'){Editor.stopPreview();this.show('screen-main');}
   },
   /* ---------- song / difficulty menus ---------- */
@@ -3446,7 +3515,18 @@ const UI={
     if(ref.type==='song'){
       const s=ref.song;title=s.title;by='<b>Jarvia Originals</b> \u00b7 '+esc(s.artist);
       idTxt=s.id;lenSec=s.duration;pinId='song:'+s.id;
-      this._detDiff=this._detDiff&&DIFF_ORDER.indexOf(this._detDiff)>=0?this._detDiff:'master';
+      /* Default the shown difficulty to the one the player actually has a best
+         on (prefer the hardest cleared), unless they explicitly picked one for
+         THIS map already. Prevents the Best Attempt block from looking empty
+         just because it defaulted to a difficulty that was never played. */
+      if(this._detDiffFor!==s.id){
+        let chosen=null;
+        for(let i=DIFF_ORDER.length-1;i>=0;i--){
+          if(Settings.best(s.id,DIFF_ORDER[i])){chosen=DIFF_ORDER[i];break;}
+        }
+        this._detDiff=chosen||(DIFF_ORDER.indexOf(this._detDiff)>=0?this._detDiff:'master');
+        this._detDiffFor=s.id;
+      }
       diffs=DIFF_ORDER.map(d=>{const c=buildChart(s,d);
         return {d,name:DIFF_META[d].name,color:DIFF_META[d].color,
           stars:starRating(c.notes),count:c.count};});
@@ -3479,7 +3559,7 @@ const UI={
         const el=document.createElement('div');el.className='sd-diff'+(dc.d===this._detDiff?' on':'');
         el.style.setProperty('--dc',dc.color);
         el.innerHTML=`<div class="n">${dc.name}</div><div class="s" style="color:${starColor(dc.stars)}">\u2605 ${dc.stars.toFixed(1)} \u00b7 ${dc.count}</div>`;
-        el.addEventListener('click',()=>{this._detDiff=dc.d;this.openDetail(ref);});
+        el.addEventListener('click',()=>{this._detDiff=dc.d;this._detDiffFor=ref.song.id;this.openDetail(ref);});
         dl.appendChild(el);
       }
     }else dw.style.display='none';
@@ -3535,14 +3615,34 @@ const UI={
     const grid=this.$('sd-best-grid');if(!grid)return;
     let best=null;
     if(ref.type==='song')best=Settings.best(ref.song.id,this._detDiff);
-    const cells=[['misses',best?best.misses:'\u2014'],['pauses',best?(best.pauses||0):'\u2014'],
+    else if(ref.type==='custom')best=Settings.best(ref.map.id,'custom');
+    else if(ref.type==='featured')best=Settings.best(ref.f.id,'featured');
+    const miss=(best&&best.misses!=null)?best.misses:'\u2014';
+    const cells=[['misses',miss],['pauses',best?(best.pauses||0):'\u2014'],
       ['accuracy',best?best.acc.toFixed(2)+'%':'\u2014'],['score',best?fmtNum(best.score):'\u2014'],
       ['grade',best?best.grade:'\u2014'],['max combo',best?fmtNum(best.combo||0):'\u2014']];
     grid.innerHTML=cells.map(c=>`<div><div class="sd-bk">${c[0]}</div><div class="sd-bv">${c[1]}</div></div>`).join('');
   },
+  _bestKey(){
+    if(Game.featured)return [Game.featured.id,'featured'];
+    if(Game.customMap)return [Game.customMap.id,'custom'];
+    if(Game.song)return [Game.song.id,Game.diff];
+    return null;
+  },
   playFeatured(f){
     const buf=(this._featBufs&&this._featBufs[f.id])||null;
     Game.startFeatured(f,buf);
+  },
+  /* After a run, drop back onto the song screen with the map's detail panel
+     already open, so retrying doesn't mean hunting for it again. */
+  returnToLastMap(){
+    const ref=Game._lastPlayed;
+    Game.quit('screen-songs');
+    if(!ref)return;
+    if(ref.type==='song'){this._detDiff=ref.diff||this._detDiff;
+      this.openDetail({type:'song',song:ref.song});}
+    else if(ref.type==='custom')this.openDetail({type:'custom',map:ref.map});
+    else if(ref.type==='featured')this.openDetail({type:'featured',f:ref.f});
   },
   _stopPreview(){
     try{if(this._previewSrc){this._previewSrc.onended=null;
@@ -3813,10 +3913,13 @@ const UI={
   fmtTime(s){s=Math.max(0,s||0);const m=Math.floor(s/60);
     return m+':'+String(Math.floor(s%60)).padStart(2,'0');},
   updateRank(){
-    const p=XP.progress(Settings.getBP()),r=XP.rankFor(p.level);
-    this.setText('mr-lv','LV '+p.level);
-    const nm=this.$('mr-name');nm.textContent=r.name;nm.style.color=r.color;
-    this.$('mr-lv').style.borderColor=r.color;
+    const r=XP.resolve(Settings.getBP());
+    this.setText('mr-lv','LV '+r.level);
+    const nm=this.$('mr-name');
+    nm.innerHTML=esc(r.name)+(r.prestige>0?' <span class="prestige">\u2605'+r.prestige+'</span>':'');
+    nm.style.color=r.color;
+    const lvEl=this.$('mr-lv');lvEl.style.borderColor=r.color;
+    lvEl.classList.toggle('rainbow',r.name==='Interstellar');
     const av=this.$('mr-ava'),us=this.$('mr-user');
     if(av&&us){
       if(Account.profile){av.src=Account.profile.avatarUrl;us.textContent=Account.profile.name;}
@@ -3824,9 +3927,16 @@ const UI={
       av.style.display='';
     }
     const fill=this.$('mr-xpfill'),txt=this.$('mr-xptext');
-    if(fill){fill.style.background='linear-gradient(90deg,'+r.color+'99,'+r.color+')';
-      fill.style.width=Math.min(100,100*p.into/Math.max(1,p.need))+'%';}
-    if(txt)txt.textContent=fmtNum(p.into)+' / '+fmtNum(p.need)+' XP to LV '+(p.level+1);
+    if(fill){
+      fill.classList.toggle('rainbow',r.name==='Interstellar');
+      fill.style.background=r.name==='Interstellar'?'':'linear-gradient(90deg,'+r.color+'99,'+r.color+')';
+      fill.style.width=r.atCap?'100%':(Math.min(100,100*r.into/Math.max(1,r.need))+'%');
+    }
+    if(txt){
+      if(r.atCap)txt.textContent='MAX LEVEL \u2014 ready to prestige';
+      else txt.textContent=fmtNum(r.into)+' / '+fmtNum(r.need)+' XP to LV '+(r.level+1)+
+        ' \u00b7 '+(r.infinite?'max rank':('prestige '+r.prestige+'/'+XP.PRESTIGE_MAX));
+    }
   },
   /* ---------- stats screen ---------- */
   fmtDur(sec){
@@ -3836,16 +3946,22 @@ const UI={
   },
   buildStats(){
     const d=Career.data||Career.BLANK;
-    const p=XP.progress(Settings.getBP()),r=XP.rankFor(p.level);
+    const r=XP.resolve(Settings.getBP());
     /* profile card */
     const av=this.$('sp-ava');
     if(Account.profile){av.src=Account.profile.avatarUrl;this.setText('sp-name',Account.profile.name);}
     else{av.src=GUEST_AVATAR;this.setText('sp-name','Guest');}
     av.style.display='';
     const rk=this.$('sp-rank');
-    rk.innerHTML='<span style="color:'+r.color+'">'+r.name+'</span> \u00b7 LV '+p.level;
-    this.$('sp-lvlfill').style.width=Math.min(100,100*p.into/Math.max(1,p.need))+'%';
-    this.setText('sp-lvltext',fmtNum(p.into)+' / '+fmtNum(p.need)+' xp to LV '+(p.level+1));
+    rk.innerHTML='<span style="color:'+r.color+'">'+esc(r.name)+'</span>'+
+      (r.prestige>0?' <span class="prestige">\u2605'+r.prestige+'</span>':'')+
+      ' \u00b7 LV '+r.level+
+      (r.infinite?'':' \u00b7 P'+r.prestige+'/'+XP.PRESTIGE_MAX);
+    const spf=this.$('sp-lvlfill');
+    spf.classList.toggle('rainbow',r.name==='Interstellar');
+    spf.style.width=r.atCap?'100%':(Math.min(100,100*r.into/Math.max(1,r.need))+'%');
+    this.setText('sp-lvltext',r.atCap?'MAX LEVEL \u2014 ready to prestige'
+      :fmtNum(r.into)+' / '+fmtNum(r.need)+' xp to LV '+(r.level+1));
     const b=this.$('btn-discord');
     b.textContent=Account.profile?'Log out':'Log in with Discord';
     /* tiles */
@@ -3985,34 +4101,47 @@ const UI={
     if(Game.mod!==1)mods.push(Game.mod.toFixed(2)+'× speed');
     if(Game.noFail)mods.push('no fail'+(stats.died?' (saved you)':''));
     this.$('res-mods').textContent=mods.length?mods.join(' · '):'none';
-    /* bests only count clean, unmodified-speed clears */
+    /* bests only count clean, unmodified-speed clears; saved for every map
+       type (originals, featured, custom) keyed on its stable id */
     let isBest=false;
     if(!failed&&!stats.died&&Game.mod===1&&!Game.practice){
-      const prev=Settings.best(song.id,diff);
+      const key=this._bestKey();
+      const prev=key?Settings.best(key[0],key[1]):null;
       isBest=!prev||stats.score>prev.score;
-      if(isBest)Settings.saveBest(song.id,diff,{score:stats.score,acc,grade:g[1]});
+      if(isBest&&key)Settings.saveBest(key[0],key[1],{
+        score:stats.score,acc,grade:g[1],
+        misses:stats.m,pauses:stats.pauses||0,
+        combo:stats.maxCombo||0,notes:stats.judged||0});
     }
     this.$('res-newbest').style.visibility=isBest?'visible':'hidden';
     /* xp: only originals and featured maps pay out */
     const xpEl=this.$('res-xp');
     if(Game.xpEligible){
-      const beforeLvl=XP.levelFor(Settings.getBP());
+      const before=XP.resolve(Settings.getBP());
       let gain=XP.reward(Game.curStars||1,acc)*modMult(Game.mod);
       if(failed)gain*=.15;
       else if(stats.died)gain*=.3;
       gain=Math.floor(gain);
       this._lastXpGain=gain;
       const bp=Settings.addBP(gain);
-      const p=XP.progress(bp),r=XP.rankFor(p.level);
+      const r=XP.resolve(bp);
+      const leveled=r.level>before.level||r.prestige>before.prestige||r.rankIdx>before.rankIdx;
       xpEl.textContent='+'+fmtNum(gain);
       xpEl.style.color='var(--ion)';
       const rk=this.$('res-rank');
-      rk.innerHTML=`<span style="color:${r.color}">${r.name}</span> \u00b7 LV ${p.level}`+
-        (p.level>beforeLvl?' <span id="res-lvlup">\u2191 LEVEL UP</span>':'');
+      const promoted=r.rankIdx>before.rankIdx?' <span id="res-lvlup">\u2191 RANK UP</span>'
+        :(r.prestige>before.prestige?' <span id="res-lvlup">\u2605 PRESTIGE</span>'
+        :(leveled?' <span id="res-lvlup">\u2191 LEVEL UP</span>':''));
+      rk.innerHTML=`<span style="color:${r.color}">${esc(r.name)}</span>`+
+        (r.prestige>0?` <span class="prestige">\u2605${r.prestige}</span>`:'')+
+        ` \u00b7 LV ${r.level}`+promoted;
       const fill=this.$('res-lvlfill');
+      fill.classList.toggle('rainbow',r.name==='Interstellar');
       fill.style.width='0%';
-      setTimeout(()=>{fill.style.width=Math.min(100,100*p.into/Math.max(1,p.need))+'%';},60);
-      this.setText('res-lvltext',fmtNum(p.into)+' / '+fmtNum(p.need)+' xp to LV '+(p.level+1));
+      const pct=r.atCap?100:Math.min(100,100*r.into/Math.max(1,r.need));
+      setTimeout(()=>{fill.style.width=pct+'%';},60);
+      this.setText('res-lvltext',r.atCap?'MAX LEVEL \u2014 ready to prestige'
+        :fmtNum(r.into)+' / '+fmtNum(r.need)+' xp to LV '+(r.level+1));
       this.$('res-lvlwrap').style.display='block';
     }else{
       xpEl.textContent=Game.practice?'\u2014 (practice earns no xp)'
