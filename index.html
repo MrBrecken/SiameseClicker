@@ -274,6 +274,8 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 .sd-best-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px;text-align:center}
 .sd-bk{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim)}
 .sd-bv{font-family:var(--mono);font-size:16px;color:#fff;margin-top:3px}
+.bp-pass{color:#8de04b;font-weight:600}
+.bp-fail{color:#e0495a;font-weight:600}
 .sd-mods{flex:1;min-width:240px}
 /* speed: label + custom box on one line, then a single horizontal strip of pills */
 .sd-speed-block{margin-bottom:18px}
@@ -3620,10 +3622,21 @@ const UI={
     if(ref.type==='song')best=Settings.best(ref.song.id,this._detDiff+tag);
     else if(ref.type==='custom')best=Settings.best(ref.map.id,'custom'+tag);
     else if(ref.type==='featured')best=Settings.best(ref.f.id,'featured'+tag);
-    const miss=(best&&best.misses!=null)?best.misses:'\u2014';
-    const cells=[['misses',miss],['pauses',best?(best.pauses||0):'\u2014'],
-      ['accuracy',best?best.acc.toFixed(2)+'%':'\u2014'],['score',best?fmtNum(best.score):'\u2014'],
-      ['grade',best?best.grade:'\u2014'],['max combo',best?fmtNum(best.combo||0):'\u2014']];
+    const dash='\u2014';
+    /* progress: prefer the stored fraction; fall back to notes/total for old bests */
+    let progTxt=dash;
+    if(best){
+      let pr=best.progress;
+      if(pr==null&&best.notes!=null){pr=best.notes/Math.max(1,best.notes);} // old passed bests
+      if(pr!=null)progTxt=(best.passed?'100':Math.round(pr*100))+'%';
+    }
+    const cells=[
+      ['result',best?(best.passed?'<span class="bp-pass">PASSED</span>':'<span class="bp-fail">FAILED</span>'):dash],
+      ['progress',progTxt],
+      ['accuracy',best?best.acc.toFixed(2)+'%':dash],
+      ['score',best?fmtNum(best.score):dash],
+      ['misses',(best&&best.misses!=null)?best.misses:dash],
+      ['max combo',best?fmtNum(best.combo||0):dash]];
     grid.innerHTML=cells.map(c=>`<div><div class="sd-bk">${c[0]}</div><div class="sd-bv">${c[1]}</div></div>`).join('');
     /* label the block with the speed it's scoped to */
     const t=this.$('sd-best-t');
@@ -4112,17 +4125,25 @@ const UI={
     if(Game.mod!==1)mods.push(Game.mod.toFixed(2)+'× speed');
     if(Game.noFail)mods.push('no fail'+(stats.died?' (saved you)':''));
     this.$('res-mods').textContent=mods.length?mods.join(' · '):'none';
-    /* bests are saved per speed: a separate best for each speed you clear at,
-       for every map type. Practice runs never count. */
+    /* Bests are saved per speed for every map type, on ANY run except practice
+       — including fails. A failed run records how far you got (progress %). The
+       "best" of two attempts prefers a pass over a fail, then more progress,
+       then higher score. A No-Fail run that hit 0 HP still passed. */
+    const passed=!failed;   // reaching the results without fail() = a pass
+    const totalNotes=Math.max(1,(Game.chart?Game.chart.length:0)-(Game._practiceSkipped||0));
+    const progress=Math.min(1,(stats.judged||0)/totalNotes);
     let isBest=false;
-    if(!failed&&!stats.died&&!Game.practice){
+    if(!Game.practice){
       const key=this._bestKey();
       const prev=key?Settings.best(key[0],key[1]):null;
-      isBest=!prev||stats.score>prev.score;
-      if(isBest&&key)Settings.saveBest(key[0],key[1],{
-        score:stats.score,acc,grade:g[1],
-        misses:stats.m,pauses:stats.pauses||0,
-        combo:stats.maxCombo||0,notes:stats.judged||0,speed:Game.mod||1});
+      /* rank a run: passed beats failed; then further progress; then score */
+      const rankOf=r=>((r.passed?1:0)*1e12)+((r.progress||0)*1e9)+(r.score||0);
+      const cur={score:stats.score,acc,grade:passed?g[1]:'F',
+        misses:stats.m,pauses:stats.pauses||0,combo:stats.maxCombo||0,
+        notes:stats.judged||0,speed:Game.mod||1,nofail:!!stats.died,
+        passed,progress};
+      isBest=!prev||rankOf(cur)>rankOf(prev);
+      if(isBest&&key)Settings.saveBest(key[0],key[1],cur);
     }
     this.$('res-newbest').style.visibility=isBest?'visible':'hidden';
     /* xp: only originals and featured maps pay out */
