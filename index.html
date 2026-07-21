@@ -3111,7 +3111,8 @@ const UI={
     const sdNum=this.$('sd-speed-num');
     if(sdNum&&sdNum.addEventListener)sdNum.addEventListener('change',()=>{
       const v=clamp(+sdNum.value||1,.25,3);
-      Settings.set('speedMod',Math.round(v*100)/100);this._renderDetailSpeed();});
+      Settings.set('speedMod',Math.round(v*100)/100);
+      this._renderDetailSpeed();this._renderDetailBest();});
     /* drag & drop .sspm onto the song screen -> add to Custom Maps */
     const songScreen=this.$('screen-songs');
     if(songScreen&&songScreen.addEventListener){
@@ -3597,7 +3598,7 @@ const UI={
       b.className='sd-spd'+(Math.abs(v-sm)<1e-6?' on':'');
       b.textContent=(v===1?'1':v.toFixed(2).replace(/0$/,''))+'\u00d7';
       b.addEventListener('click',()=>{Settings.set('speedMod',v);
-        this._renderDetailSpeed();this._syncDetailModNote();
+        this._renderDetailSpeed();this._syncDetailModNote();this._renderDetailBest();
         const n=this.$('sd-speed-num');if(n)n.value=v.toFixed(2);});
       wrap.appendChild(b);
     }
@@ -3608,25 +3609,35 @@ const UI={
     const sm=Settings.get('speedMod')||1,bits=[];
     if(sm>1)bits.push('score \u00d7'+(1+(sm-1)*.5).toFixed(2));
     else if(sm<1)bits.push('score \u00d7'+(1-(1-sm)*.6).toFixed(2));
-    if(sm!==1)bits.push('best scores not saved');
+    if(sm!==1)bits.push('best saved for this speed');
     this.setText('sd-modnote',bits.join(' \u00b7 '));
   },
   _renderDetailBest(ref){
     const grid=this.$('sd-best-grid');if(!grid)return;
+    ref=ref||this._detail;if(!ref)return;
+    const tag=this._spdTag(Settings.get('speedMod')||1);
     let best=null;
-    if(ref.type==='song')best=Settings.best(ref.song.id,this._detDiff);
-    else if(ref.type==='custom')best=Settings.best(ref.map.id,'custom');
-    else if(ref.type==='featured')best=Settings.best(ref.f.id,'featured');
+    if(ref.type==='song')best=Settings.best(ref.song.id,this._detDiff+tag);
+    else if(ref.type==='custom')best=Settings.best(ref.map.id,'custom'+tag);
+    else if(ref.type==='featured')best=Settings.best(ref.f.id,'featured'+tag);
     const miss=(best&&best.misses!=null)?best.misses:'\u2014';
     const cells=[['misses',miss],['pauses',best?(best.pauses||0):'\u2014'],
       ['accuracy',best?best.acc.toFixed(2)+'%':'\u2014'],['score',best?fmtNum(best.score):'\u2014'],
       ['grade',best?best.grade:'\u2014'],['max combo',best?fmtNum(best.combo||0):'\u2014']];
     grid.innerHTML=cells.map(c=>`<div><div class="sd-bk">${c[0]}</div><div class="sd-bv">${c[1]}</div></div>`).join('');
+    /* label the block with the speed it's scoped to */
+    const t=this.$('sd-best-t');
+    if(t){const sm=Settings.get('speedMod')||1;
+      t.textContent='Best Attempt'+(Math.abs(sm-1)<1e-6?'':' \u00b7 '+(Math.round(sm*100)/100)+'\u00d7');}
   },
+  /* suffix that scopes a best to a speed. 1.0x keeps the bare key so old bests
+     still resolve; other speeds get '@1.25' etc. */
+  _spdTag(mod){ mod=mod||1; return Math.abs(mod-1)<1e-6?'':('@'+(Math.round(mod*100)/100)); },
   _bestKey(){
-    if(Game.featured)return [Game.featured.id,'featured'];
-    if(Game.customMap)return [Game.customMap.id,'custom'];
-    if(Game.song)return [Game.song.id,Game.diff];
+    const tag=this._spdTag(Game.mod);
+    if(Game.featured)return [Game.featured.id,'featured'+tag];
+    if(Game.customMap)return [Game.customMap.id,'custom'+tag];
+    if(Game.song)return [Game.song.id,Game.diff+tag];
     return null;
   },
   playFeatured(f){
@@ -4101,17 +4112,17 @@ const UI={
     if(Game.mod!==1)mods.push(Game.mod.toFixed(2)+'× speed');
     if(Game.noFail)mods.push('no fail'+(stats.died?' (saved you)':''));
     this.$('res-mods').textContent=mods.length?mods.join(' · '):'none';
-    /* bests only count clean, unmodified-speed clears; saved for every map
-       type (originals, featured, custom) keyed on its stable id */
+    /* bests are saved per speed: a separate best for each speed you clear at,
+       for every map type. Practice runs never count. */
     let isBest=false;
-    if(!failed&&!stats.died&&Game.mod===1&&!Game.practice){
+    if(!failed&&!stats.died&&!Game.practice){
       const key=this._bestKey();
       const prev=key?Settings.best(key[0],key[1]):null;
       isBest=!prev||stats.score>prev.score;
       if(isBest&&key)Settings.saveBest(key[0],key[1],{
         score:stats.score,acc,grade:g[1],
         misses:stats.m,pauses:stats.pauses||0,
-        combo:stats.maxCombo||0,notes:stats.judged||0});
+        combo:stats.maxCombo||0,notes:stats.judged||0,speed:Game.mod||1});
     }
     this.$('res-newbest').style.visibility=isBest?'visible':'hidden';
     /* xp: only originals and featured maps pay out */
