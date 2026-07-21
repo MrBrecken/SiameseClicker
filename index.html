@@ -112,6 +112,12 @@ h2.screen-title{font-weight:600;letter-spacing:.05em;
 .diff-card .d-best{margin-top:10px;font-family:var(--mono);font-size:10.5px;color:var(--gold);min-height:14px}
 
 /* ---------- settings ---------- */
+#set-toolbar{width:min(720px,94vw);display:flex;gap:9px;margin-bottom:12px;align-items:center}
+#set-search{flex:1;background:#141417;border:1px solid var(--line-brt);border-radius:5px;
+  color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--font);outline:none}
+#set-search:focus{border-color:#55555f}
+#set-profile{background:#141417;color:var(--text);border:1px solid var(--line-brt);
+  border-radius:5px;padding:8px 10px;font-size:12px;font-family:var(--font);cursor:pointer;outline:none}
 .settings-panel{width:min(720px,94vw);max-height:74vh;overflow-y:auto;background:var(--panel);
   border:1px solid var(--line);border-radius:10px;padding:6px 34px 26px;
   display:flex;flex-direction:column}
@@ -196,6 +202,25 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 #btn-random{background:#1a1a1f;border:1px solid var(--line-brt);border-radius:3px;
   color:var(--text);font-size:12px;padding:8px 13px;cursor:pointer;font-family:var(--font)}
 #btn-random:hover{background:#232329;color:#fff}
+#btn-random-play{background:#1a1a1f;border:1px solid var(--line-brt);border-radius:3px;
+  color:var(--text);font-size:12px;padding:8px 13px;cursor:pointer;font-family:var(--font)}
+#btn-random-play:hover{background:#232329;color:#fff}
+#song-drop{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+  background:rgba(6,6,9,.82);pointer-events:none}
+#song-drop.show{display:flex}
+#song-drop .sd-inner,#ed-drop .sd-inner{border:2px dashed var(--line-brt);border-radius:14px;
+  padding:52px 64px;color:#fff;font-size:18px;letter-spacing:.04em;background:#111114}
+#ed-drop{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+  background:rgba(6,6,9,.82);pointer-events:none}
+#ed-drop.show{display:flex}
+#ed-drop-confirm{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+  background:rgba(4,4,7,.86)}
+#ed-drop-confirm.show{display:flex}
+.edc-box{background:#121215;border:1px solid var(--line-brt);border-radius:12px;
+  padding:28px 32px;max-width:440px;text-align:center}
+.edc-title{font-size:17px;color:#fff;margin-bottom:8px}
+.edc-sub{font-size:12.5px;color:var(--text-dim);margin-bottom:20px;line-height:1.5}
+.edc-btns{display:flex;gap:10px;justify-content:center}
 .lib-sec{width:min(880px,94vw);margin:22px 0 8px;display:flex;align-items:baseline;
   justify-content:flex-end;gap:14px}
 .lib-sec .t{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#c9c9d2}
@@ -211,6 +236,11 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
   margin-bottom:7px;cursor:pointer;transition:transform .12s,border-color .12s,filter .12s}
 .song-row:hover{border-color:var(--row-c,#fff);transform:translateX(-22px);
   filter:brightness(1.22)}
+.song-row .pin{flex:none;width:24px;text-align:center;font-size:15px;color:#4a4a52;cursor:pointer;
+  transition:color .12s,transform .12s;user-select:none}
+.song-row .pin:hover{color:#c9c9d2;transform:scale(1.15)}
+.song-row .pin.on{color:var(--gold)}
+.song-row.pinned{border-color:color-mix(in srgb,var(--gold) 40%,#141416)}
 .song-row .who{flex:1;min-width:0}
 .song-row .ti{font-size:14px;font-weight:600;color:#fff;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis}
@@ -395,7 +425,7 @@ select.ed-in{cursor:pointer}
 #ed-file-name{font-size:10px;color:var(--ion-dim);word-break:break-all;margin:5px 0 2px;line-height:1.6}
 #ed-center{display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:13px;padding:12px;min-height:0}
-#ed-field{position:relative;width:min(50vh,460px);max-width:92%;aspect-ratio:1;
+#ed-field{position:relative;width:min(50vh,460px);max-width:92%;aspect-ratio:1;overflow:visible;
   background:#0a0c12;border:1px solid #232c3a;cursor:crosshair}
 .ed-cell{position:absolute;width:30.4%;height:30.4%;border:1px solid #1b2230;border-radius:9px;
   pointer-events:none;background:rgba(20,24,34,.35)}
@@ -516,9 +546,11 @@ select.ed-in{cursor:pointer}
     <div id="song-search-bar">
       <input id="song-search" type="text" placeholder="Search" autocomplete="off">
       <input id="song-author" type="text" placeholder="Author" autocomplete="off">
-      <button id="btn-random">Select random from search</button>
+      <button id="btn-random">Random from search</button>
+      <button id="btn-random-play">🎲 Random map</button>
     </div>
   </div>
+  <div id="song-drop"><div class="sd-inner">drop .sspm files here to add them to Custom Maps</div></div>
   <div id="mods-bar">
     <span class="mods-lbl">Mods</span>
     <div class="mod-group" id="mod-speed">
@@ -533,12 +565,21 @@ select.ed-in{cursor:pointer}
   <div id="song-list"></div>
   <div class="lib-sec feat"><span class="t">Community Maps</span><span class="n" id="lib-n-feat"></span></div>
   <div id="featured-list"></div>
-  <div class="lib-sec cust" id="custom-sec" style="display:none"><span class="t">Your Maps</span><span class="n" id="lib-n-cust"></span></div>
+  <div class="lib-sec cust" id="custom-sec" style="display:none"><span class="t">Custom Maps</span><span class="n" id="lib-n-cust"></span></div>
   <div id="custom-list"></div>
   <div class="menu-col"><button class="btn ghost small" id="btn-songs-back">Back</button></div>
 </div>
 
 <!-- ================= MAP EDITOR ================= -->
+<div id="ed-drop-confirm"><div class="edc-box">
+  <div class="edc-title">Load this .sspm into the editor?</div>
+  <div class="edc-sub" id="edc-sub"></div>
+  <div class="edc-btns">
+    <button class="btn small primary" id="edc-yes">Yes, load it</button>
+    <button class="btn small" id="edc-no">Cancel</button>
+  </div>
+</div></div>
+<div id="ed-drop"><div class="sd-inner">drop an .sspm to load it into the editor</div></div>
 <div class="screen" id="screen-editor">
   <div id="ed-topbar"><canvas id="ed-wave"></canvas></div>
   <div id="ed-main">
@@ -556,6 +597,7 @@ select.ed-in{cursor:pointer}
         <option value="1">1/1</option><option value="2">1/2</option><option value="3">1/3</option>
         <option value="4" selected>1/4</option><option value="6">1/6</option><option value="8">1/8</option></select></div>
       <div class="ed-row"><label>Grid Snap</label><div class="etog on" id="ed-gridsnap"></div></div>
+      <div class="ed-row"><label>Quantum (off-grid)</label><div class="etog" id="ed-quantum"></div></div>
       <div class="ed-row"><label>Metronome</label><div class="etog" id="ed-tick"></div></div>
       <div class="ed-row"><label>Auto-Advance</label><div class="etog" id="ed-adv"></div></div>
       <div class="ed-h">Map</div>
@@ -632,6 +674,12 @@ select.ed-in{cursor:pointer}
     <button class="set-tab on" data-tab="customize">Customize</button>
     <button class="set-tab" data-tab="gameplay">Gameplay</button>
     <button class="set-tab" data-tab="other">Other</button>
+  </div>
+  <div id="set-toolbar">
+    <input id="set-search" type="text" placeholder="Search settings…" autocomplete="off">
+    <select id="set-profile" title="setting profile"></select>
+    <button class="btn small" id="set-profile-save">Save As…</button>
+    <button class="btn small" id="set-profile-del" title="delete this profile">✕</button>
   </div>
   <div class="settings-panel" id="settings-panel"></div>
   <div class="menu-col"><button class="btn ghost small" id="btn-settings-back">Back</button></div>
@@ -713,7 +761,7 @@ const GUEST_AVATAR='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAA
 /* Discord login: the game's official application client id.
    >>> PASTE YOUR CLIENT ID BETWEEN THE QUOTES BELOW <<<
    (discord.com/developers -> your app -> OAuth2 -> Client ID) */
-const DISCORD_CLIENT_ID='1528879968862343228';
+const DISCORD_CLIENT_ID='';
 
 /* ============ 2. SETTINGS (auto-saved) ============ */
 const SETTINGS_DEFAULTS={
@@ -782,6 +830,42 @@ const Settings={
   saveCustom(list){
     this._cmem=list;
     try{if(this.persistOk)localStorage.setItem(this.CKEY,JSON.stringify(list));}catch(e){}
+  },
+  /* ---- setting profiles: named snapshots of all tunable settings ---- */
+  PINKEY:'jarvia_pinned_v1',
+  loadPins(){
+    try{if(this.persistOk){const raw=localStorage.getItem(this.PINKEY);
+      if(raw)return JSON.parse(raw);}}catch(e){}
+    return this._pins||[];
+  },
+  isPinned(id){return this.loadPins().indexOf(id)>=0;},
+  togglePin(id){
+    let p=this.loadPins();
+    if(p.indexOf(id)>=0)p=p.filter(x=>x!==id);else p=[id,...p];
+    this._pins=p;
+    try{if(this.persistOk)localStorage.setItem(this.PINKEY,JSON.stringify(p));}catch(e){}
+    return p.indexOf(id)>=0;
+  },
+  PKEY:'jarvia_setprofiles_v1',
+  listProfiles(){
+    try{if(this.persistOk){const raw=localStorage.getItem(this.PKEY);
+      if(raw)return JSON.parse(raw);}}catch(e){}
+    return this._pmem||{};
+  },
+  _saveProfiles(o){this._pmem=o;
+    try{if(this.persistOk)localStorage.setItem(this.PKEY,JSON.stringify(o));}catch(e){}},
+  saveProfile(name){
+    name=String(name||'').trim();if(!name)return false;
+    const o=this.listProfiles();o[name]={...this.data};this._saveProfiles(o);return true;
+  },
+  applyProfile(name){
+    const o=this.listProfiles();const snap=o[name];if(!snap)return false;
+    for(const k in snap)if(k in this.data)this.data[k]=snap[k];
+    this.save();return true;
+  },
+  deleteProfile(name){
+    const o=this.listProfiles();if(!(name in o))return false;
+    delete o[name];this._saveProfiles(o);return true;
   },
   /* ---- xp / level progress ---- */
   _xpKey(){
@@ -1574,7 +1658,7 @@ function parseOBJ(text){
 const CELL=1.9;            // world units per grid cell
 const HITZ=-7;             // judgment plane z
 const CAMZ=3.2;            // camera z (notes past this are past the viewer)
-const PUSHBACK_DIST=3.8;   // pushback-on: culled this far past the hit plane
+const PUSHBACK_DIST=3.5;   // pushback-on: culled this far past the hit plane
 const SPAWNZ=-140;         // notes materialize here
 const APPROACH_DIST=HITZ-SPAWNZ;
 /* Timing windows (seconds). Rhythia's default hit window is tight; perfect/
@@ -2555,6 +2639,34 @@ const UI={
         this.buildSongList();this.buildCustomList();
       });
     }
+    const setSearch=this.$('set-search');
+    if(setSearch&&setSearch.addEventListener)setSearch.addEventListener('input',()=>{
+      this._setQ=String(setSearch.value||'').trim().toLowerCase();this.buildSettings();});
+    const prof=this.$('set-profile');
+    if(prof&&prof.addEventListener)prof.addEventListener('change',()=>{
+      const n=prof.value;if(n&&n!=='__none'){Settings.applyProfile(n);
+        AudioEngine.setVolumes();Game.applyVisual(false);Loop.reschedule();
+        this.buildSettings();}});
+    on('set-profile-save',()=>{
+      const n=(typeof prompt==='function')?prompt('Name this setting profile:'):null;
+      if(n&&Settings.saveProfile(n)){this.refreshProfiles(n);}});
+    on('set-profile-del',()=>{
+      const p=this.$('set-profile'),n=p&&p.value;
+      if(n&&n!=='__none'&&Settings.deleteProfile(n))this.refreshProfiles();});
+    on('btn-random-play',()=>this.randomAnyMap());
+    /* drag & drop .sspm onto the song screen -> add to Custom Maps */
+    const songScreen=this.$('screen-songs');
+    if(songScreen&&songScreen.addEventListener){
+      const show=v=>{const o=this.$('song-drop');if(o)o.classList.toggle('show',v);};
+      songScreen.addEventListener('dragover',e=>{e.preventDefault();show(true);});
+      songScreen.addEventListener('dragleave',e=>{
+        if(e.target===songScreen)show(false);});
+      songScreen.addEventListener('drop',async e=>{
+        e.preventDefault();show(false);
+        const files=e.dataTransfer&&e.dataTransfer.files;
+        if(files&&files.length)await this._onSongDrop(files);
+      });
+    }
     on('btn-stats-back',()=>this.show('screen-main'));
     on('btn-discord',()=>{
       if(Account.profile)Account.logout();else Account.login();
@@ -2570,6 +2682,7 @@ const UI={
     if(id==='screen-songs'){this.buildSongList();this.buildCustomList();}
     if(id==='screen-main')this.updateRank();
     if(id==='screen-stats')this.buildStats();
+    if(id==='screen-settings')this.refreshProfiles();
     for(const s of this.screens)this.$(s).classList.toggle('active',s===id);
   },
   hideScreens(){for(const s of this.screens)this.$(s).classList.remove('active');},
@@ -2583,9 +2696,18 @@ const UI={
     else if(active==='screen-editor'){Editor.stopPreview();this.show('screen-main');}
   },
   /* ---------- song / difficulty menus ---------- */
-  _row(color,ti,by,metaHtml,stars,bestTxt,needTxt){
+  _row(color,ti,by,metaHtml,stars,bestTxt,needTxt,pinId){
     const row=document.createElement('div');row.className='song-row';
     row.style.setProperty('--row-c',color);
+    if(pinId){
+      const pinned=Settings.isPinned(pinId);
+      if(pinned)row.classList.add('pinned');
+      const pin=document.createElement('div');pin.className='pin'+(pinned?' on':'');
+      pin.textContent='\u2605';pin.title=pinned?'unpin':'pin to top';
+      pin.addEventListener('click',ev=>{ev.stopPropagation();
+        Settings.togglePin(pinId);this.buildSongList();this.buildCustomList();});
+      row.appendChild(pin);
+    }
     const who=document.createElement('div');who.className='who';
     who.innerHTML=`<div class="ti">${ti}</div><div class="by">${by}</div>`;
     const meta=document.createElement('div');meta.className='meta';meta.innerHTML=metaHtml;
@@ -2617,12 +2739,15 @@ const UI={
     const wrap=this.$('song-list');wrap.innerHTML='';
     this._randPool=[];
     let shown=0;
-    for(const s of SONGS){
+    /* pinned songs float to the top, order otherwise preserved */
+    const ordered=SONGS.map((s,i)=>({s,i}))
+      .sort((a,b)=>(Settings.isPinned('song:'+b.s.id)-Settings.isPinned('song:'+a.s.id))||(a.i-b.i));
+    for(const{s}of ordered){
       if(!this._match(s.title,s.artist))continue;
       shown++;
       const m=Math.floor(s.duration/60),sec=String(Math.round(s.duration%60)).padStart(2,'0');
       const row=this._row(`hsl(${s.hue},85%,60%)`,esc(s.title),esc(s.artist),
-        `${s.bpm} bpm \u00b7 ${m}:${sec}`,this._songStars(s),this._bestTxt(s.id,'master'));
+        `${s.bpm} bpm \u00b7 ${m}:${sec}`,this._songStars(s),this._bestTxt(s.id,'master'),null,'song:'+s.id);
       row.addEventListener('click',()=>this.openDiff(s));
       wrap.appendChild(row);
       this._randPool.push(()=>this.openDiff(s));
@@ -2633,6 +2758,16 @@ const UI={
   randomFromSearch(){
     if(!this._randPool.length)return;
     this._randPool[(Math.random()*this._randPool.length)|0]();
+  },
+  /* pick any playable map at random, ignoring the search filter: originals
+     always work; custom maps need audio attached this session */
+  randomAnyMap(){
+    const pool=[];
+    for(const s of SONGS)pool.push(()=>this.openDiff(s));
+    for(const m of Settings.loadCustom())
+      if(Editor.buffers[m.id])pool.push(()=>Editor.playCustom(m.id,'songs'));
+    if(!pool.length)return;
+    pool[(Math.random()*pool.length)|0]();
   },
   buildFeaturedList(){this.buildCommunityList();},
   async buildCommunityList(){
@@ -2684,19 +2819,60 @@ const UI={
     }
     function cachedNow(e){return !!Community.cache[e.id];}
   },
+  /* import an .sspm File/ArrayBuffer into the saved custom-maps list; decodes
+     and caches its audio for the session. Returns the new map id (or null). */
+  async importSSPMFile(file){
+    try{
+      const ab=file.arrayBuffer?await file.arrayBuffer():file;
+      const map=parseSSPM(ab);
+      const id='c'+Date.now().toString(36)+Math.floor(Math.random()*999);
+      const rec={id,title:(map.title||'Imported').slice(0,80),
+        artist:(map.artist||'Custom Map').slice(0,80),
+        bpm:map.bpm||120,offset:0,duration:map.duration||0,fileName:file.name||'',
+        notes:map.notes.map(n=>({t:n.t,x:n.x,y:n.y}))};
+      const list=Settings.loadCustom();list.push(rec);Settings.saveCustom(list);
+      if(map.audio){
+        AudioEngine.init();
+        if(AudioEngine.ctx.state==='suspended')AudioEngine.ctx.resume();
+        try{
+          const buf=await new Promise((res,rej)=>{
+            const pr=AudioEngine.ctx.decodeAudioData(map.audio.slice(0),res,rej);
+            if(pr&&pr.then)pr.then(res,rej);});
+          Editor.buffers[id]=buf;
+          rec.duration=buf.duration;
+          const l2=Settings.loadCustom();const i=l2.findIndex(x=>x.id===id);
+          if(i>=0){l2[i].duration=buf.duration;Settings.saveCustom(l2);}
+        }catch(err){/* audio failed to decode; chart still saved */}
+      }
+      return id;
+    }catch(e){return null;}
+  },
+  async _onSongDrop(files){
+    let added=0,last=null;
+    for(const f of files){
+      if(!/\.sspm$/i.test(f.name))continue;
+      const id=await this.importSSPMFile(f);
+      if(id){added++;last=id;}
+    }
+    if(added){this.buildCustomList();
+      this.setText('lib-n-cust',Settings.loadCustom().length+' saved · no xp · +'+added+' just added');}
+    return added;
+  },
   buildCustomList(){
     const maps=Settings.loadCustom();
     const sec=this.$('custom-sec'),wrap=this.$('custom-list');
     wrap.innerHTML='';
     sec.style.display=maps.length?'flex':'none';
     this.setText('lib-n-cust',maps.length+' saved \u00b7 no xp');
-    for(const m of maps){
+    const ordered=maps.map((m,i)=>({m,i}))
+      .sort((a,b)=>(Settings.isPinned('cust:'+b.m.id)-Settings.isPinned('cust:'+a.m.id))||(a.i-b.i));
+    for(const{m}of ordered){
       if(!this._match(m.title||'Untitled',m.artist||'Custom Map'))continue;
       const dur=m.duration||0,mm=Math.floor(dur/60),ss=String(Math.round(dur%60)).padStart(2,'0');
       const hasAudio=!!Editor.buffers[m.id];
       const st=starRating(m.notes.map(n=>({t:n.t,x:n.x,y:n.y})).sort((a,b)=>a.t-b.t));
       const row=this._row('#ff5fd6',esc(m.title||'Untitled'),esc(m.artist||'Custom Map'),
-        `${m.notes.length} notes \u00b7 ${mm}:${ss}`,st,'',hasAudio?'':'attach audio');
+        `${m.notes.length} notes \u00b7 ${mm}:${ss}`,st,'',hasAudio?'':'attach audio','cust:'+m.id);
       row.addEventListener('click',()=>Editor.playCustom(m.id,'songs'));
       wrap.appendChild(row);
       if(hasAudio)this._randPool.push(()=>Editor.playCustom(m.id,'songs'));
@@ -2782,12 +2958,21 @@ const UI={
     r.onload=()=>cb(r.result);
     r.readAsDataURL(f);
   },
+  _setQ:'',
   buildSettings(){
     const panel=this.$('settings-panel');panel.innerHTML='';
+    const q=this._setQ;
+    const matches=it=>!q||((it.label||'')+' '+(it.sub||'')).toLowerCase().indexOf(q)>=0;
+    let pendingSec=null,secHasRows=false;
+    const flushSec=()=>{if(pendingSec&&!secHasRows)pendingSec.remove();};
     for(const item of SETTINGS_SCHEMA){
-      if(item.tab&&item.tab!==this.activeTab)continue;
-      if(item.sec){const h=document.createElement('div');h.className='set-sec';
-        h.textContent=item.sec;panel.appendChild(h);continue;}
+      if(!q&&item.tab&&item.tab!==this.activeTab)continue;
+      if(item.sec){flushSec();
+        const h=document.createElement('div');h.className='set-sec';
+        h.textContent=item.sec;panel.appendChild(h);
+        pendingSec=h;secHasRows=false;continue;}
+      if(!matches(item))continue;
+      secHasRows=true;
       const row=document.createElement('div');row.className='set-row';
       const lab=document.createElement('label');lab.textContent=item.label;
       if(item.sub){const s=document.createElement('span');s.className='sub';
@@ -2944,11 +3129,23 @@ const UI={
       }
       row.appendChild(ctl);panel.appendChild(row);
     }
+    flushSec();
+    if(q&&!panel.querySelector('.set-row')){
+      const d=document.createElement('div');d.className='ed-empty';
+      d.textContent='no settings match \u201c'+q+'\u201d';panel.appendChild(d);
+    }
     const note=document.createElement('div');note.className='storage-note';
     note.textContent=Settings.persistOk
       ?'Settings save automatically to your browser.'
       :'Browser storage is unavailable here \u2014 settings apply for this session only.';
     panel.appendChild(note);
+  },
+  refreshProfiles(sel){
+    const p=this.$('set-profile');if(!p)return;
+    const names=Object.keys(Settings.listProfiles());
+    p.innerHTML='<option value="__none">Default (unsaved)</option>'+
+      names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    if(sel)p.value=sel;
   },
   fmtTime(s){s=Math.max(0,s||0);const m=Math.floor(s/60);
     return m+':'+String(Math.floor(s%60)).padStart(2,'0');},
@@ -3468,7 +3665,7 @@ const Community={
    the session (browsers can't store multi-MB files) and can be re-attached. */
 const Editor={
   buffers:{},   // session cache: map id -> decoded AudioBuffer
-  st:{id:null,title:'',artist:'',bpm:120,offset:0,snap:4,gridSnap:true,tick:false,
+  st:{id:null,title:'',artist:'',bpm:120,offset:0,snap:4,gridSnap:true,quantum:false,tick:false,
       autoAdv:false,t:0,notes:[],buffer:null,fileName:'',duration:180,rate:1},
   playing:false,src:null,prevGain:null,playZero:0,timer:null,lastTickBeat:-1,
   _pendingAudioCb:null,
@@ -3501,7 +3698,16 @@ const Editor={
     $('ed-offset').addEventListener('change',e=>{this.st.offset=+e.target.value||0;this.refresh();});
     $('ed-snap').addEventListener('change',e=>{this.st.snap=+e.target.value;this.refresh();});
     $('ed-gridsnap').addEventListener('click',e=>{this.st.gridSnap=!this.st.gridSnap;
-      e.currentTarget.classList.toggle('on',this.st.gridSnap);this.renderField();});
+      if(this.st.gridSnap)this.st.quantum=false;
+      e.currentTarget.classList.toggle('on',this.st.gridSnap);
+      const q=$('ed-quantum');if(q)q.classList.toggle('on',this.st.quantum);
+      this.renderField();});
+    const eq=$('ed-quantum');
+    if(eq)eq.addEventListener('click',e=>{this.st.quantum=!this.st.quantum;
+      if(this.st.quantum)this.st.gridSnap=false;
+      e.currentTarget.classList.toggle('on',this.st.quantum);
+      const g=$('ed-gridsnap');if(g)g.classList.toggle('on',this.st.gridSnap);
+      this.renderField();});
     $('ed-tick').addEventListener('click',e=>{this.st.tick=!this.st.tick;
       e.currentTarget.classList.toggle('on',this.st.tick);});
     $('ed-tostart').addEventListener('click',()=>this.seek(0));
@@ -3514,6 +3720,60 @@ const Editor={
     $('ed-save').addEventListener('click',()=>this.save());
     $('ed-clear').addEventListener('click',()=>{this.st.notes.length=0;this.refresh();});
     $('ed-test').addEventListener('click',()=>this.playtest());
+    /* drag & drop an .sspm anywhere on the editor -> confirm -> load */
+    const scr=$('screen-editor');
+    if(scr){
+      const show=v=>{const o=$('ed-drop');if(o&&!$('ed-drop-confirm').classList.contains('show'))o.classList.toggle('show',v);};
+      scr.addEventListener('dragover',e=>{e.preventDefault();show(true);});
+      scr.addEventListener('dragleave',e=>{if(e.target===scr)show(false);});
+      scr.addEventListener('drop',e=>{e.preventDefault();show(false);
+        const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+        if(f&&/\.sspm$/i.test(f.name))this._askLoadSSPM(f);});
+    }
+    $('edc-yes')&&$('edc-yes').addEventListener('click',()=>{
+      $('ed-drop-confirm').classList.remove('show');
+      if(this._pendingDrop){this._loadSSPMIntoEditor(this._pendingDrop);this._pendingDrop=null;}});
+    $('edc-no')&&$('edc-no').addEventListener('click',()=>{
+      $('ed-drop-confirm').classList.remove('show');this._pendingDrop=null;});
+  },
+  _askLoadSSPM(file){
+    this._pendingDrop=file;
+    this.$('edc-sub').textContent=file.name+' — this replaces the notes currently in the editor.';
+    this.$('ed-drop-confirm').classList.add('show');
+  },
+  async _loadSSPMIntoEditor(file){
+    try{
+      const ab=await file.arrayBuffer();
+      const map=parseSSPM(ab);
+      this.stopPreview();
+      this.st.id=null;
+      this.st.title=(map.title||'').slice(0,80);
+      this.st.artist=(map.artist||'').slice(0,80);
+      if(map.bpm)this.st.bpm=clamp(map.bpm,30,400);
+      this.st.notes=map.notes.map(n=>({t:n.t,x:n.x,y:n.y}));
+      this.st.t=0;
+      /* if any note is off the 3x3 grid, switch the editor into quantum mode */
+      const hasQ=this.st.notes.some(n=>Math.abs(n.x)>1.01||Math.abs(n.y)>1.01);
+      if(hasQ){this.st.quantum=true;this.st.gridSnap=false;
+        const q=this.$('ed-quantum');if(q)q.classList.add('on');
+        const g=this.$('ed-gridsnap');if(g)g.classList.remove('on');}
+      if(map.duration>this.st.duration)this.st.duration=map.duration;
+      this.$('ed-title').value=this.st.title;
+      this.$('ed-artist').value=this.st.artist;
+      this.$('ed-bpm').value=this.st.bpm;
+      if(map.audio){
+        this.status('decoding embedded audio…');
+        AudioEngine.init();
+        if(AudioEngine.ctx.state==='suspended')AudioEngine.ctx.resume();
+        try{
+          const buf=await new Promise((res,rej)=>{
+            const pr=AudioEngine.ctx.decodeAudioData(map.audio.slice(0),res,rej);
+            if(pr&&pr.then)pr.then(res,rej);});
+          this.attachBuffer(buf,file.name.replace(/\.sspm$/i,'')+' · embedded audio');
+        }catch(err){this.refresh();
+          this.status('loaded '+this.st.notes.length+' notes · attach audio manually');}
+      }else{this.refresh();this.status('loaded '+this.st.notes.length+' notes');}
+    }catch(e){this.status('could not read that .sspm');}
   },
   open(){UI.show('screen-editor');this.refreshMaps();
     setTimeout(()=>{this.sizeWave();this.refresh();},50);this.refresh();},
@@ -3626,8 +3886,17 @@ const Editor={
     const r=this.fieldEl.getBoundingClientRect();
     let x=((e.clientX-r.left)/r.width)*3-1.5;
     let y=1.5-((e.clientY-r.top)/r.height)*3;
-    x=clamp(x,-1.4,1.4);y=clamp(y,-1.4,1.4);
-    if(this.st.gridSnap){x=clamp(Math.round(x),-1,1);y=clamp(Math.round(y),-1,1);}
+    if(this.st.gridSnap){
+      /* snapped to the 3x3 grid */
+      x=clamp(Math.round(clamp(x,-1.4,1.4)),-1,1);
+      y=clamp(Math.round(clamp(y,-1.4,1.4)),-1,1);
+    }else if(this.st.quantum){
+      /* quantum: free placement, allowed well off the 3x3 grid (like Rhythia) */
+      x=clamp(x,-3,3);y=clamp(y,-3,3);
+    }else{
+      /* free but kept near the field */
+      x=clamp(x,-1.4,1.4);y=clamp(y,-1.4,1.4);
+    }
     this.placeAt(+x.toFixed(3),+y.toFixed(3));
   },
   /** Toggle a note at the current snapped beat; used by clicks and QWE/ASD/ZXC. */
@@ -3656,7 +3925,10 @@ const Editor={
       const op=cur?1:Math.max(.12,1-Math.abs(d)/win*(d<0?1.7:1));
       const col=cur?'#ff7ad9':(d>0?'#e8eaf2':'#5d6480');
       const sc=cur?1:(d>0?clamp(1-d*.35,.55,.95):.85);
-      const ex=clamp(n.x,-1.45,1.45),ey=clamp(n.y,-1.45,1.45); /* display only: quantum notes hug the edge */
+      /* quantum notes render at their true position (may sit outside the field);
+         non-quantum stay clamped to hug the edge */
+      const lim=this.st.quantum?3:1.45;
+      const ex=clamp(n.x,-lim,lim),ey=clamp(n.y,-lim,lim);
       html+=`<div class="ed-note${cur?' now':''}" style="left:${(ex+1.5)/3*100}%;`+
         `top:${(1.5-ey)/3*100}%;border-color:${col};color:${col};opacity:${op};`+
         `transform:translate(-50%,-50%) scale(${sc})"></div>`;
