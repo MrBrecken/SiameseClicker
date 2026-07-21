@@ -218,6 +218,12 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 #btn-random-play{background:#1a1a1f;border:1px solid var(--line-brt);border-radius:3px;
   color:var(--text);font-size:12px;padding:8px 13px;cursor:pointer;font-family:var(--font)}
 #btn-random-play:hover{background:#232329;color:#fff}
+#diff-filter{display:flex;gap:6px;width:100%;margin-top:4px}
+.df-btn{width:34px;height:34px;border:1.5px solid #fff;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;
+  background:rgba(12,12,15,.6);cursor:pointer;opacity:.5;transition:opacity .12s,background .12s}
+.df-btn:hover{opacity:.85}
+.df-btn.on{opacity:1;background:rgba(255,255,255,.08)}
 #song-drop{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
   background:rgba(6,6,9,.82);pointer-events:none}
 #song-drop.show{display:flex}
@@ -387,6 +393,9 @@ select.set-select{background:var(--void-2);color:var(--text);border:1px solid va
 .song-row .pin:hover{color:#c9c9d2;transform:scale(1.15)}
 .song-row .pin.on{color:var(--gold)}
 .song-row.pinned{border-color:color-mix(in srgb,var(--gold) 40%,#141416)}
+.song-row .row-diff{flex:none;width:30px;height:30px;border:1.5px solid #fff;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;
+  background:rgba(10,10,12,.55)}
 .song-row .row-cover{flex:none;width:46px;height:46px;border-radius:4px;object-fit:cover;
   border:1px solid rgba(255,255,255,.08)}
 .song-row .who{flex:1;min-width:0}
@@ -705,6 +714,7 @@ select.ed-in{cursor:pointer}
       <button id="btn-random">Random from search</button>
       <button id="btn-random-play">🎲 Random map</button>
     </div>
+    <div id="diff-filter" title="filter by difficulty"></div>
   </div>
   <div id="song-drop"><div class="sd-inner">drop .sspm files here to add them to Custom Maps</div></div>
   <div id="map-panel">
@@ -758,7 +768,7 @@ select.ed-in{cursor:pointer}
     <button class="mod-toggle" id="mod-nofail">No Fail</button>
     <span class="mods-note" id="mods-note"></span>
   </div>
-  <div class="lib-sec"><span class="t">Jarvia Originals</span><span class="n" id="lib-n-orig"></span></div>
+  <div class="lib-sec" id="lib-sec-orig"><span class="t">Jarvia Originals</span><span class="n" id="lib-n-orig"></span></div>
   <div id="song-list"></div>
   <div class="lib-sec feat"><span class="t">Community Maps</span><span class="n" id="lib-n-feat"></span></div>
   <div id="featured-list"></div>
@@ -1630,6 +1640,60 @@ function starColor(s){
     :s<11?'#ff5f7a':s<14?'#c07bff':'#ff5fd6';
 }
 /* XP: exact curve & reward from the reference module. */
+/* ============ PERSISTENT AUDIO STORE ============
+   Custom-map audio is too big for localStorage, so raw encoded bytes are kept
+   in IndexedDB keyed by map id. On startup we re-decode them into AudioBuffers
+   so imported maps survive a page refresh with their audio intact. */
+const AudioStore={
+  db:null,DBN:'jarvia_audio',STORE:'clips',
+  _open(){
+    if(this._p)return this._p;
+    this._p=new Promise((res)=>{
+      try{
+        if(typeof indexedDB==='undefined'){res(null);return;}
+        const rq=indexedDB.open(this.DBN,1);
+        rq.onupgradeneeded=()=>{const db=rq.result;
+          if(!db.objectStoreNames.contains(this.STORE))db.createObjectStore(this.STORE);};
+        rq.onsuccess=()=>{this.db=rq.result;res(this.db);};
+        rq.onerror=()=>res(null);
+      }catch(e){res(null);}
+    });
+    return this._p;
+  },
+  async put(id,arrayBuffer){
+    const db=await this._open();if(!db)return false;
+    return new Promise((res)=>{
+      try{const tx=db.transaction(this.STORE,'readwrite');
+        tx.objectStore(this.STORE).put(arrayBuffer,id);
+        tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);
+      }catch(e){res(false);}
+    });
+  },
+  async get(id){
+    const db=await this._open();if(!db)return null;
+    return new Promise((res)=>{
+      try{const tx=db.transaction(this.STORE,'readonly');
+        const rq=tx.objectStore(this.STORE).get(id);
+        rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);
+      }catch(e){res(null);}
+    });
+  },
+  async del(id){
+    const db=await this._open();if(!db)return;
+    try{const tx=db.transaction(this.STORE,'readwrite');
+      tx.objectStore(this.STORE).delete(id);}catch(e){}
+  },
+  async keys(){
+    const db=await this._open();if(!db)return [];
+    return new Promise((res)=>{
+      try{const tx=db.transaction(this.STORE,'readonly');
+        const rq=tx.objectStore(this.STORE).getAllKeys();
+        rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>res([]);
+      }catch(e){res([]);}
+    });
+  }
+};
+
 /* ---- Prestige rank ladder ----
    Each rank levels 1..maxLevel. Reaching maxLevel lets you prestige; after
    PRESTIGE_MAX prestiges within a rank you promote to the next rank (prestige
@@ -3145,7 +3209,7 @@ const UI={
        menus are opaque, so we can skip the WebGL render there */
     Game._inMenus=(id!=='screen-pause');
     if(typeof FluidBG!=='undefined'){if(id==='screen-pause')FluidBG.stop();else FluidBG.start();}
-    if(id==='screen-songs'){this.buildSongList();this.buildCustomList();}
+    if(id==='screen-songs'){this.buildDiffFilter();this.buildSongList();this.buildCustomList();}
     if(id==='screen-main')this.updateRank();
     if(id==='screen-stats')this.buildStats();
     if(id==='screen-settings')this.refreshProfiles();
@@ -3164,7 +3228,7 @@ const UI={
     else if(active==='screen-editor'){Editor.stopPreview();this.show('screen-main');}
   },
   /* ---------- song / difficulty menus ---------- */
-  _row(color,ti,by,metaHtml,stars,bestTxt,needTxt,pinId,coverUrl){
+  _row(color,ti,by,metaHtml,stars,bestTxt,needTxt,pinId,coverUrl,diffKey){
     const row=document.createElement('div');row.className='song-row';
     row.style.setProperty('--row-c',color);
     if(pinId){
@@ -3176,6 +3240,11 @@ const UI={
         Settings.togglePin(pinId);this._rebuildLists();});
       row.appendChild(pin);
     }
+    if(diffKey){const d=SSPM_DIFFS.find(x=>x.key===diffKey)||SSPM_DIFFS[0];
+      const db=document.createElement('div');db.className='row-diff';
+      db.textContent=d.short;db.title=d.label;
+      db.style.color=d.color;db.style.borderColor=d.color;
+      row.appendChild(db);}
     if(coverUrl){const cv=document.createElement('img');cv.className='row-cover';
       cv.src=coverUrl;cv.alt='';row.appendChild(cv);}
     const who=document.createElement('div');who.className='who';
@@ -3199,16 +3268,39 @@ const UI={
     return this._ss[s.id];
   },
   _flt:{q:'',a:''},_randPool:[],
+  _diffFilter:null,   // null = all, else a difficulty key
   _match(title,by){
     const q=this._flt.q,a=this._flt.a;
     if(q&&String(title).toLowerCase().indexOf(q)<0)return false;
     if(a&&String(by).toLowerCase().indexOf(a)<0)return false;
     return true;
   },
+  _matchDiff(diffKey){
+    if(!this._diffFilter)return true;
+    return (diffKey||'na')===this._diffFilter;
+  },
+  buildDiffFilter(){
+    const wrap=this.$('diff-filter');if(!wrap)return;wrap.innerHTML='';
+    for(const d of SSPM_DIFFS){
+      const b=document.createElement('div');
+      b.className='df-btn'+(this._diffFilter===d.key?' on':'');
+      b.textContent=d.short;b.title=d.label;
+      b.style.color=d.color;b.style.borderColor=d.color;
+      b.addEventListener('click',()=>{
+        this._diffFilter=(this._diffFilter===d.key)?null:d.key;
+        this.buildDiffFilter();this._rebuildLists();});
+      wrap.appendChild(b);
+    }
+  },
   buildSongList(){
     const wrap=this.$('song-list');wrap.innerHTML='';
     this._randPool=[];
     let shown=0;
+    /* the difficulty filter is an SSPM concept; hide the originals section while
+       one is active so the list shows only matching custom/community maps */
+    const origSec=this.$('lib-sec-orig');
+    if(origSec)origSec.style.display=this._diffFilter?'none':'';
+    if(this._diffFilter){this.setText('lib-n-orig','');this.buildFeaturedList();return;}
     /* pinned songs float to the top, order otherwise preserved */
     const ordered=SONGS.map((s,i)=>({s,i}))
       .sort((a,b)=>(Settings.isPinned('song:'+b.s.id)-Settings.isPinned('song:'+a.s.id))||(a.i-b.i));
@@ -3293,6 +3385,8 @@ const UI={
     for(const{e:entry}of ordered){
       const cached=Community.cache[entry.id];
       const f=cached&&cached.f;
+      /* difficulty filter: only hide maps we actually know the difficulty of */
+      if(this._diffFilter&&f&&!this._matchDiff(f.diff))continue;
       const mb=(entry.size/1048576).toFixed(1);
       const cover=(f&&f.cover)||null;
       const row=this._row('var(--violet)',
@@ -3300,7 +3394,7 @@ const UI={
         f?('mapped by '+esc(f.by)):('\u2601 '+mb+' MB \u00b7 click to download & play'),
         f?`${fmtNum(f.notes.length)} notes \u00b7 ${this.fmtTime(f.dur)}`:'',
         f?f.stars:null,
-        this._bestTxt(entry.id,'featured'),null,'feat:'+entry.id,cover);
+        this._bestTxt(entry.id,'featured'),null,'feat:'+entry.id,cover,f&&f.diff);
       const st=document.createElement('span');st.className='dlst';row.appendChild(st);
       const openIt=async()=>{
         if(row._busy)return;row._busy=true;
@@ -3324,6 +3418,27 @@ const UI={
   },
   /* import an .sspm File/ArrayBuffer into the saved custom-maps list; decodes
      and caches its audio for the session. Returns the new map id (or null). */
+  /* Decode any persisted custom-map audio back into playable buffers on load. */
+  async restoreCustomAudio(){
+    try{
+      const maps=Settings.loadCustom();
+      if(!maps.length)return;
+      let any=false;
+      for(const m of maps){
+        if(Editor.buffers[m.id])continue;
+        const bytes=await AudioStore.get(m.id);
+        if(!bytes)continue;
+        AudioEngine.init();
+        try{
+          const buf=await new Promise((res,rej)=>{
+            const pr=AudioEngine.ctx.decodeAudioData(bytes.slice(0),res,rej);
+            if(pr&&pr.then)pr.then(res,rej);});
+          Editor.buffers[m.id]=buf;any=true;
+        }catch(e){/* skip undecodable clips */}
+      }
+      if(any){this.buildCustomList();this.buildSongList();}
+    }catch(e){}
+  },
   async importSSPMFile(file){
     try{
       const ab=file.arrayBuffer?await file.arrayBuffer():file;
@@ -3332,10 +3447,12 @@ const UI={
       const rec={id,title:(map.title||'Imported').slice(0,80),
         artist:(map.artist||'Custom Map').slice(0,80),
         bpm:map.bpm||120,offset:0,duration:map.duration||0,fileName:file.name||'',
-        cover:map.cover||null,
+        cover:map.cover||null,diff:map.diff||'na',
         notes:map.notes.map(n=>({t:n.t,x:n.x,y:n.y}))};
       const list=Settings.loadCustom();list.push(rec);Settings.saveCustom(list);
       if(map.audio){
+        /* persist the encoded bytes so the map keeps its audio across refreshes */
+        try{await AudioStore.put(id,map.audio.slice(0));}catch(e){}
         AudioEngine.init();
         if(AudioEngine.ctx.state==='suspended')AudioEngine.ctx.resume();
         try{
@@ -3372,12 +3489,13 @@ const UI={
       .sort((a,b)=>(Settings.isPinned('cust:'+b.m.id)-Settings.isPinned('cust:'+a.m.id))||(a.i-b.i));
     for(const{m}of ordered){
       if(!this._match(m.title||'Untitled',m.artist||'Custom Map'))continue;
+      if(!this._matchDiff(m.diff))continue;
       const dur=m.duration||0,mm=Math.floor(dur/60),ss=String(Math.round(dur%60)).padStart(2,'0');
       const hasAudio=!!Editor.buffers[m.id];
       const st=starRating(m.notes.map(n=>({t:n.t,x:n.x,y:n.y})).sort((a,b)=>a.t-b.t));
       const row=this._row('#ff5fd6',esc(m.title||'Untitled'),esc(m.artist||'Custom Map'),
         `${m.notes.length} notes \u00b7 ${mm}:${ss}`,st,'',hasAudio?'':'attach audio','cust:'+m.id,
-        m.cover||this._genCover(318,m.title||'?'));
+        m.cover||this._genCover(318,m.title||'?'),m.diff||'na');
       row.addEventListener('click',()=>this.openDetail({type:'custom',map:m}));
       wrap.appendChild(row);
       if(hasAudio)this._randPool.push(()=>Editor.playCustom(m.id,'songs'));
@@ -4206,6 +4324,16 @@ const UI={
    block pointers, strings, then the marker block (u32 ms, u8 type,
    u8 quantum flag, u8 pair or f32 pair position). Embedded audio (ogg/mp3)
    is returned so it can be decoded and attached in one step. */
+/* SSPM difficulty byte -> {key,label,color}. Matches Sound Space / Rhythia:
+   0 N/A, 1 Easy, 2 Medium, 3 Hard, 4 Logic(LOGIC?), 5 Tasukete. */
+const SSPM_DIFFS=[
+  {key:'na',   label:'N/A',      short:'N', color:'#ffffff'},
+  {key:'easy', label:'Easy',     short:'E', color:'#4ae351'},
+  {key:'medium',label:'Medium',  short:'M', color:'#ff9d3d'},
+  {key:'hard', label:'Hard',     short:'H', color:'#ff5f5f'},
+  {key:'logic',label:'Logic',    short:'L', color:'#b46bff'},
+  {key:'tasukete',label:'Tasukete',short:'\u52a9', color:'#1a1a1a'}];
+function sspmDiff(byte){ return SSPM_DIFFS[byte]||SSPM_DIFFS[0]; }
 function _bytesToDataURL(bytes){
   let mime='image/png';
   if(bytes[0]===0xFF&&bytes[1]===0xD8)mime='image/jpeg';
@@ -4236,7 +4364,7 @@ function parseSSPM(ab){
     const lastMs=dv.getUint32(p,true);p+=4;
     const noteCount=dv.getUint32(p,true);p+=4;
     const markerCount=dv.getUint32(p,true);p+=4;
-    p+=1;                 // difficulty
+    const diffByte=u8[p];p+=1;    // difficulty
     p+=2;                 // rating
     const hasAudio=u8[p];p+=1;
     const hasCover=u8[p];p+=1;
@@ -4276,6 +4404,7 @@ function parseSSPM(ab){
     }
     return {title:songName||mapName||'SSPM Import',
       artist:mappers.join(' & ')||'Unknown Mapper',
+      diff:sspmDiff(diffByte).key,
       notes,audio,cover,duration:lastMs/1000+3};
   }
   if(ver===1){
@@ -4289,7 +4418,7 @@ function parseSSPM(ab){
     const creator=rline();
     const lastMs=dv.getUint32(p,true);p+=4;
     const noteCount=dv.getUint32(p,true);p+=4;
-    p+=1;                         // difficulty
+    const diffByte=u8[p];p+=1;    // difficulty
     /* cover */
     const ct=u8[p];p+=1;
     if(ct===1){p+=2+2+1+1;const cl=Number(dv.getBigUint64(p,true));p+=8+cl;}
@@ -4312,6 +4441,7 @@ function parseSSPM(ab){
     notes.sort((a,b)=>a.t-b.t);
     if(!notes.length)throw new Error('no notes found');
     return {title:name||'SSPM Import',artist:creator||'Unknown Mapper',
+      diff:sspmDiff(diffByte).key,
       notes,audio,duration:lastMs/1000+3};
   }
   throw new Error('unsupported .sspm version '+ver);
@@ -4502,7 +4632,7 @@ const Community={
       });
       const f={id:entry.id,title:map.title,by:map.artist,dur:map.duration,
         stars:starRating(map.notes),notes:map.notes,cover:map.cover||null,
-        official:this.isOfficial()};
+        diff:map.diff||'na',official:this.isOfficial()};
       const rec={f,buffer};
       this.cache[entry.id]=rec;
       delete this.pending[entry.id];
@@ -5277,6 +5407,9 @@ const FluidBG={
   if(typeof document!=='undefined'&&document.getElementById('fluid-bg'))FluidBG.init();
   Loop.start();
   window.addEventListener('resize',()=>Game.resize());
+  /* re-hydrate persisted custom-map audio so imported maps keep their sound
+     after a refresh */
+  UI.restoreCustomAudio&&UI.restoreCustomAudio();
 })();
 </script>
 </body>
